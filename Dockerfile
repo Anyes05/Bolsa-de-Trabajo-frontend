@@ -1,5 +1,5 @@
 #stage 1
-FROM node:lts as node
+FROM node:12 as node
 WORKDIR /app
 COPY . .
 
