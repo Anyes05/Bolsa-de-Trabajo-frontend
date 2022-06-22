@@ -12,10 +12,6 @@ build_image_testing:
     - export VERSION=$(echo $DATESTAMPCOMMIT.$CI_PIPELINE_IID.$CI_COMMIT_SHORT_SHA)
     - echo $VERSION
     - export ENVIRONMENT_NAME=$(echo $CI_ENVIRONMENT_SLUG)
-    - export APP_NAME=ccisj-empleo
-    - echo $APP_NAME
-    - export STACK_NAME=ccisj-empleo
-    - echo $STACK_NAME
   environment:
     name: test
   services:
@@ -36,10 +32,6 @@ deploy_test:
     - export VERSION=$(echo $DATESTAMPCOMMIT.$CI_PIPELINE_IID.$CI_COMMIT_SHORT_SHA)
     - echo $VERSION
     - export ENVIRONMENT_NAME=$(echo $CI_ENVIRONMENT_SLUG)
-    - export APP_NAME=ccisj-empleo
-    - echo $APP_NAME
-    - export STACK_NAME=ccisj-empleo
-    - echo $STACK_NAME
   services:
     - docker:20.10.2-dind
   environment:
@@ -59,10 +51,6 @@ build_image_prod:
     - export VERSION=$(echo $DATESTAMPCOMMIT.$CI_PIPELINE_IID.$CI_COMMIT_SHORT_SHA)
     - echo $VERSION
     - export ENVIRONMENT_NAME=$(echo $CI_ENVIRONMENT_SLUG)
-    - export APP_NAME=ccisj-empleo
-    - echo $APP_NAME
-    - export STACK_NAME=ccisj-empleo
-    - echo $STACK_NAME
   environment:
     name: prod
   services:
@@ -92,10 +80,6 @@ deploy_prod:
     - echo "$SSH_PROD_KEY" > /tmp/key.pem && chmod 600 /tmp/key.pem
     - ssh-add /tmp/key.pem
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config' 
-    - export APP_NAME=ccisj-empleo
-    - echo $APP_NAME
-    - export STACK_NAME=ccisj-empleo
-    - echo $STACK_NAME
   services:
     - docker:20.10.2-dind
   environment:

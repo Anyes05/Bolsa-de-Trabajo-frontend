@@ -10,9 +10,9 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.${APP_NAME}frontend.rule=Host(`${APP_NAME}.${CI_ENVIRONMENT_SLUG}.softtero.com`)"
+        - "traefik.http.routers.${APP_NAME}frontend.rule=Host(`empleo.ccisanjose.com.uy`, `${APP_NAME}.${CI_ENVIRONMENT_SLUG}.softtero.com`)"
         - "traefik.http.routers.${APP_NAME}frontend.entrypoints=http"
-        - "traefik.http.routers.${APP_NAME}frontend-secured.rule=Host(`${APP_NAME}.${CI_ENVIRONMENT_SLUG}.softtero.com`)"
+        - "traefik.http.routers.${APP_NAME}frontend-secured.rule=Host(`empleo.ccisanjose.com.uy`, `${APP_NAME}.${CI_ENVIRONMENT_SLUG}.softtero.com`)"
         - "traefik.http.routers.${APP_NAME}frontend-secured.entrypoints=https"
         - "traefik.http.routers.${APP_NAME}frontend-secured.tls.certresolver=le"
         - "traefik.http.services.${APP_NAME}frontend.loadbalancer.server.port=80"

@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiURL: "https://g2back.ccisanjose.com.uy/"
+  apiURL: 'https://backend-endpoint/'
 
 };
