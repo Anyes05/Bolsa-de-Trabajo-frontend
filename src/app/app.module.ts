@@ -43,7 +43,7 @@ import { MisOfertasComponent } from './views/empresario/mis-ofertas/mis-ofertas.
 import { ListaPostulantesPartialComponent } from './components/lista-postulantes-partial/lista-postulantes-partial.component';
 import { AgregarOfertaComponent } from './views/empresario/agregar-oferta/agregar-oferta.component';
 import { DetalleOfertaComponent } from './views/detalle-oferta/detalle-oferta.component';
-import {ConfirmationService} from 'primeng/api';
+import { ConfirmationService } from 'primeng/api';
 import { SafePipe } from './pipes/safe.pipe';
 import { DatosAdicionalesComponent } from './views/empresario/datos-adicionales/datos-adicionales.component';
 import { RecuperarContraseniaComponent } from './views/recuperar-contrasenia/recuperar-contrasenia/recuperar-contrasenia.component';
@@ -99,7 +99,7 @@ import { environment } from '../environments/environment';
     DetalleNovedadComponent,
     ModificarOfertaComponent,
 
-    
+
   ],
   imports: [
     BrowserModule,
@@ -134,13 +134,11 @@ import { environment } from '../environments/environment';
         providers: [
           {
             id: GoogleLoginProvider.PROVIDER_ID,
-            provider: new GoogleLoginProvider(
-              '811112997489-6gbrihariesa3h7pbcrpbtr8qfm13l4i.apps.googleusercontent.com'
-            )
+            provider: new GoogleLoginProvider(environment.GoogleLoginProvider)
           },
           {
             id: FacebookLoginProvider.PROVIDER_ID,
-            provider: new FacebookLoginProvider('1007582456710652')
+            provider: new FacebookLoginProvider(environment.FacebookLoginProvider)
           }
         ]
       } as SocialAuthServiceConfig,

@@ -4,7 +4,9 @@
 
 export const environment = {
   production: false,
-  apiURL: "http://localhost:3000/"
+  apiURL: "http://localhost:3000/",
+  FacebookLoginProvider: "1007582456710652",
+  GoogleLoginProvider: '811112997489-6gbrihariesa3h7pbcrpbtr8qfm13l4i.apps.googleusercontent.com'
 };
 
 /*
