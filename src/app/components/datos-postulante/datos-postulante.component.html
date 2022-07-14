@@ -2,7 +2,8 @@
     <div class="p-col-12 p-md-3 p-fluid">
         <div class=" p-grid p-jc-center">
             <div class="p-col-12 p-grid p-formgrid p-jc-center ">
-                <img style="max-height:250px; max-width: 100%; " [src]="this.fotoPerfil | safe: 'url'" #img>
+                <img style="max-height:250px; max-width: 100%; " [src]="this.fotoPerfil | safe: 'url'"
+                    alt="Foto de perfil" #img>
 
                 <div class="p-field p-col-12">
                     <p-skeleton *ngIf="!this.fotoPerfil" height="250px" width="100%"></p-skeleton>
@@ -18,17 +19,20 @@
                 </p-fileUpload> -->
                 <input type="file" accept="image/*" class="file-input" (change)="onFileSelected($event)" #fileUpload>
 
-                <p-button class="boton-foto" [label]="file?.name || 'Cambiar foto'" icon="pi pi-paperclip" (click)="fileUpload.click()" *ngIf="perfilPropio"></p-button>
+                <p-button class="boton-foto" [label]="file?.name || 'Cambiar foto'" icon="pi pi-paperclip"
+                    (click)="fileUpload.click()" *ngIf="perfilPropio"></p-button>
 
 
             </div>
             <div class="p-col-12 p-grid p-jc-center">
 
-                <a pButton target="_blank" type="button" label="Curriculum" icon="pi pi-search" [href]="cv | safe: 'url'" *ngIf="postulante.curriculum"></a>
+                <a pButton target="_blank" type="button" label="Curriculum" icon="pi pi-search"
+                    [href]="cv | safe: 'url'" *ngIf="postulante.curriculum"></a>
             </div>
             <div class="p-col-12 p-grid p-jc-center">
 
-                <a pButton target="_blank" type="button" label="Curriculum Generado" icon="pi pi-search" [href]="pdf | safe: 'url'" [loading]="pdf==''"></a>
+                <a pButton target="_blank" type="button" label="Curriculum Generado" icon="pi pi-search"
+                    [href]="pdf | safe: 'url'" [loading]="pdf==''"></a>
             </div>
             <div class="p-col-12 p-grid p-jc-center ">
                 <div *ngIf="perfilPropio" class="p-field p-grid p-ai-center vertical-container">
@@ -99,10 +103,14 @@
             </div>
 
             <p-accordion class="p-col-12">
-                <p-accordionTab *ngIf="postulante.capacitacionFormacion && postulante.capacitacionFormacion.length > 0
-                    || postulante.idioma&& postulante.idioma.length > 0 || postulante.conocimientoInfo&& postulante.conocimientoInfo.length > 0" header='Educación y Formación'>
+                <p-accordionTab
+                    *ngIf="postulante.capacitacionFormacion && postulante.capacitacionFormacion.length > 0
+                    || postulante.idioma&& postulante.idioma.length > 0 || postulante.conocimientoInfo&& postulante.conocimientoInfo.length > 0"
+                    header='Educación y Formación'>
                     <p-accordion>
-                        <p-accordionTab *ngIf="postulante.capacitacionFormacion&& postulante.capacitacionFormacion.length > 0" header="Capacitaciones">
+                        <p-accordionTab
+                            *ngIf="postulante.capacitacionFormacion&& postulante.capacitacionFormacion.length > 0"
+                            header="Capacitaciones">
                             <p-accordion>
                                 <div *ngFor="let CapFor of postulante.capacitacionFormacion;">
                                     <p-accordionTab *ngIf="CapFor.nombre" [header]="CapFor.nombre">
@@ -115,10 +123,12 @@
                                                 <strong>Institución:</strong> <br> {{CapFor.institucion}}
                                             </div>
                                             <div class="p-field p-col-12 p-md-6">
-                                                <strong>Fecha de inicio:</strong> <br> {{convertirFecha(CapFor.fechaInicio)}}
+                                                <strong>Fecha de inicio:</strong> <br>
+                                                {{convertirFecha(CapFor.fechaInicio)}}
                                             </div>
                                             <div class="p-field p-col-12 p-md-6">
-                                                <strong>Duración:</strong> <br> {{CapFor.duracion}} {{CapFor.tipoDuracion}}
+                                                <strong>Duración:</strong> <br> {{CapFor.duracion}}
+                                                {{CapFor.tipoDuracion}}
                                             </div>
                                             <div class="p-field p-col-12 p-md-6">
                                                 <strong>Estado:</strong> <br> {{CapFor.estado}}
@@ -156,7 +166,8 @@
                             </p-accordion>
                         </p-accordionTab>
 
-                        <p-accordionTab *ngIf="postulante.conocimientoInfo&& postulante.conocimientoInfo.length > 0" header="Conocimientos Informaticos">
+                        <p-accordionTab *ngIf="postulante.conocimientoInfo&& postulante.conocimientoInfo.length > 0"
+                            header="Conocimientos Informaticos">
                             <p-accordion>
                                 <div *ngFor="let conocInfo of postulante.conocimientoInfo;">
                                     <p-accordionTab *ngIf="conocInfo.nombreApp" [header]="conocInfo.nombreApp">
@@ -166,7 +177,8 @@
                                                 <strong>Categoría:</strong> <br> {{conocInfo.categoria}}
                                             </div>
                                             <div class="p-field p-col-12 p-md-6">
-                                                <strong>Nivel de conocimiento:</strong> <br> {{conocInfo.nivelConocimiento}}
+                                                <strong>Nivel de conocimiento:</strong> <br>
+                                                {{conocInfo.nivelConocimiento}}
                                             </div>
                                         </div>
                                     </p-accordionTab>
@@ -182,7 +194,8 @@
             <p-divider class="p-col-12" *ngIf="postulante.expLaboral&& postulante.expLaboral.length > 0"></p-divider>
 
             <p-accordion class="p-col-12">
-                <p-accordionTab *ngIf="postulante.expLaboral&& postulante.expLaboral.length > 0" header="Experiencias Laborales">
+                <p-accordionTab *ngIf="postulante.expLaboral&& postulante.expLaboral.length > 0"
+                    header="Experiencias Laborales">
                     <p-accordion>
                         <div *ngFor="let expLab of postulante.expLaboral;">
                             <p-accordionTab *ngIf="expLab.nombreEmp" [header]="expLab.nombreEmp">
@@ -204,8 +217,10 @@
                                         <strong>Tareas Realizadas:</strong> <br> {{expLab.tareas}}
                                     </div>
                                     <div class="p-field p-col-12 p-md-6">
-                                        <strong>Período trabajado:</strong> <br> Desde {{convertirFecha(expLab.fechaInicio)}}
-                                        <p *ngIf="!expLab.trabajando; else Atrabajando">hasta {{convertirFecha(expLab.fechaFin)}}
+                                        <strong>Período trabajado:</strong> <br> Desde
+                                        {{convertirFecha(expLab.fechaInicio)}}
+                                        <p *ngIf="!expLab.trabajando; else Atrabajando">hasta
+                                            {{convertirFecha(expLab.fechaFin)}}
                                         </p>
                                     </div>
                                     <ng-template #Atrabajando>
@@ -238,10 +253,12 @@
 
             </p-accordion>
 
-            <p-divider class="p-col-12" *ngIf="postulante.permisosLicencias&& postulante.permisosLicencias.length > 0"></p-divider>
+            <p-divider class="p-col-12" *ngIf="postulante.permisosLicencias&& postulante.permisosLicencias.length > 0">
+            </p-divider>
 
             <p-accordion class="p-col-12">
-                <p-accordionTab *ngIf="postulante.permisosLicencias&& postulante.permisosLicencias.length > 0" header="Permisos y Licencias">
+                <p-accordionTab *ngIf="postulante.permisosLicencias&& postulante.permisosLicencias.length > 0"
+                    header="Permisos y Licencias">
                     <p-accordion>
                         <div *ngFor="let permLic of postulante.permisosLicencias;">
                             <p-accordionTab *ngIf="permLic.tipoDocumento" [header]="permLic.tipoDocumento">
@@ -266,40 +283,47 @@
 
             </p-accordion>
 
-            <p-divider class="p-col-12" *ngIf="postulante.preferenciaLaboral&& postulante.preferenciaLaboral.length > 0"></p-divider>
+            <p-divider class="p-col-12"
+                *ngIf="postulante.preferenciaLaboral&& postulante.preferenciaLaboral.length > 0"></p-divider>
 
             <p-accordion class="p-col-12">
-                <p-accordionTab *ngIf="postulante.preferenciaLaboral&& postulante.preferenciaLaboral.length > 0" header="Intereses y Preferencias">
+                <p-accordionTab *ngIf="postulante.preferenciaLaboral&& postulante.preferenciaLaboral.length > 0"
+                    header="Intereses y Preferencias">
                     <p-accordion>
                         <p-divider align="left" type="dashed">
                             <b>Jornada laboral preferida</b>
                         </p-divider>
                         <div class="p-fluid p-grid p-mb-4">
                             <div class="p-field-checkbox p-col-12 p-md-6">
-                                <p-checkbox [binary]="true" id="jIndiferente" [(ngModel)]="postulante.jIndiferente" [disabled]="true">
+                                <p-checkbox [binary]="true" id="jIndiferente" [(ngModel)]="postulante.jIndiferente"
+                                    [disabled]="true">
                                 </p-checkbox>
                                 <label for="jIndiferente">Indiferente</label>
                             </div>
                             <div class="p-field-checkbox p-col-12 p-md-6">
-                                <p-checkbox [binary]="true" id="jCompleta" [(ngModel)]="postulante.jCompleta" [disabled]="true">
+                                <p-checkbox [binary]="true" id="jCompleta" [(ngModel)]="postulante.jCompleta"
+                                    [disabled]="true">
                                 </p-checkbox>
                                 <label for="jCompleta">Completa</label>
                             </div>
 
                             <div class="p-field-checkbox p-col-12 p-md-6">
-                                <p-checkbox [binary]="true" id="jMtManiana" [(ngModel)]="postulante.jMtManiana" [disabled]="true">
+                                <p-checkbox [binary]="true" id="jMtManiana" [(ngModel)]="postulante.jMtManiana"
+                                    [disabled]="true">
                                 </p-checkbox>
                                 <label for="jMtManiana">Medio Turno Mañana</label>
                             </div>
 
                             <div class="p-field-checkbox p-col-12 p-md-6">
-                                <p-checkbox [binary]="true" id="jMtTarde" [(ngModel)]="postulante.jMtTarde" [disabled]="true">
+                                <p-checkbox [binary]="true" id="jMtTarde" [(ngModel)]="postulante.jMtTarde"
+                                    [disabled]="true">
                                 </p-checkbox>
                                 <label for="jMtTarde">Medio Turno Tarde</label>
                             </div>
 
                             <div class="p-field-checkbox p-col-12 p-md-6">
-                                <p-checkbox [binary]="true" id="jMtNoche" [(ngModel)]="postulante.jMtNoche" [disabled]="true">.
+                                <p-checkbox [binary]="true" id="jMtNoche" [(ngModel)]="postulante.jMtNoche"
+                                    [disabled]="true">.
                                 </p-checkbox>
                                 <label for="jMtNoche">Medio Turno Noche</label>
                             </div>
@@ -315,7 +339,8 @@
                                         <strong>Área de interés laboral:</strong> <br> {{intPref.areaInteres}}
                                     </div>
                                     <div class="p-field p-col-12 p-md-6">
-                                        <strong>Aspiración salarial nominal:</strong> <br> {{intPref.aspiracionSalarial}}
+                                        <strong>Aspiración salarial nominal:</strong> <br>
+                                        {{intPref.aspiracionSalarial}}
                                     </div>
 
                                 </div>

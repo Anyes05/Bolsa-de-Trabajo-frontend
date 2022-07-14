@@ -127,7 +127,7 @@ export class DatosPersonalesComponent implements OnInit {
         // console.log(this.postulante.fechaNacimiento);
         // console.log(result.localidad);
         // console.log(this.selectedDepartamento);
-        if(this.selectedDepartamento) this.getLocalidades(this.selectedDepartamento);
+        if (this.selectedDepartamento) this.getLocalidades(this.selectedDepartamento);
         if (this.postulante.fechaNacimiento) {
           this.datosPersonalesForm.controls["fechaN"].setValue((moment(this.postulante.fechaNacimiento, 'YYYY-MM-DD').toDate()));
         }
@@ -276,13 +276,12 @@ export class DatosPersonalesComponent implements OnInit {
   async nextPage() {
     this.submitted = true;
     if (this.datosPersonalesForm.valid) {
-      console.log('asdada');
-      
+
       if (this.datosPersonalesForm.touched) {
         if (await this.ngOnSubmit()) {
           this.router.navigate(['formulario/educacionFormacion']);
         }
-      }else{
+      } else {
         this.router.navigate(['formulario/educacionFormacion']);
       }
     } else {
