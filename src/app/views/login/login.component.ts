@@ -90,8 +90,11 @@ export class LoginComponent implements OnInit {
         });
         google.accounts.id.renderButton(
             document.getElementById("buttonDiv"),
-            { size: "large", type: "large", shape: "pill", width: '100%' }  // customization attributes
+            { size: "medium", shape: "pill", width: '200px' }  // customization attributes
         );
+
+        let iframe = document.getElementsByTagName('iframe').item(0);
+        if(iframe) iframe.style.display = 'none'
     }
 
     handleGoogleSignIn(response: any) {

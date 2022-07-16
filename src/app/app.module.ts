@@ -9,7 +9,6 @@ import { AppComponent } from './app.component';
 //Social Logins
 import { SocialLoginModule, SocialAuthServiceConfig } from 'angularx-social-login';
 import {
-  GoogleLoginProvider,
   FacebookLoginProvider
 } from 'angularx-social-login';
 import { HomeComponent } from './views/home/home.component';
@@ -132,10 +131,6 @@ import { environment } from '../environments/environment';
       useValue: {
         autoLogin: false,
         providers: [
-          {
-            id: GoogleLoginProvider.PROVIDER_ID,
-            provider: new GoogleLoginProvider(environment.GoogleLoginProvider)
-          },
           {
             id: FacebookLoginProvider.PROVIDER_ID,
             provider: new FacebookLoginProvider(environment.FacebookLoginProvider)
