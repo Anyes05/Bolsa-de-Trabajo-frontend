@@ -1,7 +1,29 @@
 <script setup lang="ts">
-import { LogOut, ShieldCheck } from 'lucide-vue-next'
-import type { AuthResponse } from '../services/api'
-defineProps<{ session: AuthResponse }>()
-defineEmits<{ logout: [] }>()
+import { LogOut } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import AppButton from '../components/AppButton.vue'
+import BrandLogo from '../components/BrandLogo.vue'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+function logout() {
+  auth.logout()
+  router.push({ name: 'access' })
+}
 </script>
-<template><main class="session"><section class="session__card"><ShieldCheck :size="38" /><p>Sesion iniciada</p><h1>{{ session.email }}</h1><span>{{ session.role }}</span><button type="button" class="button button--primary" @click="$emit('logout')"><LogOut :size="16" /> Cerrar sesion</button></section></main></template>
+
+<template>
+  <main class="session">
+    <section class="session__card" aria-labelledby="session-title">
+      <BrandLogo variant="green" />
+      <p>Sesion iniciada</p>
+      <h1 id="session-title">{{ auth.email }}</h1>
+      <span>{{ auth.role }}</span>
+      <AppButton type="button" @click="logout">
+        <LogOut :size="16" aria-hidden="true" /> Cerrar sesion
+      </AppButton>
+    </section>
+  </main>
+</template>
