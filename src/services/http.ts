@@ -26,6 +26,7 @@ function readSessionToken(): string | null {
 }
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  // Token de sesion vigente al momento del request (puede ser sobreescrito por options.headers).
   const token = readSessionToken()
   const isFormData = options.body instanceof FormData
   const headers: HeadersInit = {
@@ -42,6 +43,9 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   if (!response.ok) {
     const payload = await response.json().catch(() => null)
     const detail = payload?.detail || 'No fue posible completar la solicitud.'
+    if (response.status === 401 || response.status === 403) {
+      console.error('[http-request-auth-error]', { path, status: response.status, hasSessionToken: Boolean(token) })
+    }
     throw new ApiRequestError(response.status, path, payload, detail)
   }
 
