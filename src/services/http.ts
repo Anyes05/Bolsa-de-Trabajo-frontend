@@ -27,7 +27,8 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null)
-    throw new Error(payload?.detail || 'No fue posible completar la solicitud.')
+    const detail = payload?.detail || 'No fue posible completar la solicitud.'
+    throw new Error(`${response.status}: ${detail}`)
   }
 
   if (response.status === 204) {

@@ -6,15 +6,19 @@ export const postulanteService = {
     return request<CvResponse[]>('/postulante/cvs')
   },
 
-  uploadCv(file: File, resumen?: string) {
+  uploadCv(file: File, resumen?: string, authToken?: string) {
     const body = new FormData()
     body.append('file', file)
     if (resumen?.trim()) {
       body.append('resumen', resumen.trim())
     }
+
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined
+
     return request<CvResponse>('/postulante/cvs', {
       method: 'POST',
       body,
+      headers,
     })
   },
 

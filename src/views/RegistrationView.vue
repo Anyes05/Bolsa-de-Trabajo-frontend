@@ -180,6 +180,27 @@ function clearCvFiles() {
   cvFiles.value = []
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function uploadCvWithRetry(file: File, resumen: string, authToken: string) {
+  try {
+    await postulanteService.uploadCv(file, resumen, authToken)
+    return
+  } catch (firstError) {
+    const message = firstError instanceof Error ? firstError.message : ''
+    const isForbidden = /403|forbidden/i.test(message)
+    if (!isForbidden) {
+      throw firstError
+    }
+
+    // En producción vimos 403 esporádico inmediatamente luego de registrar; reintentamos una vez.
+    await wait(900)
+    await postulanteService.uploadCv(file, resumen, authToken)
+  }
+}
+
 async function complete() {
   busy.value = true
   clearFeedback()
@@ -199,7 +220,7 @@ async function complete() {
     if (filesToUpload.length) {
       for (const file of filesToUpload) {
         try {
-          await postulanteService.uploadCv(file, form.experienceDescription)
+          await uploadCvWithRetry(file, form.experienceDescription, session.token)
         } catch (uploadError) {
           console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
         }
