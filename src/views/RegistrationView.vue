@@ -187,16 +187,17 @@ function wait(ms: number) {
 
 function logApiFailure(scope: string, error: unknown, context: Record<string, unknown> = {}) {
   if (error instanceof ApiRequestError) {
-    console.error(`[${scope}] API error`, {
+    const payload = {
       status: error.status,
       path: error.path,
       payload: error.payload,
       message: error.message,
       context,
-    })
+    }
+    console.error(`[${scope}] API error ${JSON.stringify(payload)}`)
     return
   }
-  console.error(`[${scope}] error`, { error, context })
+  console.error(`[${scope}] error ${JSON.stringify({ message: error instanceof Error ? error.message : String(error), context })}`)
 }
 
 async function uploadCvWithRetry(file: File, resumen: string, authToken: string) {
@@ -208,6 +209,8 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
       fileName: file.name,
       fileType: file.type,
       fileSize: file.size,
+      hasAuthToken: Boolean(authToken),
+      authTokenLength: authToken?.length ?? 0,
     })
     const message = firstError instanceof Error ? firstError.message : ''
     const isForbidden = /403|forbidden/i.test(message)
@@ -224,6 +227,8 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
+        hasAuthToken: Boolean(authToken),
+        authTokenLength: authToken?.length ?? 0,
       })
       throw retryError
     }
@@ -255,6 +260,8 @@ async function complete() {
             fileName: file.name,
             fileType: file.type,
             fileSize: file.size,
+            hasAuthToken: Boolean(session.token),
+            authTokenLength: session.token?.length ?? 0,
           })
         }
       }
@@ -271,6 +278,8 @@ async function complete() {
       email: form.email,
       sectors: chosen.value,
       withFiles: cvFiles.value.length,
+      hasStoreToken: Boolean(auth.token),
+      storeTokenLength: auth.token?.length ?? 0,
     })
     error.value = exception instanceof Error ? exception.message : 'No fue posible completar el registro.'
   } finally {

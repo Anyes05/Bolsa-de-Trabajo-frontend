@@ -22,16 +22,17 @@ const form = ref({
 
 function logApiFailure(scope: string, error: unknown, context: Record<string, unknown> = {}) {
   if (error instanceof ApiRequestError) {
-    console.error(`[${scope}] API error`, {
+    const payload = {
       status: error.status,
       path: error.path,
       payload: error.payload,
       message: error.message,
       context,
-    })
+    }
+    console.error(`[${scope}] API error ${JSON.stringify(payload)}`)
     return
   }
-  console.error(`[${scope}] error`, { error, context })
+  console.error(`[${scope}] error ${JSON.stringify({ message: error instanceof Error ? error.message : String(error), context })}`)
 }
 
 const hasCvs = computed(() => cvs.value.length > 0)
