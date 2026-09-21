@@ -636,6 +636,50 @@ button:disabled {
   font-size: 10px;
 }
 
+.upload-files {
+  margin-top: 10px;
+  border: 1px solid #2f353d;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.upload-files__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.upload-files__clear,
+.upload-files__remove {
+  border: 0;
+  background: transparent;
+  color: #22ad6d;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0;
+}
+
+.upload-files__list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.upload-files__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 1px solid #2f353d;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
 .experience-form {
   border: 1px solid #e6e9ed;
   border-radius: 10px;

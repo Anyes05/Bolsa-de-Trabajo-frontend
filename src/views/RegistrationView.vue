@@ -24,7 +24,7 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
-const cvFile = ref<File | null>(null)
+const cvFiles = ref<File[]>([])
 const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive({
   fullName: '',
@@ -168,7 +168,16 @@ function previous() {
 
 function onCvFileChange(event: Event) {
   const input = event.target as HTMLInputElement
-  cvFile.value = input.files?.[0] ?? null
+  const selected = Array.from(input.files ?? [])
+  cvFiles.value = selected
+}
+
+function removeCvFile(index: number) {
+  cvFiles.value = cvFiles.value.filter((_, currentIndex) => currentIndex !== index)
+}
+
+function clearCvFiles() {
+  cvFiles.value = []
 }
 
 async function complete() {
@@ -182,12 +191,18 @@ async function complete() {
     auth.setSession(session)
 
     // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
-    const fileToUpload = cvFile.value ?? buildManualCvFile()
-    if (fileToUpload) {
-      try {
-        await postulanteService.uploadCv(fileToUpload, form.experienceDescription)
-      } catch (uploadError) {
-        console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
+    const filesToUpload = cvFiles.value.length ? cvFiles.value : (() => {
+      const generated = buildManualCvFile()
+      return generated ? [generated] : []
+    })()
+
+    if (filesToUpload.length) {
+      for (const file of filesToUpload) {
+        try {
+          await postulanteService.uploadCv(file, form.experienceDescription)
+        } catch (uploadError) {
+          console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
+        }
       }
     }
 
@@ -316,23 +331,35 @@ async function complete() {
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
         <h2 id="step-cv">Curriculum Vitae</h2>
-        <p>Para finalizar el registro, podes adjuntar tu CV digital y completar tu experiencia.</p>
+        <p>Para finalizar el registro, podes adjuntar uno o varios CVs y completar tu experiencia.</p>
         <div class="upload-placeholder">
           <Paperclip :size="22" aria-hidden="true" />
           <div>
             <b>Adjuntar archivo de CV</b>
-            <small>PDF o DOCX, tamaño maximo de 5MB.</small>
+            <small>PDF o DOCX, tamaño maximo de 5MB por archivo (hasta 5 CVs).</small>
           </div>
-          <label class="upload-placeholder__action" for="cv-file-input">Subir archivo</label>
+          <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
           <input
             id="cv-file-input"
             class="upload-placeholder__input"
             type="file"
+            multiple
             accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             @change="onCvFileChange"
           >
         </div>
-        <p v-if="cvFile" class="upload-placeholder__filename">Archivo seleccionado: {{ cvFile.name }}</p>
+        <div v-if="cvFiles.length" class="upload-files">
+          <div class="upload-files__header">
+            <strong>Archivos seleccionados ({{ cvFiles.length }})</strong>
+            <button type="button" class="upload-files__clear" @click="clearCvFiles">Quitar todos</button>
+          </div>
+          <ul class="upload-files__list">
+            <li v-for="(file, index) in cvFiles" :key="`${file.name}-${index}`" class="upload-files__item">
+              <span>{{ file.name }}</span>
+              <button type="button" class="upload-files__remove" @click="removeCvFile(index)">Quitar</button>
+            </li>
+          </ul>
+        </div>
         <section class="experience-form">
           <h3><BriefcaseBusiness :size="18" aria-hidden="true" /> Completar experiencia manualmente</h3>
           <AppField id="latestJob" label="Ultimo empleo / empresa actual">
