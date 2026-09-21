@@ -112,11 +112,8 @@ router.beforeEach((to) => {
   if (allowedRoles && auth.role && !allowedRoles.includes(auth.role)) {
     return { name: auth.homeRoute }
   }
-  if (to.name === 'session' && auth.role === 'SOCIO') {
-    return { name: 'socio-bolsa-empleo' }
-  }
-  if (to.name === 'session' && auth.role === 'POSTULANTE') {
-    return { name: 'postulante-bolsa-empleo' }
+  if (to.name === 'session' && auth.isAuthenticated) {
+    return { name: auth.homeRoute }
   }
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: auth.homeRoute }
