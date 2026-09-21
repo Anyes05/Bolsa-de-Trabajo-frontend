@@ -4,6 +4,18 @@ import AccessView from '../views/AccessView.vue'
 import RegistrationView from '../views/RegistrationView.vue'
 import SessionView from '../views/SessionView.vue'
 
+//temporal
+import AdminDashboardView from '../views/admin/AdminDashboardView.vue'
+import AdminSociosView from '../views/admin/AdminSociosView.vue'
+import AdminApplicantsView from '../views/admin/AdminApplicantsView.vue'
+import AdminOffersView from '../views/admin/AdminOffersView.vue'
+import AdminSettingsView from '../views/admin/AdminSettingsView.vue'
+import AdminCommunicationsView from '../views/admin/AdminCommunicationsView.vue'
+import AdminNewCompanyView from '../views/admin/AdminNewCompanyView.vue'
+import AdminOfferApplicationsView from '../views/admin/AdminOfferApplicationsView.vue'
+
+//end
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -30,6 +42,46 @@ const router = createRouter({
       name: 'socio-bolsa-empleo',
       component: () => import('../views/socio/SocioBolsaEmpleoView.vue'),
       meta: { requiresAuth: true, roles: ['SOCIO'] },
+    },
+    {
+      path: '/admin',
+      name: 'admin-dashboard',
+      component: AdminDashboardView,
+    },
+    {
+      path: '/admin/socios',
+      name: 'admin-socios',
+      component: AdminSociosView,
+    },
+    {
+      path: '/admin/socios/nueva',
+      name: 'admin-new-company',
+      component: AdminNewCompanyView,
+    },
+    {
+      path: '/admin/postulantes',
+      name: 'admin-applicants',
+      component: AdminApplicantsView,
+    },
+    {
+      path: '/admin/ofertas',
+      name: 'admin-offers',
+      component: AdminOffersView,
+    },
+    {
+      path: '/admin/ofertas/:offerId/postulaciones',
+      name: 'admin-offer-applications',
+      component: AdminOfferApplicationsView,
+    },
+    {
+      path: '/admin/configuracion',
+      name: 'admin-settings',
+      component: AdminSettingsView,
+    },
+    {
+      path: '/admin/comunicados',
+      name: 'admin-communications',
+      component: AdminCommunicationsView,
     },
     {
       path: '/:pathMatch(.*)*',
