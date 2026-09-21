@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { MapPin, Mail } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
-import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
+import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
 
 defineProps<{
   profile: MockApplicantProfile
 }>()
 
-const availabilityLabel: Record<string, string> = {
-  FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
-}
+defineEmits<{
+  view: []
+}>()
 </script>
 
 <template>
@@ -34,7 +33,7 @@ const availabilityLabel: Record<string, string> = {
       · Libreta: {{ profile.license }}
     </p>
     <footer class="profile-card__actions">
-      <AppButton variant="secondary" type="button">Ver perfil completo</AppButton>
+      <AppButton variant="secondary" type="button" @click="$emit('view')">Ver perfil completo</AppButton>
       <AppButton variant="primary" type="button">
         <Mail :size="14" aria-hidden="true" /> Contactar
       </AppButton>

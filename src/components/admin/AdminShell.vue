@@ -29,7 +29,7 @@ const open = ref(false)
 
 const links = [
   { key: 'dashboard', label: 'Control de Caja', to: '/admin', icon: CircleDollarSign },
-  { key: 'socios', label: 'Gestión de Empresas', to: '/admin/socios', icon: Building2 },
+  { key: 'socios', label: 'Gestión de Socios', to: '/admin/socios', icon: Building2 },
   { key: 'postulantes', label: 'Postulantes', to: '/admin/postulantes', icon: CircleUserRound },
   { key: 'ofertas', label: 'Ofertas Laborales', to: '/admin/ofertas', icon: BriefcaseBusiness },
   { key: 'configuracion', label: 'Config. Cuota', to: '/admin/configuracion', icon: Settings },

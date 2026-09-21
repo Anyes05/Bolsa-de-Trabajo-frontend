@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
+import { isDirectivoEmail } from '../data/mockSocioDirectorio'
 import type { AuthResponse, Role } from '../services/types'
 
 const STORAGE_KEY = 'ccisj-session'
@@ -33,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
   const role = ref<Role | null>(stored?.role ?? null)
 
   const isAuthenticated = computed(() => Boolean(token.value && email.value && role.value))
+  const isDirectivo = computed(() => role.value === 'SOCIO' && isDirectivoEmail(email.value))
   const homeRoute = computed(() => {
     if (role.value === 'SOCIO') return 'socio-bolsa-empleo'
     if (role.value === 'POSTULANTE') return 'postulante-bolsa-empleo'
@@ -70,5 +72,5 @@ export const useAuthStore = defineStore('auth', () => {
     sessionStorage.removeItem(STORAGE_KEY)
   }
 
-  return { token, email, role, isAuthenticated, homeRoute, setSession, logout }
+  return { token, email, role, isAuthenticated, isDirectivo, homeRoute, setSession, logout }
 })

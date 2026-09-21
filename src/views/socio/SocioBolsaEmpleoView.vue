@@ -2,11 +2,13 @@
 import { computed, ref } from 'vue'
 import FilterGroup from '../../components/socio/FilterGroup.vue'
 import ProfileCard from '../../components/socio/ProfileCard.vue'
+import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import {
   mockApplicantProfiles,
   mockCompany,
   mockRubros,
+  type MockApplicantProfile,
   type SortOption,
 } from '../../data/mockSocioBolsa'
 
@@ -14,6 +16,7 @@ const rubro = ref('Todos')
 const availability = ref('Todos')
 const vehicle = ref('Todos')
 const sortBy = ref<SortOption>('updated')
+const selectedProfile = ref<MockApplicantProfile | null>(null)
 
 const profiles = computed(() => {
   const filtered = mockApplicantProfiles.filter((profile) => {
@@ -36,6 +39,7 @@ const profiles = computed(() => {
 
 <template>
   <SocioShell
+    active-nav="bolsa"
     title="Bolsa de Empleo Digital"
     subtitle="Explora perfiles laborales listos para incorporarse"
     :company-name="mockCompany.name"
@@ -64,10 +68,22 @@ const profiles = computed(() => {
         </header>
 
         <div v-if="profiles.length" class="bolsa__grid">
-          <ProfileCard v-for="profile in profiles" :key="profile.id" :profile="profile" />
+          <ProfileCard
+            v-for="profile in profiles"
+            :key="profile.id"
+            :profile="profile"
+            @view="selectedProfile = profile"
+          />
         </div>
         <p v-else class="bolsa__empty">No hay perfiles mock que coincidan con los filtros.</p>
       </section>
     </div>
+    <template #overlay>
+      <ProfileDetailModal
+        v-if="selectedProfile"
+        :profile="selectedProfile"
+        @close="selectedProfile = null"
+      />
+    </template>
   </SocioShell>
 </template>

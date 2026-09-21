@@ -71,7 +71,7 @@ async function submitLogin() {
           <RoleOption
             v-for="option in roleOptions"
             :key="option.role"
-            :title="option.role === 'ADMIN' ? 'ADMINISTRADOR' : option.role === 'SOCIO' ? 'EMPRESA / SOCIO' : 'POSTULANTE'"
+            :title="option.role === 'ADMIN' ? 'ADMINISTRADOR' : option.role === 'SOCIO' ? 'SOCIO' : 'POSTULANTE'"
             :description="option.description"
             :icon="option.icon"
             :modifier="option.modifier"

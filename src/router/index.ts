@@ -48,6 +48,36 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['SOCIO'] },
     },
     {
+      path: '/socio/mis-ofertas',
+      name: 'socio-mis-ofertas',
+      component: () => import('../views/socio/SocioMisOfertasView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'] },
+    },
+    {
+      path: '/socio/mis-ofertas/:offerId/postulaciones',
+      name: 'socio-oferta-postulaciones',
+      component: () => import('../views/socio/SocioOfertaPostulacionesView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'] },
+    },
+    {
+      path: '/socio/directorio',
+      name: 'socio-directorio',
+      component: () => import('../views/socio/SocioDirectorioView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'], requiresDirectivo: true },
+    },
+    {
+      path: '/socio/notificaciones',
+      name: 'socio-notificaciones',
+      component: () => import('../views/socio/SocioNotificacionesView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'] },
+    },
+    {
+      path: '/socio/perfil',
+      name: 'socio-perfil',
+      component: () => import('../views/socio/SocioPerfilView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'] },
+    },
+    {
       path: '/admin',
       name: 'admin-dashboard',
       component: AdminDashboardView,
@@ -117,6 +147,9 @@ router.beforeEach((to) => {
   }
   if (allowedRoles && currentRole && !normalizedAllowedRoles.includes(currentRole)) {
     return { name: auth.homeRoute }
+  }
+  if (to.meta.requiresDirectivo && !auth.isDirectivo) {
+    return { name: 'socio-bolsa-empleo' }
   }
   if (to.name === 'session' && auth.isAuthenticated) {
     return { name: auth.homeRoute }

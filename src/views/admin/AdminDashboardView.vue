@@ -4,7 +4,7 @@ import { ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 
 const metrics = [
-  { label: 'Total Empresas', value: '10', icon: UsersRound, tone: 'blue' },
+  { label: 'Total Socios', value: '10', icon: UsersRound, tone: 'blue' },
   { label: 'Al Día', value: '6', icon: CheckCircle2, tone: 'green' },
   { label: 'Pendiente', value: '2', icon: Clock3, tone: 'orange' },
   { label: 'Inactivos', value: '2', icon: AlertCircle, tone: 'red' },
@@ -43,7 +43,7 @@ function openHistory(company: string[]) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input placeholder="Buscar empresa o N°..."></label>
+      <label class="cash-search"><Search :size="17" /><input placeholder="Buscar socio o N°..."></label>
       <div class="cash-filters"><button class="cash-filter cash-filter--active" type="button">Todos</button><button class="cash-filter" type="button">Al Día</button><button class="cash-filter" type="button">Pendiente</button><button class="cash-filter" type="button">Inactivo</button></div>
       <button class="cash-download" type="button"><Download :size="16" /> Descargar Excel (10)</button>
     </section>
@@ -58,7 +58,7 @@ function openHistory(company: string[]) {
         <div class="cash-modal__body">
           <fieldset class="cash-payment"><legend>Método de pago</legend><div><button v-for="method in ['💵 Efectivo', '🏦 Transf.', '▤ Cobrador']" :key="method" type="button" :class="{ 'cash-payment__option--active': paymentMethod === method.split(' ')[1] }" @click="paymentMethod = method.split(' ')[1]">{{ method }}</button></div></fieldset>
           <label class="cash-amount">Monto a cobrar<input value="$ 3.500" readonly></label>
-          <dl class="cash-receipt-detail"><div><dt>Empresa N°</dt><dd>{{ selectedCompany[0].toLowerCase() }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany[2] }}</dd></div><div><dt>Concepto</dt><dd>Cuota mensual</dd></div><div><dt>Fecha</dt><dd>25/02/2026</dd></div></dl>
+          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>{{ selectedCompany[0].toLowerCase() }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany[2] }}</dd></div><div><dt>Concepto</dt><dd>Cuota mensual</dd></div><div><dt>Fecha</dt><dd>25/02/2026</dd></div></dl>
         </div>
         <footer class="cash-modal__footer"><button class="cash-modal__print" type="button"><Printer :size="14" /> Imprimir Recibo</button><button class="cash-modal__confirm" type="button" @click="selectedCompany = null">Confirmar Cobro</button></footer>
       </section>

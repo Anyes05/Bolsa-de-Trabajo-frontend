@@ -59,7 +59,7 @@ onMounted(loadCvs)
 <template>
   <PostulanteShell
     title="Ofertas de Empleo"
-    subtitle="Explora las busquedas laborales de empresas de San Jose"
+    subtitle="Explora las busquedas laborales de socios de San Jose"
     active-section="ofertas"
   >
     <section class="postulante-offers">
