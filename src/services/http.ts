@@ -1,5 +1,19 @@
 const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 
+export class ApiRequestError extends Error {
+  status: number
+  path: string
+  payload: unknown
+
+  constructor(status: number, path: string, payload: unknown, detail: string) {
+    super(`${status}: ${detail}`)
+    this.name = 'ApiRequestError'
+    this.status = status
+    this.path = path
+    this.payload = payload
+  }
+}
+
 function readSessionToken(): string | null {
   try {
     const raw = sessionStorage.getItem('ccisj-session')
@@ -28,7 +42,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   if (!response.ok) {
     const payload = await response.json().catch(() => null)
     const detail = payload?.detail || 'No fue posible completar la solicitud.'
-    throw new Error(`${response.status}: ${detail}`)
+    throw new ApiRequestError(response.status, path, payload, detail)
   }
 
   if (response.status === 204) {

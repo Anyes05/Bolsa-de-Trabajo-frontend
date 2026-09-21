@@ -11,6 +11,7 @@ import WizardStepper from '../components/WizardStepper.vue'
 import { fallbackSectors, residenceAreas, wizardSteps } from '../data/registration'
 import { authService } from '../services/authService'
 import { catalogService } from '../services/catalogService'
+import { ApiRequestError } from '../services/http'
 import { postulanteService } from '../services/postulanteService'
 import { useAuthStore } from '../stores/auth'
 
@@ -184,11 +185,30 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function logApiFailure(scope: string, error: unknown, context: Record<string, unknown> = {}) {
+  if (error instanceof ApiRequestError) {
+    console.error(`[${scope}] API error`, {
+      status: error.status,
+      path: error.path,
+      payload: error.payload,
+      message: error.message,
+      context,
+    })
+    return
+  }
+  console.error(`[${scope}] error`, { error, context })
+}
+
 async function uploadCvWithRetry(file: File, resumen: string, authToken: string) {
   try {
     await postulanteService.uploadCv(file, resumen, authToken)
     return
   } catch (firstError) {
+    logApiFailure('register-upload-first-attempt', firstError, {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+    })
     const message = firstError instanceof Error ? firstError.message : ''
     const isForbidden = /403|forbidden/i.test(message)
     if (!isForbidden) {
@@ -197,7 +217,16 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
 
     // En producción vimos 403 esporádico inmediatamente luego de registrar; reintentamos una vez.
     await wait(900)
-    await postulanteService.uploadCv(file, resumen, authToken)
+    try {
+      await postulanteService.uploadCv(file, resumen, authToken)
+    } catch (retryError) {
+      logApiFailure('register-upload-retry', retryError, {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      })
+      throw retryError
+    }
   }
 }
 
@@ -222,7 +251,11 @@ async function complete() {
         try {
           await uploadCvWithRetry(file, form.experienceDescription, session.token)
         } catch (uploadError) {
-          console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
+          logApiFailure('register-upload-final', uploadError, {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+          })
         }
       }
     }
@@ -234,6 +267,11 @@ async function complete() {
       window.location.assign(target.path)
     }
   } catch (exception) {
+    logApiFailure('register-submit', exception, {
+      email: form.email,
+      sectors: chosen.value,
+      withFiles: cvFiles.value.length,
+    })
     error.value = exception instanceof Error ? exception.message : 'No fue posible completar el registro.'
   } finally {
     busy.value = false

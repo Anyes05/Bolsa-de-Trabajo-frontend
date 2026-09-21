@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
+import { ApiRequestError } from '../../services/http'
 import { postulanteService } from '../../services/postulanteService'
 import type { CvResponse } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
@@ -19,6 +20,20 @@ const form = ref({
   summary: '',
 })
 
+function logApiFailure(scope: string, error: unknown, context: Record<string, unknown> = {}) {
+  if (error instanceof ApiRequestError) {
+    console.error(`[${scope}] API error`, {
+      status: error.status,
+      path: error.path,
+      payload: error.payload,
+      message: error.message,
+      context,
+    })
+    return
+  }
+  console.error(`[${scope}] error`, { error, context })
+}
+
 const hasCvs = computed(() => cvs.value.length > 0)
 
 function formatDate(value: string) {
@@ -33,6 +48,11 @@ async function loadCvs() {
   try {
     cvs.value = await postulanteService.listCvs(auth.token ?? undefined)
   } catch (error) {
+    logApiFailure('profiles-load-cvs', error, {
+      hasToken: Boolean(auth.token),
+      email: auth.email,
+      role: auth.role,
+    })
     message.value = error instanceof Error ? error.message : 'No se pudieron cargar tus CVs.'
     messageTone.value = 'error'
   } finally {
@@ -70,6 +90,13 @@ async function submitUpload() {
     closeUpload()
     await loadCvs()
   } catch (error) {
+    logApiFailure('profiles-upload-cv', error, {
+      fileName: selectedFile.value?.name,
+      fileType: selectedFile.value?.type,
+      fileSize: selectedFile.value?.size,
+      hasToken: Boolean(auth.token),
+      email: auth.email,
+    })
     messageTone.value = 'error'
     message.value = error instanceof Error ? error.message : 'No se pudo cargar el CV.'
   } finally {
@@ -84,6 +111,7 @@ async function activateCv(cvId: number) {
     message.value = 'CV marcado como activo.'
     await loadCvs()
   } catch (error) {
+    logApiFailure('profiles-activate-cv', error, { cvId })
     messageTone.value = 'error'
     message.value = error instanceof Error ? error.message : 'No se pudo activar el CV.'
   }
@@ -96,6 +124,7 @@ async function deleteCv(cvId: number) {
     message.value = 'CV eliminado correctamente.'
     await loadCvs()
   } catch (error) {
+    logApiFailure('profiles-delete-cv', error, { cvId })
     messageTone.value = 'error'
     message.value = error instanceof Error ? error.message : 'No se pudo eliminar el CV.'
   }
