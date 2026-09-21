@@ -6,7 +6,9 @@ import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
 import { ofertasActivasMock, postulacionesMock, type OfertaActiva } from '../../data/mockPostulanteBolsa'
 import { postulanteService } from '../../services/postulanteService'
 import type { CvResponse } from '../../services/types'
+import { useAuthStore } from '../../stores/auth'
 
+const auth = useAuthStore()
 const activeTab = ref<'activas' | 'postulaciones'>('activas')
 const showModal = ref(false)
 const selectedOffer = ref<OfertaActiva | null>(null)
@@ -42,7 +44,7 @@ function confirmApply() {
 async function loadCvs() {
   loadingCvs.value = true
   try {
-    cvs.value = await postulanteService.listCvs()
+    cvs.value = await postulanteService.listCvs(auth.token ?? undefined)
   } catch (error) {
     messageTone.value = 'error'
     message.value = error instanceof Error ? error.message : 'No se pudieron cargar tus CVs.'

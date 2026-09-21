@@ -5,7 +5,9 @@ import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
 import { postulanteService } from '../../services/postulanteService'
 import type { CvResponse } from '../../services/types'
+import { useAuthStore } from '../../stores/auth'
 
+const auth = useAuthStore()
 const cvs = ref<CvResponse[]>([])
 const loading = ref(false)
 const message = ref<string | null>(null)
@@ -29,7 +31,7 @@ function formatDate(value: string) {
 async function loadCvs() {
   loading.value = true
   try {
-    cvs.value = await postulanteService.listCvs()
+    cvs.value = await postulanteService.listCvs(auth.token ?? undefined)
   } catch (error) {
     message.value = error instanceof Error ? error.message : 'No se pudieron cargar tus CVs.'
     messageTone.value = 'error'
@@ -62,7 +64,7 @@ async function submitUpload() {
 
   uploading.value = true
   try {
-    await postulanteService.uploadCv(selectedFile.value, form.value.summary)
+    await postulanteService.uploadCv(selectedFile.value, form.value.summary, auth.token ?? undefined)
     messageTone.value = 'success'
     message.value = 'CV cargado correctamente.'
     closeUpload()
@@ -77,7 +79,7 @@ async function submitUpload() {
 
 async function activateCv(cvId: number) {
   try {
-    await postulanteService.activateCv(cvId)
+    await postulanteService.activateCv(cvId, auth.token ?? undefined)
     messageTone.value = 'success'
     message.value = 'CV marcado como activo.'
     await loadCvs()
@@ -89,7 +91,7 @@ async function activateCv(cvId: number) {
 
 async function deleteCv(cvId: number) {
   try {
-    await postulanteService.deleteCv(cvId)
+    await postulanteService.deleteCv(cvId, auth.token ?? undefined)
     messageTone.value = 'success'
     message.value = 'CV eliminado correctamente.'
     await loadCvs()

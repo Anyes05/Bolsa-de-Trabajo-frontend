@@ -1,9 +1,15 @@
 import { request } from './http'
 import type { CvDownloadResponse, CvResponse } from './types'
 
+function authHeaders(authToken?: string) {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : undefined
+}
+
 export const postulanteService = {
-  listCvs() {
-    return request<CvResponse[]>('/postulante/cvs')
+  listCvs(authToken?: string) {
+    return request<CvResponse[]>('/postulante/cvs', {
+      headers: authHeaders(authToken),
+    })
   },
 
   uploadCv(file: File, resumen?: string, authToken?: string) {
@@ -13,28 +19,30 @@ export const postulanteService = {
       body.append('resumen', resumen.trim())
     }
 
-    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : undefined
-
     return request<CvResponse>('/postulante/cvs', {
       method: 'POST',
       body,
-      headers,
+      headers: authHeaders(authToken),
     })
   },
 
-  activateCv(cvId: number) {
+  activateCv(cvId: number, authToken?: string) {
     return request<CvResponse>(`/postulante/cvs/${cvId}/activar`, {
       method: 'PATCH',
+      headers: authHeaders(authToken),
     })
   },
 
-  deleteCv(cvId: number) {
+  deleteCv(cvId: number, authToken?: string) {
     return request<void>(`/postulante/cvs/${cvId}`, {
       method: 'DELETE',
+      headers: authHeaders(authToken),
     })
   },
 
-  downloadCv(cvId: number) {
-    return request<CvDownloadResponse>(`/postulante/cvs/${cvId}/download`)
+  downloadCv(cvId: number, authToken?: string) {
+    return request<CvDownloadResponse>(`/postulante/cvs/${cvId}/download`, {
+      headers: authHeaders(authToken),
+    })
   },
 }
