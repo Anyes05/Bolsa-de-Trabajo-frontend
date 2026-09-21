@@ -13,7 +13,7 @@ import {
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
-
+//
 withDefaults(defineProps<{
   title: string
   subtitle: string
