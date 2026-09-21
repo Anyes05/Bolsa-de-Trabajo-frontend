@@ -82,6 +82,18 @@ const router = createRouter({
       path: '/admin/comunicados',
       name: 'admin-communications',
       component: AdminCommunicationsView,
+        },
+        {
+      path: '/postulante/ofertas-empleo',
+      name: 'postulante-bolsa-empleo',
+      component: () => import('../views/postulante/PostulanteOfertasView.vue'),
+      meta: { requiresAuth: true, roles: ['POSTULANTE'] },
+    },
+    {
+      path: '/postulante/mis-perfiles',
+      name: 'postulante-mis-perfiles',
+      component: () => import('../views/postulante/PostulantePerfilesView.vue'),
+      meta: { requiresAuth: true, roles: ['POSTULANTE'] },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -102,6 +114,9 @@ router.beforeEach((to) => {
   }
   if (to.name === 'session' && auth.role === 'SOCIO') {
     return { name: 'socio-bolsa-empleo' }
+  }
+  if (to.name === 'session' && auth.role === 'POSTULANTE') {
+    return { name: 'postulante-bolsa-empleo' }
   }
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: auth.homeRoute }

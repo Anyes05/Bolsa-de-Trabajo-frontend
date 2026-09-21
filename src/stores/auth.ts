@@ -23,7 +23,11 @@ export const useAuthStore = defineStore('auth', () => {
   const role = ref<Role | null>(stored?.role ?? null)
 
   const isAuthenticated = computed(() => Boolean(token.value && email.value && role.value))
-  const homeRoute = computed(() => (role.value === 'SOCIO' ? 'socio-bolsa-empleo' : 'session'))
+  const homeRoute = computed(() => {
+    if (role.value === 'SOCIO') return 'socio-bolsa-empleo'
+    if (role.value === 'POSTULANTE') return 'postulante-bolsa-empleo'
+    return 'session'
+  })
 
   function persist() {
     if (!token.value || !email.value || !role.value) {
