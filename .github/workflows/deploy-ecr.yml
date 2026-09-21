@@ -11,10 +11,14 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: frontend
+  EC2_HOST: 44.218.41.4
+  EC2_SECURITY_GROUP_ID: sg-07b88f147aef90a12
 
 jobs:
   push-image:
     runs-on: ubuntu-latest
+    outputs:
+      image_sha_tag: ${{ steps.vars.outputs.image_sha_tag }}
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
@@ -25,16 +29,63 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-      - uses: docker/metadata-action@v5
-        id: metadata
-        with:
-          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
-          tags: |
-            type=sha,prefix=sha-
-            type=raw,value=latest,enable={{is_default_branch}}
+      - id: vars
+        run: |
+          IMAGE_SHA_TAG="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:sha-${GITHUB_SHA}"
+          echo "image_sha_tag=${IMAGE_SHA_TAG}" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.metadata.outputs.tags }}
-          labels: ${{ steps.metadata.outputs.labels }}
+          tags: |
+            ${{ steps.vars.outputs.image_sha_tag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+  deploy-ec2:
+    needs: push-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Allow SSH from this runner
+        id: sg
+        run: |
+          RUNNER_IP="$(curl -fsS https://checkip.amazonaws.com | tr -d '[:space:]')"
+          echo "runner_ip=${RUNNER_IP}" >> "$GITHUB_OUTPUT"
+          aws ec2 authorize-security-group-ingress \
+            --group-id "${EC2_SECURITY_GROUP_ID}" \
+            --protocol tcp \
+            --port 22 \
+            --cidr "${RUNNER_IP}/32" || true
+      - name: Deploy frontend image in EC2
+        env:
+          IMAGE_SHA_TAG: ${{ needs.push-image.outputs.image_sha_tag }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ccisj.pem
+          chmod 600 ~/.ssh/ccisj.pem
+          ssh-keyscan -H "${EC2_HOST}" >> ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/ccisj.pem "ec2-user@${EC2_HOST}" "IMAGE_SHA_TAG='${IMAGE_SHA_TAG}' bash -s" <<'EOF'
+          set -e
+
+          sudo sed -i "s|^FRONTEND_IMAGE=.*|FRONTEND_IMAGE=${IMAGE_SHA_TAG}|" /opt/ccisj/runtime.env
+          sudo docker compose --env-file /opt/ccisj/runtime.env -f /opt/ccisj/docker-compose.prod.yml pull frontend
+          sudo docker compose --env-file /opt/ccisj/runtime.env -f /opt/ccisj/docker-compose.prod.yml up -d frontend
+          sudo docker compose --env-file /opt/ccisj/runtime.env -f /opt/ccisj/docker-compose.prod.yml ps frontend
+          curl -fsS http://127.0.0.1:3000 >/dev/null
+          EOF
+      - name: Remove runner SSH access
+        if: always()
+        run: |
+          if [ -n "${{ steps.sg.outputs.runner_ip }}" ]; then
+            aws ec2 revoke-security-group-ingress \
+              --group-id "${EC2_SECURITY_GROUP_ID}" \
+              --protocol tcp \
+              --port 22 \
+              --cidr "${{ steps.sg.outputs.runner_ip }}/32" || true
+          fi
