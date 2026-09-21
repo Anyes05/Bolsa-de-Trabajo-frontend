@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { LogOut } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import AppButton from '../components/AppButton.vue'
@@ -7,6 +8,16 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+
+onMounted(() => {
+  if (auth.role === 'POSTULANTE') {
+    router.replace({ name: 'postulante-bolsa-empleo' })
+    return
+  }
+  if (auth.role === 'SOCIO') {
+    router.replace({ name: 'socio-bolsa-empleo' })
+  }
+})
 
 function logout() {
   auth.logout()

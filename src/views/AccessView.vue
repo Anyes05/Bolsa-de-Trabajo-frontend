@@ -21,6 +21,13 @@ const error = ref('')
 const busy = ref(false)
 const detail = computed(() => (role.value ? getRoleOption(role.value) : null))
 
+function routeByRole(roleValue: string) {
+  const normalized = roleValue.trim().toUpperCase()
+  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const }
+  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const }
+  return { name: 'session' as const }
+}
+
 function selectRole(value: Role) {
   role.value = value
   identifier.value = ''
@@ -40,7 +47,7 @@ async function submitLogin() {
   try {
     const session = await authService.login(role.value, identifier.value, password.value)
     auth.setSession(session)
-    await router.push({ name: auth.homeRoute })
+    await router.replace(routeByRole(session.role))
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible ingresar.'
   } finally {

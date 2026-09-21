@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Lightbulb, Paperclip } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Eye, EyeOff, Lightbulb, Paperclip } from 'lucide-vue-next'
+import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
 import AppButton from '../components/AppButton.vue'
@@ -19,6 +20,8 @@ const step = ref(1)
 const busy = ref(false)
 const error = ref('')
 const success = ref('')
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
 const cvFile = ref<File | null>(null)
@@ -29,6 +32,7 @@ const form = reactive({
   phone: '',
   email: '',
   password: '',
+  confirmPassword: '',
   residenceArea: residenceAreas[0],
   profileName: '',
   availability: 'FULL_TIME' as 'FULL_TIME' | 'PART_TIME',
@@ -61,6 +65,66 @@ function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+function routeByRole(role: string) {
+  const normalized = role.trim().toUpperCase()
+  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const }
+  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const }
+  return { name: 'session' as const }
+}
+
+function buildManualCvFile() {
+  const latestJob = form.latestJob.trim()
+  const experience = form.experienceDescription.trim()
+  if (!latestJob && !experience) {
+    return null
+  }
+
+  const doc = new jsPDF()
+  const createdAt = new Date().toLocaleString('es-UY')
+  let y = 20
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(16)
+  doc.text('Curriculum Vitae', 14, y)
+  y += 10
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(11)
+  doc.text(`Nombre: ${form.fullName}`, 14, y)
+  y += 7
+  doc.text(`Email: ${form.email}`, 14, y)
+  y += 7
+  doc.text(`Telefono: ${form.phone}`, 14, y)
+  y += 7
+  doc.text(`Zona: ${form.residenceArea}`, 14, y)
+  y += 7
+  doc.text(`Perfil: ${form.profileName}`, 14, y)
+  y += 10
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('Ultimo empleo / empresa actual', 14, y)
+  y += 7
+  doc.setFont('helvetica', 'normal')
+  const latestLines = doc.splitTextToSize(latestJob || 'No informado', 180)
+  doc.text(latestLines, 14, y)
+  y += latestLines.length * 6 + 4
+
+  doc.setFont('helvetica', 'bold')
+  doc.text('Descripcion de experiencia', 14, y)
+  y += 7
+  doc.setFont('helvetica', 'normal')
+  const expLines = doc.splitTextToSize(experience || 'No informada', 180)
+  doc.text(expLines, 14, y)
+  y += expLines.length * 6 + 8
+
+  doc.setFontSize(9)
+  doc.setTextColor(90, 90, 90)
+  doc.text(`Generado automaticamente durante el registro el ${createdAt}`, 14, y)
+
+  const blob = doc.output('blob')
+  return new File([blob], 'cv-registro.pdf', { type: 'application/pdf' })
+}
+
 function validateStep(current: number) {
   clearFeedback()
   if (current === 1) {
@@ -70,9 +134,11 @@ function validateStep(current: number) {
     if (!form.email) fieldErrors.email = 'Ingresa un correo.'
     else if (!isEmail(form.email)) fieldErrors.email = 'El correo no es valido.'
     if (form.password.length < 12) fieldErrors.password = 'La contrasena debe tener al menos 12 caracteres.'
+    if (!form.confirmPassword) fieldErrors.confirmPassword = 'Confirma tu contrasena.'
+    else if (form.confirmPassword !== form.password) fieldErrors.confirmPassword = 'Las contrasenas no coinciden.'
     if (!form.residenceArea) fieldErrors.residenceArea = 'Selecciona una zona.'
     if (Object.values(fieldErrors).some(Boolean)) {
-      error.value = 'Completa los campos obligatorios. La contrasena debe tener al menos 12 caracteres.'
+      error.value = 'Completa los campos obligatorios y verifica la contrasena.'
       return false
     }
   }
@@ -116,16 +182,17 @@ async function complete() {
     auth.setSession(session)
 
     // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
-    if (cvFile.value) {
+    const fileToUpload = cvFile.value ?? buildManualCvFile()
+    if (fileToUpload) {
       try {
-        await postulanteService.uploadCv(cvFile.value, form.experienceDescription)
+        await postulanteService.uploadCv(fileToUpload, form.experienceDescription)
       } catch (uploadError) {
         console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
       }
     }
 
     success.value = 'Registro completado. Ingresando...'
-    await router.push({ name: 'session' })
+    await router.replace(routeByRole(session.role))
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible completar el registro.'
   } finally {
@@ -163,7 +230,22 @@ async function complete() {
             <input id="email" v-model="form.email" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
           </AppField>
           <AppField id="password" label="Escribi una contrasena" required :error="fieldErrors.password">
-            <input id="password" v-model="form.password" type="password" placeholder="Minimo 12 caracteres" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.password)">
+            <div class="password-field">
+              <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Minimo 12 caracteres" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.password)">
+              <button type="button" class="password-field__toggle" :aria-label="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'" @click="showPassword = !showPassword">
+                <EyeOff v-if="showPassword" :size="14" aria-hidden="true" />
+                <Eye v-else :size="14" aria-hidden="true" />
+              </button>
+            </div>
+          </AppField>
+          <AppField id="confirmPassword" label="Confirmar contrasena" required :error="fieldErrors.confirmPassword">
+            <div class="password-field">
+              <input id="confirmPassword" v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'" placeholder="Repite tu contrasena" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.confirmPassword)">
+              <button type="button" class="password-field__toggle" :aria-label="showConfirmPassword ? 'Ocultar confirmacion de contrasena' : 'Mostrar confirmacion de contrasena'" @click="showConfirmPassword = !showConfirmPassword">
+                <EyeOff v-if="showConfirmPassword" :size="14" aria-hidden="true" />
+                <Eye v-else :size="14" aria-hidden="true" />
+              </button>
+            </div>
           </AppField>
           <AppField id="residenceArea" label="Zona de residencia" required wide :error="fieldErrors.residenceArea">
             <select id="residenceArea" v-model="form.residenceArea">
