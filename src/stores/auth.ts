@@ -4,13 +4,23 @@ import type { AuthResponse, Role } from '../services/types'
 
 const STORAGE_KEY = 'ccisj-session'
 
+function normalizeRole(value: unknown): Role | null {
+  if (typeof value !== 'string') return null
+  const normalized = value.trim().toUpperCase()
+  if (normalized === 'ADMIN') return 'ADMIN'
+  if (normalized === 'SOCIO') return 'SOCIO'
+  if (normalized === 'POSTULANTE') return 'POSTULANTE'
+  return null
+}
+
 function readStoredSession(): AuthResponse | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<AuthResponse>
-    if (!parsed.token || !parsed.email || !parsed.role) return null
-    return { token: parsed.token, email: parsed.email, role: parsed.role }
+    const role = normalizeRole(parsed.role)
+    if (!parsed.token || !parsed.email || !role) return null
+    return { token: parsed.token, email: parsed.email, role }
   } catch {
     return null
   }
@@ -43,9 +53,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function setSession(session: AuthResponse) {
+    const normalizedRole = normalizeRole(session.role)
+    if (!normalizedRole) {
+      throw new Error('Rol de sesion invalido')
+    }
     token.value = session.token
     email.value = session.email
-    role.value = session.role
+    role.value = normalizedRole
     persist()
   }
 

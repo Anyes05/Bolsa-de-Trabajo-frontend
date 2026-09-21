@@ -16,6 +16,10 @@ import AdminOfferApplicationsView from '../views/admin/AdminOfferApplicationsVie
 
 //end
 
+function normalizeRole(value: string | null | undefined) {
+  return (value ?? '').trim().toUpperCase()
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -105,11 +109,13 @@ const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore()
   const allowedRoles = to.meta.roles as string[] | undefined
+  const currentRole = normalizeRole(auth.role)
+  const normalizedAllowedRoles = (allowedRoles ?? []).map((role) => role.trim().toUpperCase())
 
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'access' }
   }
-  if (allowedRoles && auth.role && !allowedRoles.includes(auth.role)) {
+  if (allowedRoles && currentRole && !normalizedAllowedRoles.includes(currentRole)) {
     return { name: auth.homeRoute }
   }
   if (to.name === 'session' && auth.isAuthenticated) {

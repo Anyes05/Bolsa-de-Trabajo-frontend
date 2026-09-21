@@ -12,11 +12,12 @@ const router = useRouter()
 watch(
   () => auth.role,
   (role) => {
-    if (role === 'POSTULANTE') {
+    const normalized = (role ?? '').trim().toUpperCase()
+    if (normalized === 'POSTULANTE') {
       router.replace({ name: 'postulante-bolsa-empleo' })
       return
     }
-    if (role === 'SOCIO') {
+    if (normalized === 'SOCIO') {
       router.replace({ name: 'socio-bolsa-empleo' })
     }
   },
