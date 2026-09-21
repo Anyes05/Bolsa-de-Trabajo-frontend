@@ -64,14 +64,22 @@ jobs:
       - name: Deploy frontend image in EC2
         env:
           IMAGE_SHA_TAG: ${{ needs.push-image.outputs.image_sha_tag }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ccisj.pem
           chmod 600 ~/.ssh/ccisj.pem
           ssh-keyscan -H "${EC2_HOST}" >> ~/.ssh/known_hosts
 
-          ssh -i ~/.ssh/ccisj.pem "ec2-user@${EC2_HOST}" "IMAGE_SHA_TAG='${IMAGE_SHA_TAG}' bash -s" <<'EOF'
+          ssh -i ~/.ssh/ccisj.pem "ec2-user@${EC2_HOST}" \
+            "IMAGE_SHA_TAG='${IMAGE_SHA_TAG}' AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}' AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}' AWS_SESSION_TOKEN='${AWS_SESSION_TOKEN}' AWS_REGION='${AWS_REGION}' bash -s" <<'EOF'
           set -e
+
+          ECR_REGISTRY="${IMAGE_SHA_TAG%%/*}"
+          aws ecr get-login-password --region "${AWS_REGION}" | sudo docker login --username AWS --password-stdin "${ECR_REGISTRY}"
 
           sudo sed -i "s|^FRONTEND_IMAGE=.*|FRONTEND_IMAGE=${IMAGE_SHA_TAG}|" /opt/ccisj/runtime.env
           sudo docker compose --env-file /opt/ccisj/runtime.env -f /opt/ccisj/docker-compose.prod.yml pull frontend
