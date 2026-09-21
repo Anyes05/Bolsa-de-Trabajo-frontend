@@ -10,6 +10,7 @@ import WizardStepper from '../components/WizardStepper.vue'
 import { fallbackSectors, residenceAreas, wizardSteps } from '../data/registration'
 import { authService } from '../services/authService'
 import { catalogService } from '../services/catalogService'
+import { postulanteService } from '../services/postulanteService'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
@@ -20,6 +21,7 @@ const error = ref('')
 const success = ref('')
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
+const cvFile = ref<File | null>(null)
 const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive({
   fullName: '',
@@ -98,6 +100,11 @@ function previous() {
   if (step.value > 1) step.value -= 1
 }
 
+function onCvFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  cvFile.value = input.files?.[0] ?? null
+}
+
 async function complete() {
   busy.value = true
   clearFeedback()
@@ -107,6 +114,16 @@ async function complete() {
       sectors: chosen.value,
     })
     auth.setSession(session)
+
+    // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
+    if (cvFile.value) {
+      try {
+        await postulanteService.uploadCv(cvFile.value, form.experienceDescription)
+      } catch (uploadError) {
+        console.warn('No se pudo adjuntar CV en registro inicial', uploadError)
+      }
+    }
+
     success.value = 'Registro completado. Ingresando...'
     await router.push({ name: 'session' })
   } catch (exception) {
@@ -213,15 +230,23 @@ async function complete() {
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
         <h2 id="step-cv">Curriculum Vitae</h2>
-        <p>Completa tu experiencia laboral. La carga de archivos estara disponible con S3.</p>
+        <p>Para finalizar el registro, podes adjuntar tu CV digital y completar tu experiencia.</p>
         <div class="upload-placeholder">
           <Paperclip :size="22" aria-hidden="true" />
           <div>
             <b>Adjuntar archivo de CV</b>
-            <small>PDF o Word, tamaño maximo de 5MB</small>
+            <small>PDF o DOCX, tamaño maximo de 5MB.</small>
           </div>
-          <button type="button" disabled>Proximamente</button>
+          <label class="upload-placeholder__action" for="cv-file-input">Subir archivo</label>
+          <input
+            id="cv-file-input"
+            class="upload-placeholder__input"
+            type="file"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            @change="onCvFileChange"
+          >
         </div>
+        <p v-if="cvFile" class="upload-placeholder__filename">Archivo seleccionado: {{ cvFile.name }}</p>
         <section class="experience-form">
           <h3><BriefcaseBusiness :size="18" aria-hidden="true" /> Completar experiencia manualmente</h3>
           <AppField id="latestJob" label="Ultimo empleo / empresa actual">

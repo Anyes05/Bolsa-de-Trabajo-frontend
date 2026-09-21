@@ -104,6 +104,13 @@ async function submitLogin() {
         </AppField>
         <AppAlert v-if="error">{{ error }}</AppAlert>
         <p class="login-form__hint">Acceso seguro al sistema CCISJ.</p>
+        <RouterLink
+          v-if="role === 'POSTULANTE'"
+          class="login-form__register-link"
+          to="/registro"
+        >
+          ¿No tenes cuenta? Crear postulante
+        </RouterLink>
         <AppButton type="submit" :loading="busy">
           {{ busy ? 'Ingresando...' : 'Ingresar' }}
           <ArrowRight :size="15" aria-hidden="true" />

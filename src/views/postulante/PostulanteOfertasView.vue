@@ -1,19 +1,31 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
-import { ofertasActivasMock, perfilesMock, postulacionesMock, type OfertaActiva } from '../../data/mockPostulanteBolsa'
+import { ofertasActivasMock, postulacionesMock, type OfertaActiva } from '../../data/mockPostulanteBolsa'
+import { postulanteService } from '../../services/postulanteService'
+import type { CvResponse } from '../../services/types'
 
 const activeTab = ref<'activas' | 'postulaciones'>('activas')
 const showModal = ref(false)
 const selectedOffer = ref<OfertaActiva | null>(null)
-const selectedProfileId = ref(perfilesMock[0]?.id ?? 0)
+const selectedCvId = ref(0)
+const cvs = ref<CvResponse[]>([])
+const loadingCvs = ref(false)
+const message = ref<string | null>(null)
+const messageTone = ref<'error' | 'success' | 'info'>('info')
 
-const profilesForApply = computed(() => perfilesMock)
+const cvsForApply = computed(() => cvs.value)
 
 function openApplyModal(offer: OfertaActiva) {
+  if (!cvs.value.length) {
+    messageTone.value = 'error'
+    message.value = 'Necesitas subir al menos un CV en Mis Perfiles antes de postularte.'
+    return
+  }
   selectedOffer.value = offer
-  selectedProfileId.value = perfilesMock[0]?.id ?? 0
+  selectedCvId.value = cvs.value.find((cv) => cv.activo)?.id ?? cvs.value[0]?.id ?? 0
   showModal.value = true
 }
 
@@ -22,8 +34,24 @@ function closeApplyModal() {
 }
 
 function confirmApply() {
+  messageTone.value = 'info'
+  message.value = 'Flujo de postulacion pendiente: backend de ofertas en siguiente iteracion.'
   showModal.value = false
 }
+
+async function loadCvs() {
+  loadingCvs.value = true
+  try {
+    cvs.value = await postulanteService.listCvs()
+  } catch (error) {
+    messageTone.value = 'error'
+    message.value = error instanceof Error ? error.message : 'No se pudieron cargar tus CVs.'
+  } finally {
+    loadingCvs.value = false
+  }
+}
+
+onMounted(loadCvs)
 </script>
 
 <template>
@@ -33,6 +61,9 @@ function confirmApply() {
     active-section="ofertas"
   >
     <section class="postulante-offers">
+      <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
+      <AppAlert v-else-if="loadingCvs" tone="info">Cargando CVs para postulacion...</AppAlert>
+
       <nav class="postulante-offers__tabs" aria-label="Ofertas y postulaciones">
         <button
           type="button"
@@ -102,7 +133,7 @@ function confirmApply() {
       </div>
     </section>
 
-    <div v-if="showModal && selectedOffer" class="modal" role="dialog" aria-modal="true" aria-labelledby="apply-modal-title">
+    <div v-if="showModal && selectedOffer" class="modal" aria-modal="true" aria-labelledby="apply-modal-title">
       <div class="modal__backdrop" @click="closeApplyModal"></div>
       <section class="modal__panel">
         <header class="modal__header">
@@ -112,15 +143,15 @@ function confirmApply() {
 
         <div class="modal__options">
           <label
-            v-for="profile in profilesForApply"
-            :key="profile.id"
+            v-for="cv in cvsForApply"
+            :key="cv.id"
             class="modal-profile"
-            :class="{ 'modal-profile--active': selectedProfileId === profile.id }"
+            :class="{ 'modal-profile--active': selectedCvId === cv.id }"
           >
-            <input v-model="selectedProfileId" type="radio" :value="profile.id">
+            <input v-model="selectedCvId" type="radio" :value="cv.id">
             <div>
-              <strong>{{ profile.name }}</strong>
-              <small>{{ profile.skills.slice(0, 2).join(' · ') }}</small>
+              <strong>{{ cv.nombreArchivo || `CV v${cv.version}` }}</strong>
+              <small>{{ cv.activo ? 'Activo' : 'Inactivo' }} · {{ cv.resumen || 'Sin resumen' }}</small>
             </div>
           </label>
         </div>

@@ -20,3 +20,19 @@ export type RegisterApplicantPayload = {
   latestJob: string
   experienceDescription: string
 }
+
+export type CvResponse = {
+  id: number
+  version: number
+  resumen: string | null
+  nombreArchivo: string | null
+  mimeType: string | null
+  sizeBytes: number | null
+  activo: boolean
+  fechaCarga: string
+  downloadUrl: string
+}
+
+export type CvDownloadResponse = {
+  url: string
+}
