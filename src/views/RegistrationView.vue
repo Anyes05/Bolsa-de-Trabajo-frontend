@@ -67,9 +67,9 @@ function isEmail(value: string) {
 
 function routeByRole(role: string) {
   const normalized = role.trim().toUpperCase()
-  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const }
-  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const }
-  return { name: 'session' as const }
+  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const, path: '/postulante/ofertas-empleo' }
+  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const, path: '/socio/bolsa-empleo' }
+  return { name: 'session' as const, path: '/sesion' }
 }
 
 function buildManualCvFile() {
@@ -192,7 +192,11 @@ async function complete() {
     }
 
     success.value = 'Registro completado. Ingresando...'
-    await router.replace(routeByRole(session.role))
+    const target = routeByRole(session.role)
+    await router.replace({ name: target.name })
+    if (window.location.pathname !== target.path) {
+      window.location.assign(target.path)
+    }
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible completar el registro.'
   } finally {

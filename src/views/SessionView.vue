@@ -15,10 +15,16 @@ watch(
     const normalized = (role ?? '').trim().toUpperCase()
     if (normalized === 'POSTULANTE') {
       router.replace({ name: 'postulante-bolsa-empleo' })
+      if (window.location.pathname !== '/postulante/ofertas-empleo') {
+        window.location.replace('/postulante/ofertas-empleo')
+      }
       return
     }
     if (normalized === 'SOCIO') {
       router.replace({ name: 'socio-bolsa-empleo' })
+      if (window.location.pathname !== '/socio/bolsa-empleo') {
+        window.location.replace('/socio/bolsa-empleo')
+      }
     }
   },
   { immediate: true },

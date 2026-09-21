@@ -23,9 +23,9 @@ const detail = computed(() => (role.value ? getRoleOption(role.value) : null))
 
 function routeByRole(roleValue: string) {
   const normalized = roleValue.trim().toUpperCase()
-  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const }
-  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const }
-  return { name: 'session' as const }
+  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const, path: '/postulante/ofertas-empleo' }
+  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const, path: '/socio/bolsa-empleo' }
+  return { name: 'session' as const, path: '/sesion' }
 }
 
 function selectRole(value: Role) {
@@ -47,7 +47,11 @@ async function submitLogin() {
   try {
     const session = await authService.login(role.value, identifier.value, password.value)
     auth.setSession(session)
-    await router.replace(routeByRole(session.role))
+    const target = routeByRole(session.role)
+    await router.replace({ name: target.name })
+    if (window.location.pathname !== target.path) {
+      window.location.assign(target.path)
+    }
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible ingresar.'
   } finally {
