@@ -4,6 +4,13 @@ export type AuthResponse = {
   token: string
   email: string
   role: Role
+  fullName?: string | null
+}
+
+export type CurrentUserResponse = {
+  email: string
+  roles: unknown[]
+  fullName: string | null
 }
 
 export type RegisterApplicantPayload = {

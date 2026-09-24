@@ -16,9 +16,6 @@ const messageTone = ref<'success' | 'error' | 'info'>('info')
 const showUploadModal = ref(false)
 const uploading = ref(false)
 const selectedFile = ref<File | null>(null)
-const form = ref({
-  summary: '',
-})
 
 function logApiFailure(scope: string, error: unknown, context: Record<string, unknown> = {}) {
   if (error instanceof ApiRequestError) {
@@ -63,7 +60,6 @@ async function loadCvs() {
 
 function openUpload() {
   selectedFile.value = null
-  form.value.summary = ''
   showUploadModal.value = true
 }
 
@@ -73,7 +69,12 @@ function closeUpload() {
 
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
-  selectedFile.value = input.files?.[0] ?? null
+  const file = input.files?.[0] ?? null
+  selectedFile.value = file?.type === 'application/pdf' ? file : null
+  if (file && !selectedFile.value) {
+    messageTone.value = 'error'
+    message.value = 'Selecciona un archivo PDF.'
+  }
 }
 
 async function submitUpload() {
@@ -85,7 +86,7 @@ async function submitUpload() {
 
   uploading.value = true
   try {
-    await postulanteService.uploadCv(selectedFile.value, form.value.summary, auth.token ?? undefined)
+    await postulanteService.uploadCv(selectedFile.value, undefined, auth.token ?? undefined)
     messageTone.value = 'success'
     message.value = 'CV cargado correctamente.'
     closeUpload()
@@ -119,6 +120,9 @@ async function activateCv(cvId: number) {
 }
 
 async function deleteCv(cvId: number) {
+  if (!window.confirm('Eliminar este CV? Esta accion no se puede deshacer.')) {
+    return
+  }
   try {
     await postulanteService.deleteCv(cvId, auth.token ?? undefined)
     messageTone.value = 'success'
@@ -200,11 +204,8 @@ onMounted(loadCvs)
         </header>
 
         <div class="modal__form-grid">
-          <label for="cv-file-input">Archivo CV (PDF o DOCX) *</label>
-          <input id="cv-file-input" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" @change="onFileChange">
-
-          <label for="profile-summary-input">Resumen de experiencia laboral y presentacion</label>
-          <textarea id="profile-summary-input" v-model="form.summary"></textarea>
+          <label for="cv-file-input">Archivo CV (PDF) *</label>
+          <input id="cv-file-input" type="file" accept=".pdf,application/pdf" @change="onFileChange">
         </div>
 
         <footer class="modal__actions">

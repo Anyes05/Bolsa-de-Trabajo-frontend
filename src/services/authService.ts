@@ -1,7 +1,11 @@
 import { request } from './http'
-import type { AuthResponse, RegisterApplicantPayload, Role } from './types'
+import type { AuthResponse, CurrentUserResponse, RegisterApplicantPayload, Role } from './types'
 
 export const authService = {
+  currentUser() {
+    return request<CurrentUserResponse>('/auth/me')
+  },
+
   login(role: Role, identifier: string, password: string) {
     return request<AuthResponse>('/auth/login', {
       method: 'POST',

@@ -21,7 +21,7 @@ function readStoredSession(): AuthResponse | null {
     const parsed = JSON.parse(raw) as Partial<AuthResponse>
     const role = normalizeRole(parsed.role)
     if (!parsed.token || !parsed.email || !role) return null
-    return { token: parsed.token, email: parsed.email, role }
+    return { token: parsed.token, email: parsed.email, role, fullName: parsed.fullName?.trim() || null }
   } catch {
     return null
   }
@@ -32,6 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(stored?.token ?? null)
   const email = ref<string | null>(stored?.email ?? null)
   const role = ref<Role | null>(stored?.role ?? null)
+  const fullName = ref<string | null>(stored?.fullName?.trim() || null)
 
   const isAuthenticated = computed(() => Boolean(token.value && email.value && role.value))
   const isDirectivo = computed(() => role.value === 'SOCIO' && isDirectivoEmail(email.value))
@@ -50,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
       token: token.value,
       email: email.value,
       role: role.value,
+      fullName: fullName.value,
     }
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
   }
@@ -62,6 +64,12 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = session.token
     email.value = session.email
     role.value = normalizedRole
+    fullName.value = session.fullName?.trim() || null
+    persist()
+  }
+
+  function setFullName(value: string | null | undefined) {
+    fullName.value = value?.trim() || null
     persist()
   }
 
@@ -69,8 +77,9 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     email.value = null
     role.value = null
+    fullName.value = null
     sessionStorage.removeItem(STORAGE_KEY)
   }
 
-  return { token, email, role, isAuthenticated, isDirectivo, homeRoute, setSession, logout }
+  return { token, email, role, fullName, isAuthenticated, isDirectivo, homeRoute, setSession, setFullName, logout }
 })

@@ -169,8 +169,11 @@ function previous() {
 
 function onCvFileChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const selected = Array.from(input.files ?? [])
-  cvFiles.value = selected
+  const selected = Array.from(input.files ?? []).filter((file) => file.type === 'application/pdf')
+  const existing = new Set(cvFiles.value.map((file) => `${file.name}-${file.size}-${file.lastModified}`))
+  const added = selected.filter((file) => !existing.has(`${file.name}-${file.size}-${file.lastModified}`))
+  cvFiles.value = [...cvFiles.value, ...added].slice(0, 5)
+  input.value = ''
 }
 
 function removeCvFile(index: number) {
@@ -404,7 +407,7 @@ async function complete() {
           <Paperclip :size="22" aria-hidden="true" />
           <div>
             <b>Adjuntar archivo de CV</b>
-            <small>PDF o DOCX, tamaño maximo de 5MB por archivo (hasta 5 CVs).</small>
+            <small>PDF, tamaño maximo de 5MB por archivo (hasta 5 CVs).</small>
           </div>
           <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
           <input
@@ -412,7 +415,7 @@ async function complete() {
             class="upload-placeholder__input"
             type="file"
             multiple
-            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            accept=".pdf,application/pdf"
             @change="onCvFileChange"
           >
         </div>

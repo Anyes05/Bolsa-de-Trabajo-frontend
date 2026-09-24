@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import { LogOut } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import { useAuthStore } from '../../stores/auth'
-import { postulanteDisplay } from '../../data/mockPostulanteBolsa'
+import { authService } from '../../services/authService'
 
 defineProps<{
   title: string
@@ -13,6 +14,18 @@ defineProps<{
 
 const auth = useAuthStore()
 const router = useRouter()
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'P'
+}
+
+onMounted(async () => {
+  if (auth.fullName || auth.role !== 'POSTULANTE') return
+  try {
+    const currentUser = await authService.currentUser()
+    auth.setFullName(currentUser.fullName)
+  } catch {}
+})
 
 function logout() {
   auth.logout()
@@ -53,10 +66,10 @@ function logout() {
         </div>
         <div class="postulante-header__user">
           <div class="postulante-header__identity">
-            <strong>{{ postulanteDisplay.fullName }}</strong>
-            <span>{{ postulanteDisplay.roleLabel }}</span>
+            <strong>{{ auth.fullName || auth.email || 'Postulante' }}</strong>
+            <span>{{ auth.role || 'POSTULANTE' }}</span>
           </div>
-          <span class="postulante-header__avatar" aria-hidden="true">{{ postulanteDisplay.initials }}</span>
+          <span class="postulante-header__avatar" aria-hidden="true">{{ initials(auth.fullName || auth.email || 'Postulante') }}</span>
           <button type="button" class="postulante-header__exit" @click="logout">
             Salir <LogOut :size="16" aria-hidden="true" />
           </button>
