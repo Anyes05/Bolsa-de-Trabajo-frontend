@@ -2672,6 +2672,32 @@ button:disabled {
   font-size: 12px;
 }
 
+.profile-pdfs {
+  border-top: 1px solid #e9edf1;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.profile-pdfs h3,
+.profile-pdfs h4 { margin: 0 0 10px; }
+
+.profile-pdfs__item,
+.profile-pdfs__upload {
+  align-items: center;
+  border-top: 1px solid #edf0f3;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.profile-editor { display: grid; gap: 14px; max-height: 68vh; overflow-y: auto; }
+.profile-editor label, .profile-editor fieldset { border: 0; display: grid; font-size: 13px; font-weight: 700; gap: 7px; margin: 0; padding: 0; }
+.profile-editor input:not([type='checkbox']), .profile-editor select, .profile-editor textarea { border: 1px solid #dfe3e8; border-radius: 8px; padding: 9px 10px; width: 100%; }
+.profile-editor textarea { min-height: 84px; resize: vertical; }
+.profile-card-postulante__skills button { background: #edf1f5; border: 0; border-radius: 999px; color: #607084; font-size: 12px; padding: 5px 9px; }
+.profile-card-postulante__skills .profile-chip--selected { background: #e6f6ed; color: #078f45; }
+
 /* Block: modal */
 .modal {
   position: fixed;

@@ -30,6 +30,7 @@ export type RegisterApplicantPayload = {
 
 export type CvResponse = {
   id: number
+  perfilLaboralId: number | null
   version: number
   resumen: string | null
   nombreArchivo: string | null
@@ -38,6 +39,17 @@ export type CvResponse = {
   activo: boolean
   fechaCarga: string
   downloadUrl: string
+}
+
+export type ProfessionalProfile = {
+  id: number
+  nombre: string
+  disponibilidadHoraria: 'FULL_TIME' | 'PART_TIME' | 'INDEFINIDO'
+  tieneVehiculo: boolean
+  ultimoEmpleo: string | null
+  descripcionExperiencia: string | null
+  visible: boolean
+  rubros: string[]
 }
 
 export type CvDownloadResponse = {
