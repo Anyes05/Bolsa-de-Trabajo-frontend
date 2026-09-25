@@ -16,6 +16,7 @@ const router = useRouter()
 const photoError = ref('')
 const saved = reactive({
   ...(auth.isDirectivo ? mockDirectivoProfile : mockSocioProfile),
+  ...(auth.fullName ? { fullName: auth.fullName } : {}),
 })
 const form = reactive({ ...saved })
 const password = reactive({

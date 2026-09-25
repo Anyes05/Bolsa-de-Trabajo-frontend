@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Bell, Briefcase, Building2, ClipboardList, LogOut, Megaphone, UserRound, X } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
-import { mockDirectivoCompany } from '../../data/mockSocioDirectorio'
+import { authService } from '../../services/authService'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioNotificationsStore } from '../../stores/socioNotifications'
 import { useSocioProfileStore } from '../../stores/socioProfile'
@@ -22,15 +22,28 @@ const notifications = useSocioNotificationsStore()
 const profile = useSocioProfileStore()
 const router = useRouter()
 
-const shownCompany = computed(() => (
-  auth.isDirectivo
-    ? mockDirectivoCompany
-    : {
-        name: props.companyName,
-        initials: props.companyInitials,
-        roleLabel: props.companyRole,
-      }
-))
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S'
+}
+
+const shownCompany = computed(() => {
+  const name = auth.fullName || props.companyName || 'Socio'
+  return {
+    name,
+    initials: initials(name) || props.companyInitials,
+    roleLabel: auth.isDirectivo ? 'SOCIO DIRECTIVO' : (props.companyRole || 'SOCIO'),
+  }
+})
+
+onMounted(async () => {
+  if (auth.role !== 'SOCIO') return
+  if (auth.fullName) return
+  try {
+    const currentUser = await authService.currentUser()
+    auth.setFullName(currentUser.fullName)
+    auth.setEsDirectivo(currentUser.esDirectivo)
+  } catch {}
+})
 
 function logout() {
   profile.clearPhoto()

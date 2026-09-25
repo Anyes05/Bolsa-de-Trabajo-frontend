@@ -41,12 +41,22 @@ function returnToRoles() {
   error.value = ''
 }
 
+function loginIdentifier() {
+  if (role.value === 'SOCIO') return identifier.value.replace(/\D/g, '')
+  return identifier.value.trim()
+}
+
 async function submitLogin() {
   if (!role.value) return
+  const identifierValue = loginIdentifier()
+  if (role.value === 'SOCIO' && !identifierValue) {
+    error.value = 'Ingresa tu numero de BPS.'
+    return
+  }
   busy.value = true
   error.value = ''
   try {
-    const session = await authService.login(role.value, identifier.value, password.value)
+    const session = await authService.login(role.value, identifierValue, password.value)
     auth.setSession(session)
     const target = routeByRole(session.role)
     await router.replace({ name: target.name })
@@ -100,6 +110,7 @@ async function submitLogin() {
             id="login-identifier"
             v-model="identifier"
             :placeholder="detail?.placeholder"
+            :inputmode="role === 'SOCIO' ? 'numeric' : 'email'"
             autocomplete="username"
             required
           >

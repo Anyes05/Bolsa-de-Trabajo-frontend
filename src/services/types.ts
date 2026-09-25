@@ -5,12 +5,14 @@ export type AuthResponse = {
   email: string
   role: Role
   fullName?: string | null
+  esDirectivo?: boolean | null
 }
 
 export type CurrentUserResponse = {
   email: string
   roles: unknown[]
   fullName: string | null
+  esDirectivo?: boolean | null
 }
 
 export type RegisterApplicantPayload = {
