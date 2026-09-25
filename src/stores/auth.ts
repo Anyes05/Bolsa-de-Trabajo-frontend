@@ -39,6 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
   const homeRoute = computed(() => {
     if (role.value === 'SOCIO') return 'socio-bolsa-empleo'
     if (role.value === 'POSTULANTE') return 'postulante-bolsa-empleo'
+    if (role.value === 'ADMIN') return 'admin-dashboard'
     return 'session'
   })
 

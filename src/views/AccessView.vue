@@ -25,6 +25,7 @@ function routeByRole(roleValue: string) {
   const normalized = roleValue.trim().toUpperCase()
   if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const, path: '/postulante/ofertas-empleo' }
   if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const, path: '/socio/bolsa-empleo' }
+  if (normalized === 'ADMIN') return { name: 'admin-dashboard' as const, path: '/admin' }
   return { name: 'session' as const, path: '/sesion' }
 }
 

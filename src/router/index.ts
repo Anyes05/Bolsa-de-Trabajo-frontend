@@ -4,7 +4,6 @@ import AccessView from '../views/AccessView.vue'
 import RegistrationView from '../views/RegistrationView.vue'
 import SessionView from '../views/SessionView.vue'
 
-//temporal
 import AdminDashboardView from '../views/admin/AdminDashboardView.vue'
 import AdminSociosView from '../views/admin/AdminSociosView.vue'
 import AdminApplicantsView from '../views/admin/AdminApplicantsView.vue'
@@ -13,8 +12,6 @@ import AdminSettingsView from '../views/admin/AdminSettingsView.vue'
 import AdminCommunicationsView from '../views/admin/AdminCommunicationsView.vue'
 import AdminNewCompanyView from '../views/admin/AdminNewCompanyView.vue'
 import AdminOfferApplicationsView from '../views/admin/AdminOfferApplicationsView.vue'
-
-//end
 
 function normalizeRole(value: string | null | undefined) {
   return (value ?? '').trim().toUpperCase()
@@ -81,42 +78,50 @@ const router = createRouter({
       path: '/admin',
       name: 'admin-dashboard',
       component: AdminDashboardView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/socios',
       name: 'admin-socios',
       component: AdminSociosView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/socios/nueva',
       name: 'admin-new-company',
       component: AdminNewCompanyView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/postulantes',
       name: 'admin-applicants',
       component: AdminApplicantsView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/ofertas',
       name: 'admin-offers',
       component: AdminOffersView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/ofertas/:offerId/postulaciones',
       name: 'admin-offer-applications',
       component: AdminOfferApplicationsView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/configuracion',
       name: 'admin-settings',
       component: AdminSettingsView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
       path: '/admin/comunicados',
       name: 'admin-communications',
       component: AdminCommunicationsView,
-        },
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
+    },
         {
       path: '/postulante/ofertas-empleo',
       name: 'postulante-bolsa-empleo',

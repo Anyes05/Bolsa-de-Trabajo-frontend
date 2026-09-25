@@ -10,10 +10,12 @@ import {
   Settings,
   X,
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
-//
+import { useAuthStore } from '../../stores/auth'
+import { authService } from '../../services/authService'
+
 withDefaults(defineProps<{
   title: string
   subtitle: string
@@ -24,8 +26,12 @@ withDefaults(defineProps<{
   active: 'dashboard',
 })
 
+const auth = useAuthStore()
 const router = useRouter()
 const open = ref(false)
+
+const displayName = computed(() => auth.fullName || auth.email || 'Administrador')
+const avatarInitials = computed(() => initials(displayName.value))
 
 const links = [
   { key: 'dashboard', label: 'Control de Caja', to: '/admin', icon: CircleDollarSign },
@@ -36,12 +42,20 @@ const links = [
   { key: 'comunicados', label: 'Comunicados', to: '/admin/comunicados', icon: Megaphone },
 ]
 
-function go(to: string) {
-  open.value = false
-  router.push(to)
+onMounted(async () => {
+  if (auth.fullName || auth.role !== 'ADMIN') return
+  try {
+    const currentUser = await authService.currentUser()
+    auth.setFullName(currentUser.fullName)
+  } catch {}
+})
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AD'
 }
 
 function logout() {
+  auth.logout()
   router.push({ name: 'access' })
 }
 </script>
@@ -88,10 +102,10 @@ function logout() {
         </div>
         <div class="admin-topbar__user">
           <div class="admin-topbar__identity">
-            <strong>Administrador</strong>
-            <span>ADMINISTRADOR</span>
+            <strong>{{ displayName }}</strong>
+            <span>{{ auth.role || 'ADMIN' }}</span>
           </div>
-          <span class="admin-topbar__avatar">AD</span>
+          <span class="admin-topbar__avatar">{{ avatarInitials }}</span>
           <button class="admin-topbar__exit" type="button" aria-label="Cerrar sesión" @click="logout">
             <LogOut :size="17" />
           </button>

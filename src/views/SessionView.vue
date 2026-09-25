@@ -25,6 +25,13 @@ watch(
       if (window.location.pathname !== '/socio/bolsa-empleo') {
         window.location.replace('/socio/bolsa-empleo')
       }
+      return
+    }
+    if (normalized === 'ADMIN') {
+      router.replace({ name: 'admin-dashboard' })
+      if (window.location.pathname !== '/admin') {
+        window.location.replace('/admin')
+      }
     }
   },
   { immediate: true },
