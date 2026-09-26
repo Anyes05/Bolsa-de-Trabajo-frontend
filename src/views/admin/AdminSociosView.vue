@@ -38,6 +38,7 @@ const filtered = computed(() => {
     socio.rut,
     socio.nombreRubro,
     socio.emailUsuario,
+    socio.emailContacto,
   ].some((value) => (value ?? '').toLowerCase().includes(term)))
 })
 
@@ -177,6 +178,8 @@ async function toggleActive(socio: SocioRecord) {
               <td class="company-table__name">
                 <strong>{{ socio.razonSocial }}</strong>
                 <small>{{ socio.bps || 'Sin BPS' }}</small>
+                <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
+                <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
               </td>
               <td>{{ socio.rut || '—' }}</td>
               <td>{{ socio.nombreRubro || socio.giro || '—' }}</td>
@@ -214,7 +217,7 @@ async function toggleActive(socio: SocioRecord) {
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
           <h2 id="edit-socio-title">Editar socio</h2>
-          <p>Actualiza los datos institucionales. BPS y contraseña no se modifican aquí.</p>
+          <p>BPS y email de cuenta no se cambian aquí. El de contacto puede ser el mismo u otro.</p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
           <label class="new-company-form__wide">Razón social *
@@ -229,8 +232,13 @@ async function toggleActive(socio: SocioRecord) {
           <label>Teléfono
             <input v-model="editForm.telefono">
           </label>
+          <label>Email de cuenta
+            <input :value="editing.emailUsuario || ''" type="email" readonly>
+            <small>Con este correo se registró el usuario.</small>
+          </label>
           <label>Email de contacto
-            <input v-model="editForm.emailContacto" type="email">
+            <input v-model="editForm.emailContacto" type="email" placeholder="contacto@empresa.com">
+            <small>Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
           </label>
           <label>Fecha de aniversario
             <input v-model="editForm.fechaAniversario" type="date">

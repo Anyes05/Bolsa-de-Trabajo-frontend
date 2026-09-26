@@ -97,14 +97,15 @@ async function submit() {
     <section class="new-company-card">
       <header class="new-company-card__header">
         <h2>Ficha del Socio</h2>
-        <p>Completa autenticación, datos institucionales y dirección. El socio entra después con su BPS.</p>
+        <p>El socio entra con su BPS. El email de cuenta y el de contacto pueden ser el mismo o distintos, según prefiera.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
         <label>BPS *
           <input v-model="form.bps" inputmode="numeric" required placeholder="123456789">
         </label>
-        <label>Email de usuario *
-          <input v-model="form.email" type="email" required placeholder="socio@gmail.com">
+        <label>Email de cuenta *
+          <input v-model="form.email" type="email" required placeholder="cuenta@empresa.com">
+          <small>Con este correo se registra el usuario en el sistema.</small>
         </label>
         <label class="new-company-form__wide">Contraseña inicial *
           <input v-model="form.password" type="password" required minlength="12" placeholder="Mínimo 12 caracteres">
@@ -122,7 +123,8 @@ async function submit() {
           <input v-model="form.telefono">
         </label>
         <label>Email de contacto
-          <input v-model="form.emailContacto" type="email">
+          <input v-model="form.emailContacto" type="email" placeholder="contacto@empresa.com">
+          <small>Con este correo se contacta a la firma. Puede coincidir con el de cuenta.</small>
         </label>
         <label>Fecha de aniversario
           <input v-model="form.fechaAniversario" type="date">

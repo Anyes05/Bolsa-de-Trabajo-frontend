@@ -2835,6 +2835,8 @@ button:disabled {
 
 .company-empty { margin: 0 0 16px; color: #7c8794; font-size: 13px; }
 .new-company-form select.new-company-select { appearance: auto; padding: 0 12px; }
+.new-company-form small { color: #7c8794; font-size: 10px; font-weight: 600; }
+.new-company-form input[readonly] { background: #f4f6f8; color: #5b6570; }
 .new-company-check { display: flex !important; align-items: center; gap: 8px; grid-column: 1 / -1; }
 .new-company-check input { width: auto; height: auto; }
 .admin-modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; }
