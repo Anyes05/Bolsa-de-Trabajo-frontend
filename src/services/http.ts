@@ -14,6 +14,17 @@ export class ApiRequestError extends Error {
   }
 }
 
+function readErrorDetail(payload: unknown) {
+  if (!payload || typeof payload !== 'object') {
+    return 'No fue posible completar la solicitud.'
+  }
+  const body = payload as { detail?: unknown; message?: unknown; error?: unknown }
+  if (typeof body.detail === 'string' && body.detail.trim()) return body.detail
+  if (typeof body.message === 'string' && body.message.trim()) return body.message
+  if (typeof body.error === 'string' && body.error.trim()) return body.error
+  return 'No fue posible completar la solicitud.'
+}
+
 function readSessionToken(): string | null {
   try {
     const raw = sessionStorage.getItem('ccisj-session')
@@ -42,7 +53,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null)
-    const detail = payload?.detail || 'No fue posible completar la solicitud.'
+    const detail = readErrorDetail(payload)
     if (response.status === 401 || response.status === 403) {
       console.error('[http-request-auth-error]', { path, status: response.status, hasSessionToken: Boolean(token) })
     }

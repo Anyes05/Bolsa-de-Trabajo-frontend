@@ -41,9 +41,22 @@ function emptyToNull(value: string) {
   return trimmed ? trimmed : null
 }
 
+function toIsoDate(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+  const localized = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (localized) return `${localized[3]}-${localized[2]}-${localized[1]}`
+  return trimmed
+}
+
 async function submit() {
   if (!form.rubroId) {
     error.value = 'Selecciona un rubro.'
+    return
+  }
+  if (form.password.length < 12) {
+    error.value = 'La contraseña debe tener al menos 12 caracteres.'
     return
   }
   busy.value = true
@@ -63,7 +76,7 @@ async function submit() {
       localidad: form.localidad.trim(),
       rubroId: Number(form.rubroId),
       esDirectivo: form.esDirectivo,
-      fechaAniversario: emptyToNull(form.fechaAniversario),
+      fechaAniversario: toIsoDate(form.fechaAniversario),
     })
     await router.push({ name: 'admin-socios' })
   } catch (exception) {
