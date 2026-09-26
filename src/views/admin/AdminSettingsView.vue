@@ -23,7 +23,7 @@ function saveAmount() {
   <AdminShell active="configuracion" title="Configuración de Cuota" subtitle="Monto mensual para socios del CCISJ">
     <div class="fee-settings">
       <section class="fee-panel fee-current">
-        <div class="fee-current__intro"><h2>Monto de cuota vigente</h2><p>Definí el valor mensual de la cuota social. Este monto se aplicará automáticamente a todos los socios activos al momento de generar la facturación.</p></div>
+        <div class="fee-current__intro"><h2>Monto de cuota vigente</h2><p>Define el valor mensual de la cuota social. Este monto se aplicará automáticamente a todos los socios activos al momento de generar la facturación.</p></div>
         <div class="fee-current__control"><label class="fee-input"><span>$</span><input v-model="amount" aria-label="Monto de cuota vigente"></label><button class="fee-save" type="button" @click="saveAmount"><Save :size="16" /> Guardar Monto</button></div>
         <p class="fee-success"><CheckCircle2 :size="15" /> {{ saved ? 'Monto actualizado correctamente para el próximo período de facturación.' : 'Monto actualizado correctamente para el próximo período de facturación.' }}</p>
         <p class="fee-warning"><AlertTriangle :size="15" /> Nota: El cambio de cuota impactará a las nuevas facturas. Los históricos o saldos ya emitidos no sufrirán modificaciones automáticas.</p>

@@ -119,7 +119,7 @@ async function activateCv(cvId: number) {
 }
 
 async function deleteCv(cvId: number) {
-  if (!window.confirm('Eliminar este PDF? Esta accion no se puede deshacer.')) return
+  if (!window.confirm('¿Eliminar este PDF? Esta acción no se puede deshacer.')) return
   try {
     await postulanteService.deleteCv(cvId, auth.token ?? undefined)
     await load()
@@ -140,7 +140,7 @@ onMounted(load)
 </script>
 
 <template>
-  <PostulanteShell title="Mis Perfiles Profesionales" subtitle="Gestiona tus diferentes perfiles de postulacion" active-section="perfiles">
+  <PostulanteShell title="Mis Perfiles Profesionales" subtitle="Gestiona tus diferentes perfiles de postulación" active-section="perfiles">
     <section class="postulante-profiles">
       <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
       <AppAlert tone="info">Administra tus perfiles profesionales y los PDFs asociados a cada uno.</AppAlert>
@@ -155,22 +155,22 @@ onMounted(load)
           <AppButton variant="secondary" @click="openEditor(profile)">Editar</AppButton>
         </header>
         <div class="profile-card-postulante__details">
-          <p><strong>Habilidades y areas de interes:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro">{{ rubro }}</span></span></p>
+          <p><strong>Habilidades y áreas de interés:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro">{{ rubro }}</span></span></p>
           <p><strong>Disponibilidad horaria:</strong> {{ availabilityLabel[profile.disponibilidadHoraria] }}</p>
-          <p><strong>Vehiculo propio:</strong> {{ profile.tieneVehiculo ? 'Si' : 'No' }}</p>
-          <p><strong>Detalle del ultimo empleo:</strong> {{ profile.ultimoEmpleo || 'No informado' }}</p>
-          <p><strong>Resumen de experiencia laboral y presentacion:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
+          <p><strong>Vehículo propio:</strong> {{ profile.tieneVehiculo ? 'Sí' : 'No' }}</p>
+          <p><strong>Detalle del último empleo:</strong> {{ profile.ultimoEmpleo || 'No informado' }}</p>
+          <p><strong>Resumen de experiencia laboral y presentación:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
         </div>
         <section class="profile-pdfs">
           <h3>PDFs</h3>
-          <p v-if="!cvsFor(profile.id).length">Todavia no hay PDFs asociados a este perfil.</p>
+          <p v-if="!cvsFor(profile.id).length">Todavía no hay PDFs asociados a este perfil.</p>
           <div v-for="cv in cvsFor(profile.id)" :key="cv.id" class="profile-pdfs__item">
-            <span>{{ cv.nombreArchivo || `PDF version ${cv.version}` }} {{ cv.activo ? '(Activo)' : '' }}</span>
+            <span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }} {{ cv.activo ? '(Activo)' : '' }}</span>
             <div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton @click="deleteCv(cv.id)">Eliminar</AppButton></div>
           </div>
         </section>
       </article>
-      <AppAlert v-if="!loading && !profiles.length" tone="info">Aun no tenes perfiles profesionales.</AppAlert>
+      <AppAlert v-if="!loading && !profiles.length" tone="info">Aún no tienes perfiles profesionales.</AppAlert>
     </section>
 
     <div v-if="editing" class="modal" aria-modal="true" aria-labelledby="edit-profile-title">
@@ -179,13 +179,13 @@ onMounted(load)
         <header class="modal__header"><h3 id="edit-profile-title">Editar Perfil Profesional</h3><button type="button" class="modal__close" @click="editing = null">×</button></header>
         <div class="modal__form-grid profile-editor">
           <label>Nombre del perfil profesional *<input v-model="editing.nombre"></label>
-          <fieldset><legend>Habilidades y Areas de interes</legend><div class="profile-card-postulante__skills"><button v-for="sector in sectors" :key="sector" type="button" :class="{ 'profile-chip--selected': editing.rubros.includes(sector) }" @click="toggleSector(sector)">{{ sector }}</button></div></fieldset>
+          <fieldset><legend>Habilidades y áreas de interés</legend><div class="profile-card-postulante__skills"><button v-for="sector in sectors" :key="sector" type="button" :class="{ 'profile-chip--selected': editing.rubros.includes(sector) }" @click="toggleSector(sector)">{{ sector }}</button></div></fieldset>
           <label>Disponibilidad Horaria *<select v-model="editing.disponibilidadHoraria"><option value="FULL_TIME">Tiempo completo</option><option value="INDEFINIDO">Cualquier horario</option><option value="PART_TIME">Part-time</option></select></label>
-          <label class="modal__checkbox"><input v-model="editing.tieneVehiculo" type="checkbox"> Posee vehiculo propio / libreta de conducir al dia</label>
-          <label>Detalle del ultimo empleo *<input v-model="editing.ultimoEmpleo"></label>
-          <label>Resumen de experiencia laboral y presentacion *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
+          <label class="modal__checkbox"><input v-model="editing.tieneVehiculo" type="checkbox"> Posee vehículo propio / libreta de conducir al día</label>
+          <label>Detalle del último empleo *<input v-model="editing.ultimoEmpleo"></label>
+          <label>Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
           <label class="modal__checkbox"><input v-model="editing.visible" type="checkbox"> Perfil visible para socios</label>
-          <section class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF version ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton></div></section>
+          <section class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton></div></section>
         </div>
         <footer class="modal__actions"><AppButton variant="secondary" @click="editing = null">Cancelar</AppButton><AppButton :loading="saving" @click="saveProfile">Guardar cambios</AppButton></footer>
       </section>

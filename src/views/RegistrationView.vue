@@ -95,7 +95,7 @@ function buildManualCvFile() {
   y += 7
   doc.text(`Email: ${form.email}`, 14, y)
   y += 7
-  doc.text(`Telefono: ${form.phone}`, 14, y)
+  doc.text(`Teléfono: ${form.phone}`, 14, y)
   y += 7
   doc.text(`Zona: ${form.residenceArea}`, 14, y)
   y += 7
@@ -111,7 +111,7 @@ function buildManualCvFile() {
   y += latestLines.length * 6 + 4
 
   doc.setFont('helvetica', 'bold')
-  doc.text('Descripcion de experiencia', 14, y)
+  doc.text('Descripción de experiencia', 14, y)
   y += 7
   doc.setFont('helvetica', 'normal')
   const expLines = doc.splitTextToSize(experience || 'No informada', 180)
@@ -120,7 +120,7 @@ function buildManualCvFile() {
 
   doc.setFontSize(9)
   doc.setTextColor(90, 90, 90)
-  doc.text(`Generado automaticamente durante el registro el ${createdAt}`, 14, y)
+  doc.text(`Generado automáticamente durante el registro el ${createdAt}`, 14, y)
 
   const blob = doc.output('blob')
   return new File([blob], 'cv-registro.pdf', { type: 'application/pdf' })
@@ -130,16 +130,16 @@ function validateStep(current: number) {
   clearFeedback()
   if (current === 1) {
     if (!form.fullName) fieldErrors.fullName = 'Ingresa tu nombre completo.'
-    if (!form.identityCard) fieldErrors.identityCard = 'Ingresa tu cedula.'
-    if (!form.phone) fieldErrors.phone = 'Ingresa un telefono.'
+    if (!form.identityCard) fieldErrors.identityCard = 'Ingresa tu cédula.'
+    if (!form.phone) fieldErrors.phone = 'Ingresa un teléfono.'
     if (!form.email) fieldErrors.email = 'Ingresa un correo.'
-    else if (!isEmail(form.email)) fieldErrors.email = 'El correo no es valido.'
-    if (form.password.length < 12) fieldErrors.password = 'La contrasena debe tener al menos 12 caracteres.'
-    if (!form.confirmPassword) fieldErrors.confirmPassword = 'Confirma tu contrasena.'
-    else if (form.confirmPassword !== form.password) fieldErrors.confirmPassword = 'Las contrasenas no coinciden.'
+    else if (!isEmail(form.email)) fieldErrors.email = 'El correo no es válido.'
+    if (form.password.length < 12) fieldErrors.password = 'La contraseña debe tener al menos 12 caracteres.'
+    if (!form.confirmPassword) fieldErrors.confirmPassword = 'Confirma tu contraseña.'
+    else if (form.confirmPassword !== form.password) fieldErrors.confirmPassword = 'Las contraseñas no coinciden.'
     if (!form.residenceArea) fieldErrors.residenceArea = 'Selecciona una zona.'
     if (Object.values(fieldErrors).some(Boolean)) {
-      error.value = 'Completa los campos obligatorios y verifica la contrasena.'
+      error.value = 'Completa los campos obligatorios y verifica la contraseña.'
       return false
     }
   }
@@ -305,33 +305,33 @@ async function complete() {
     <form class="registration-card" @submit.prevent="step < 3 ? next() : complete()">
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
         <h2 id="step-personal">Datos Personales</h2>
-        <p>Completa la informacion basica para dar de alta tu ficha de postulante.</p>
+        <p>Completa la información básica para dar de alta tu ficha de postulante.</p>
         <div class="form-grid">
           <AppField id="fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
             <input id="fullName" v-model="form.fullName" placeholder="Ingresa tu nombre y apellido" autocomplete="name" :aria-invalid="Boolean(fieldErrors.fullName)">
           </AppField>
-          <AppField id="identityCard" label="Cedula de Identidad" required :error="fieldErrors.identityCard">
+          <AppField id="identityCard" label="Cédula de Identidad" required :error="fieldErrors.identityCard">
             <input id="identityCard" v-model="form.identityCard" placeholder="Ej: 4.876.543-2" :aria-invalid="Boolean(fieldErrors.identityCard)">
           </AppField>
-          <AppField id="phone" label="Telefono / Celular" required :error="fieldErrors.phone">
+          <AppField id="phone" label="Teléfono / Celular" required :error="fieldErrors.phone">
             <input id="phone" v-model="form.phone" placeholder="Ej: 099 123 456" autocomplete="tel" :aria-invalid="Boolean(fieldErrors.phone)">
           </AppField>
-          <AppField id="email" label="Gmail / Correo electronico" required :error="fieldErrors.email">
+          <AppField id="email" label="Gmail / Correo electrónico" required :error="fieldErrors.email">
             <input id="email" v-model="form.email" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
           </AppField>
-          <AppField id="password" label="Escribi una contrasena" required :error="fieldErrors.password">
+          <AppField id="password" label="Escribe una contraseña" required :error="fieldErrors.password">
             <div class="password-field">
-              <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Minimo 12 caracteres" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.password)">
-              <button type="button" class="password-field__toggle" :aria-label="showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'" @click="showPassword = !showPassword">
+              <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Mínimo 12 caracteres" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.password)">
+              <button type="button" class="password-field__toggle" :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="showPassword = !showPassword">
                 <EyeOff v-if="showPassword" :size="14" aria-hidden="true" />
                 <Eye v-else :size="14" aria-hidden="true" />
               </button>
             </div>
           </AppField>
-          <AppField id="confirmPassword" label="Confirmar contrasena" required :error="fieldErrors.confirmPassword">
+          <AppField id="confirmPassword" label="Confirmar contraseña" required :error="fieldErrors.confirmPassword">
             <div class="password-field">
-              <input id="confirmPassword" v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'" placeholder="Repite tu contrasena" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.confirmPassword)">
-              <button type="button" class="password-field__toggle" :aria-label="showConfirmPassword ? 'Ocultar confirmacion de contrasena' : 'Mostrar confirmacion de contrasena'" @click="showConfirmPassword = !showConfirmPassword">
+              <input id="confirmPassword" v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'" placeholder="Repite tu contraseña" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.confirmPassword)">
+              <button type="button" class="password-field__toggle" :aria-label="showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'" @click="showConfirmPassword = !showConfirmPassword">
                 <EyeOff v-if="showConfirmPassword" :size="14" aria-hidden="true" />
                 <Eye v-else :size="14" aria-hidden="true" />
               </button>
@@ -349,17 +349,17 @@ async function complete() {
         <aside class="registration-card__notice">
           <Lightbulb :size="17" aria-hidden="true" />
           <div>
-            <b>Podes tener varios perfiles laborales</b><br>
-            Despues podras crear perfiles adicionales para distintos rubros.
+            <b>Puedes tener varios perfiles laborales</b><br>
+            Después podrás crear perfiles adicionales para distintos rubros.
           </div>
         </aside>
         <h2 id="step-profile">Primer Perfil Laboral</h2>
-        <p>Configura las bases de tu primera postulacion activa.</p>
+        <p>Configura las bases de tu primera postulación activa.</p>
         <AppField id="profileName" label="Nombre de este perfil" required :error="fieldErrors.profileName">
-          <input id="profileName" v-model="form.profileName" placeholder="Ej: Perfil Administracion" :aria-invalid="Boolean(fieldErrors.profileName)">
+          <input id="profileName" v-model="form.profileName" placeholder="Ej: Perfil Administración" :aria-invalid="Boolean(fieldErrors.profileName)">
         </AppField>
         <fieldset class="sector-picker">
-          <legend>Rubros de interes</legend>
+          <legend>Rubros de interés</legend>
           <button
             v-for="sector in sectors"
             :key="sector"
@@ -382,7 +382,7 @@ async function complete() {
             @click="form.availability = 'FULL_TIME'"
           >
             <b>Full-time</b>
-            <small>Mas de 30 horas semanales</small>
+            <small>Más de 30 horas semanales</small>
           </button>
           <button
             type="button"
@@ -396,18 +396,18 @@ async function complete() {
           </button>
         </fieldset>
         <label class="registration-card__check">
-          <input v-model="form.hasVehicle" type="checkbox"> Tengo vehiculo propio habilitado
+          <input v-model="form.hasVehicle" type="checkbox"> Tengo vehículo propio habilitado
         </label>
       </section>
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
         <h2 id="step-cv">Curriculum Vitae</h2>
-        <p>Para finalizar el registro, podes adjuntar uno o varios CVs y completar tu experiencia.</p>
+        <p>Para finalizar el registro, puedes adjuntar uno o varios CVs y completar tu experiencia.</p>
         <div class="upload-placeholder">
           <Paperclip :size="22" aria-hidden="true" />
           <div>
             <b>Adjuntar archivo de CV</b>
-            <small>PDF, tamaño maximo de 5MB por archivo (hasta 5 CVs).</small>
+            <small>PDF, tamaño máximo de 5MB por archivo (hasta 5 CVs).</small>
           </div>
           <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
           <input
@@ -433,10 +433,10 @@ async function complete() {
         </div>
         <section class="experience-form">
           <h3><BriefcaseBusiness :size="18" aria-hidden="true" /> Completar experiencia manualmente</h3>
-          <AppField id="latestJob" label="Ultimo empleo / empresa actual">
+          <AppField id="latestJob" label="Último empleo / empresa actual">
             <input id="latestJob" v-model="form.latestJob" placeholder="Ej: Auxiliar administrativo">
           </AppField>
-          <AppField id="experienceDescription" label="Descripcion de la experiencia">
+          <AppField id="experienceDescription" label="Descripción de la experiencia">
             <textarea id="experienceDescription" v-model="form.experienceDescription" placeholder="Detalla tareas y logros clave..."></textarea>
           </AppField>
         </section>

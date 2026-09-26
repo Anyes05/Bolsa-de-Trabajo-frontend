@@ -36,14 +36,14 @@ function saveForm(offer: MockSocioOffer) {
 
 function applicationsLabel(offerId: string) {
   const total = offers.applicationsFor(offerId).length
-  return `${total} ${total === 1 ? 'postulacion' : 'postulaciones'}`
+  return `${total} ${total === 1 ? 'postulación' : 'postulaciones'}`
 }
 </script>
 
 <template>
   <SocioShell
     active-nav="ofertas"
-    title="Gestion de Ofertas Laborales"
+    title="Gestión de Ofertas Laborales"
     :subtitle="subtitle"
     :company-name="mockCompany.name"
     :company-initials="mockCompany.initials"

@@ -47,11 +47,11 @@ function logout() {
   <main class="session">
     <section class="session__card" aria-labelledby="session-title">
       <BrandLogo variant="green" />
-      <p>Sesion iniciada</p>
+      <p>Sesión iniciada</p>
       <h1 id="session-title">{{ auth.email }}</h1>
       <span>{{ auth.role }}</span>
       <AppButton type="button" @click="logout">
-        <LogOut :size="16" aria-hidden="true" /> Cerrar sesion
+        <LogOut :size="16" aria-hidden="true" /> Cerrar sesión
       </AppButton>
     </section>
   </main>

@@ -102,7 +102,7 @@ function logout() {
           Mi Perfil
         </RouterLink>
       </nav>
-      <small class="socio-sidebar__footer">© 2026 CCISJ · San Jose, Uruguay</small>
+      <small class="socio-sidebar__footer">© 2026 CCISJ · San José, Uruguay</small>
     </aside>
 
     <div class="socio-shell__content">

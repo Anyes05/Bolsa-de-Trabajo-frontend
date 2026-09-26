@@ -1,5 +1,5 @@
 export const residenceAreas = [
-  'San Jose de Mayo (Centro)',
+  'San José de Mayo (Centro)',
   'Ciudad del Plata',
   'Libertad',
   'Otra localidad',

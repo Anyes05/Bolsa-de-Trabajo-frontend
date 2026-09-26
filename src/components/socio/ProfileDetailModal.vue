@@ -34,13 +34,13 @@ onUnmounted(() => {
           <h2 :id="`profile-modal-title-${profile.id}`" class="profile-modal__name">{{ profile.fullName }}</h2>
           <p class="profile-modal__meta">
             <MapPin :size="13" aria-hidden="true" />
-            {{ profile.location }} · CI: {{ profile.identityCard }} · {{ profile.age }} anos
+            {{ profile.location }} · CI: {{ profile.identityCard }} · {{ profile.age }} años
           </p>
           <ul class="profile-modal__pills">
             <li>{{ availabilityLabel[profile.availability] }}</li>
             <li>
               <Car :size="12" aria-hidden="true" />
-              {{ profile.hasVehicle ? 'Con vehiculo propio' : 'Sin vehiculo' }}
+              {{ profile.hasVehicle ? 'Con vehículo propio' : 'Sin vehículo' }}
             </li>
           </ul>
         </div>
@@ -49,7 +49,7 @@ onUnmounted(() => {
 
       <div class="profile-modal__body">
         <section class="profile-modal__block">
-          <h3>Areas de interes</h3>
+          <h3>Áreas de interés</h3>
           <ul class="profile-modal__tags">
             <li v-for="interest in profile.interests" :key="interest">{{ interest }}</li>
           </ul>
@@ -61,12 +61,12 @@ onUnmounted(() => {
         </section>
 
         <section class="profile-modal__block">
-          <h3>Ultimo empleo</h3>
+          <h3>Último empleo</h3>
           <p><b>{{ profile.latestJob }}</b></p>
         </section>
 
         <section class="profile-modal__block">
-          <h3>Curriculum vitae adjunto</h3>
+          <h3>Currículum vitae adjunto</h3>
           <div class="profile-modal__cv">
             <div class="profile-modal__cv-file">
               <span class="profile-modal__cv-icon" aria-hidden="true">

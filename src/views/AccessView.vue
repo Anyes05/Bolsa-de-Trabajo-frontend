@@ -50,7 +50,7 @@ async function submitLogin() {
   if (!role.value) return
   const identifierValue = loginIdentifier()
   if (role.value === 'SOCIO' && !identifierValue) {
-    error.value = 'Ingresa tu numero de BPS.'
+    error.value = 'Ingresa tu número de BPS.'
     return
   }
   busy.value = true
@@ -77,8 +77,8 @@ async function submitLogin() {
     <section class="access__content">
       <section v-if="!role" class="access-card" aria-labelledby="access-title">
         <h2 id="access-title" class="access-card__title">Bienvenido</h2>
-        <p class="access-card__subtitle">¿Como queres ingresar?</p>
-        <nav class="access-card__roles" aria-label="Seleccion de rol">
+        <p class="access-card__subtitle">¿Cómo quieres ingresar?</p>
+        <nav class="access-card__roles" aria-label="Selección de rol">
           <RoleOption
             v-for="option in roleOptions"
             :key="option.role"
@@ -89,7 +89,7 @@ async function submitLogin() {
             @click="selectRole(option.role)"
           />
         </nav>
-        <RouterLink class="access-card__link" to="/registro">¿Buscas empleo? Registrate aqui</RouterLink>
+        <RouterLink class="access-card__link" to="/registro">¿Buscas empleo? Regístrate aquí</RouterLink>
       </section>
 
       <form v-else class="login-form" @submit.prevent="submitLogin">
@@ -115,12 +115,12 @@ async function submitLogin() {
             required
           >
         </AppField>
-        <AppField id="login-password" label="Contrasena" required>
+        <AppField id="login-password" label="Contraseña" required>
           <input
             id="login-password"
             v-model="password"
             type="password"
-            placeholder="Ingresa tu contrasena"
+            placeholder="Ingresa tu contraseña"
             autocomplete="current-password"
             required
           >
@@ -132,7 +132,7 @@ async function submitLogin() {
           class="login-form__register-link"
           to="/registro"
         >
-          ¿No tenes cuenta? Crear postulante
+          ¿No tienes cuenta? Crear postulante
         </RouterLink>
         <AppButton type="submit" :loading="busy">
           {{ busy ? 'Ingresando...' : 'Ingresar' }}

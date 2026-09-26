@@ -22,7 +22,7 @@ withDefaults(defineProps<{
   active: string
 }>(), {
   title: 'Panel de administración',
-  subtitle: 'Gestioná la plataforma CCISJ',
+  subtitle: 'Gestiona la plataforma CCISJ',
   active: 'dashboard',
 })
 

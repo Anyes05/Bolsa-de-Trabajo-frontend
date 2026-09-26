@@ -25,7 +25,7 @@ const members = computed(() => {
 })
 
 function statusClass(value: DirectoryStatus) {
-  if (value === 'Al dia') return 'socio-directory__status--ok'
+  if (value === 'Al día') return 'socio-directory__status--ok'
   if (value === 'Pendiente') return 'socio-directory__status--pending'
   return 'socio-directory__status--inactive'
 }
@@ -35,7 +35,7 @@ function statusClass(value: DirectoryStatus) {
   <SocioShell
     active-nav="directorio"
     title="Directorio de Socios"
-    subtitle="Acceso exclusivo para miembros de la Comision Directiva"
+    subtitle="Acceso exclusivo para miembros de la Comisión Directiva"
     :company-name="mockCompany.name"
     :company-initials="mockCompany.initials"
     :company-role="mockCompany.roleLabel"
@@ -45,9 +45,9 @@ function statusClass(value: DirectoryStatus) {
         <div>
           <h2>
             <Landmark :size="18" aria-hidden="true" />
-            Comision Directiva – Vista restringida
+            Comisión Directiva – Vista restringida
           </h2>
-          <p>Como miembro directivo podes ver el directorio completo de socios activos del CCISJ.</p>
+          <p>Como miembro directivo puedes ver el directorio completo de socios activos del CCISJ.</p>
         </div>
         <span>Solo directivos</span>
       </div>
@@ -69,9 +69,9 @@ function statusClass(value: DirectoryStatus) {
         <table class="socio-directory__table">
           <thead>
             <tr>
-              <th>Razon social</th>
+              <th>Razón social</th>
               <th>Rubro</th>
-              <th>Telefono</th>
+              <th>Teléfono</th>
               <th>Email</th>
               <th>Estado</th>
             </tr>
@@ -93,7 +93,7 @@ function statusClass(value: DirectoryStatus) {
             </tr>
           </tbody>
         </table>
-        <p v-if="!members.length" class="socio-directory__empty">No hay socios mock que coincidan con la busqueda.</p>
+        <p v-if="!members.length" class="socio-directory__empty">No hay socios mock que coincidan con la búsqueda.</p>
       </div>
     </section>
   </SocioShell>

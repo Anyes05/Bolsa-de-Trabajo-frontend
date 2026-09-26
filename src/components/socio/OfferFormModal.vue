@@ -60,7 +60,7 @@ function submit() {
 
       <form class="offer-form" @submit.prevent="submit">
         <label class="offer-form__wide">
-          Titulo del puesto *
+          Título del puesto *
           <input v-model="form.title" required :placeholder="mode === 'create' ? 'Ej. Vendedor/a Mostrador' : undefined">
         </label>
 
@@ -93,7 +93,7 @@ function submit() {
         </label>
 
         <label class="offer-form__wide">
-          Descripcion *
+          Descripción *
           <textarea v-model="form.description" rows="4" required></textarea>
         </label>
 

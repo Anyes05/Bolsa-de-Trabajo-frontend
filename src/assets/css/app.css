@@ -2832,3 +2832,11 @@ button:disabled {
     flex: 1;
   }
 }
+
+.company-empty { margin: 0 0 16px; color: #7c8794; font-size: 13px; }
+.new-company-form select.new-company-select { appearance: auto; padding: 0 12px; }
+.new-company-check { display: flex !important; align-items: center; gap: 8px; grid-column: 1 / -1; }
+.new-company-check input { width: auto; height: auto; }
+.admin-modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; }
+.admin-modal__backdrop { position: absolute; inset: 0; border: 0; background: #1b2a2280; }
+.admin-modal__card { position: relative; z-index: 1; width: min(100%, 640px); max-height: calc(100vh - 48px); overflow: auto; margin: 0; }

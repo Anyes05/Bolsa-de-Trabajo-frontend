@@ -55,7 +55,7 @@ function logout() {
           Mis Perfiles
         </RouterLink>
       </nav>
-      <small class="postulante-sidebar__footer">© 2026 CCISJ · San Jose</small>
+      <small class="postulante-sidebar__footer">© 2026 CCISJ · San José</small>
     </aside>
 
     <div class="postulante-shell__content">

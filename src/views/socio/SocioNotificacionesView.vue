@@ -27,7 +27,7 @@ const icons: Record<NotificationKind, typeof Megaphone> = {
   >
     <template #header-actions>
       <AppButton variant="secondary" type="button" @click="notifications.markAllRead()">
-        Marcar todo como leido
+        Marcar todo como leído
       </AppButton>
     </template>
 

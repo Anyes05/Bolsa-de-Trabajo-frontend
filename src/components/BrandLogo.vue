@@ -22,6 +22,6 @@ const src = computed(() => {
     class="brand-logo"
     :class="`brand-logo--${variant}`"
     :src="src"
-    alt="Centro Comercial e Industrial de San Jose"
+    alt="Centro Comercial e Industrial de San José"
   >
 </template>

@@ -43,7 +43,7 @@ function updatePassword() {
   password.current = ''
   password.next = ''
   password.repeat = ''
-  passwordHint.value = 'La contrasena se actualizo en esta pantalla (mock).'
+  passwordHint.value = 'La contraseña se actualizó en esta pantalla (mock).'
 }
 
 function onPhotoChange(event: Event) {
@@ -53,7 +53,7 @@ function onPhotoChange(event: Event) {
   photoError.value = ''
   if (!file) return
   if (!file.type.startsWith('image/')) {
-    photoError.value = 'Elegi una imagen (JPG, PNG o WEBP).'
+    photoError.value = 'Elige una imagen (JPG, PNG o WEBP).'
     return
   }
   if (file.size > 2 * 1024 * 1024) {
@@ -121,12 +121,12 @@ function logout() {
 
         <h4>Datos del socio</h4>
         <label>
-          Razon social
+          Razón social
           <input v-model="form.razonSocial">
         </label>
         <div class="socio-profile__row">
           <label>
-            Telefono
+            Teléfono
             <input v-model="form.telefono">
           </label>
           <label>
@@ -138,7 +138,7 @@ function logout() {
           Rubro
           <select v-model="form.rubro">
             <option v-for="sector in mockOfferSectors" :key="sector" :value="sector">{{ sector }}</option>
-            <option value="Construccion">Construccion</option>
+            <option value="Construccion">Construcción</option>
           </select>
         </label>
         <label>
@@ -151,29 +151,29 @@ function logout() {
       </form>
 
       <form class="socio-profile__card" @submit.prevent="updatePassword">
-        <h3>Cambiar contrasena</h3>
+        <h3>Cambiar contraseña</h3>
         <label>
-          Contrasena actual *
+          Contraseña actual *
           <input v-model="password.current" type="password" autocomplete="current-password">
         </label>
         <div class="socio-profile__row">
           <label>
-            Nueva contrasena *
-            <input v-model="password.next" type="password" autocomplete="new-password" placeholder="Minimo 6 caracteres">
+            Nueva contraseña *
+            <input v-model="password.next" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
           </label>
           <label>
-            Repetir contrasena *
+            Repetir contraseña *
             <input v-model="password.repeat" type="password" autocomplete="new-password">
           </label>
         </div>
         <p v-if="passwordHint" class="socio-profile__hint">{{ passwordHint }}</p>
-        <AppButton type="submit" :disabled="!canUpdatePassword">Actualizar contrasena</AppButton>
+        <AppButton type="submit" :disabled="!canUpdatePassword">Actualizar contraseña</AppButton>
       </form>
 
       <section class="socio-profile__logout">
-        <h3>Cerrar sesion</h3>
-        <p>Al cerrar sesion deberas ingresar tus credenciales nuevamente.</p>
-        <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesion</button>
+        <h3>Cerrar sesión</h3>
+        <p>Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
+        <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesión</button>
       </section>
     </div>
   </SocioShell>

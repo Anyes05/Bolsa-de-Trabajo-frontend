@@ -26,7 +26,7 @@ const showPublishModal = ref(false)
           <label>Zona<span class="publish-select">San José de Mayo <span>⌄</span></span></label>
           <label>Modalidad<span class="publish-select">Full-time <span>⌄</span></span></label>
           <label>Rango salarial (Opcional)<input placeholder="Ej: $25.000 - $30.000"></label>
-          <label class="publish-form__wide">Descripción<textarea rows="4" placeholder="Describí las tareas del puesto y lo que ofrece el socio..."></textarea></label>
+          <label class="publish-form__wide">Descripción<textarea rows="4" placeholder="Describe las tareas del puesto y lo que ofrece el socio..."></textarea></label>
           <label class="publish-form__wide">Requisitos<textarea rows="3" placeholder="Formación académica, experiencia previa, libreta de conducir, etc..."></textarea></label>
           <footer class="publish-form__footer"><button class="publish-cancel" type="button" @click="showPublishModal = false">Cancelar</button><button class="publish-confirm" type="submit">Publicar Oferta</button></footer>
         </form>

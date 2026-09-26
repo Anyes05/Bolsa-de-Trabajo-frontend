@@ -1,4 +1,4 @@
-export type DirectoryStatus = 'Al dia' | 'Pendiente' | 'Inactivo'
+export type DirectoryStatus = 'Al día' | 'Pendiente' | 'Inactivo'
 
 export type MockDirectoryMember = {
   id: string
@@ -24,7 +24,7 @@ export function isDirectivoEmail(email: string | null | undefined) {
 
 export const mockDirectoryStatuses: Array<'Todos' | DirectoryStatus> = [
   'Todos',
-  'Al dia',
+  'Al día',
   'Pendiente',
   'Inactivo',
 ]
@@ -37,7 +37,7 @@ export const mockDirectoryMembers: MockDirectoryMember[] = [
     rubro: 'Distribucion',
     telefono: '099 123 456',
     email: 'fernandez@ccisj.org.uy',
-    status: 'Al dia',
+    status: 'Al día',
   },
   {
     id: '2',
@@ -46,7 +46,7 @@ export const mockDirectoryMembers: MockDirectoryMember[] = [
     rubro: 'Comercio',
     telefono: '098 234 567',
     email: 'doncarlos@ccisj.org.uy',
-    status: 'Al dia',
+    status: 'Al día',
   },
   {
     id: '3',
@@ -73,7 +73,7 @@ export const mockDirectoryMembers: MockDirectoryMember[] = [
     rubro: 'Ferreteria',
     telefono: '095 567 890',
     email: 'elmartillo@gmail.com',
-    status: 'Al dia',
+    status: 'Al día',
   },
   {
     id: '6',
@@ -100,7 +100,7 @@ export const mockDirectoryMembers: MockDirectoryMember[] = [
     rubro: 'Construccion',
     telefono: '091 901 234',
     email: 'palleiro@gmail.com',
-    status: 'Al dia',
+    status: 'Al día',
   },
   {
     id: '9',
@@ -109,6 +109,6 @@ export const mockDirectoryMembers: MockDirectoryMember[] = [
     rubro: 'Salud',
     telefono: '090 012 345',
     email: 'visionplena@gmail.com',
-    status: 'Al dia',
+    status: 'Al día',
   },
 ]

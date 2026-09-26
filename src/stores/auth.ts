@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
   function setSession(session: AuthResponse) {
     const normalizedRole = normalizeRole(session.role)
     if (!normalizedRole) {
-      throw new Error('Rol de sesion invalido')
+      throw new Error('Rol de sesión inválido')
     }
     token.value = session.token
     email.value = session.email

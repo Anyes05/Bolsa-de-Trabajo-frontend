@@ -37,7 +37,7 @@ function closeApplyModal() {
 
 function confirmApply() {
   messageTone.value = 'info'
-  message.value = 'Flujo de postulacion pendiente: backend de ofertas en siguiente iteracion.'
+    message.value = 'Flujo de postulación pendiente: backend de ofertas en siguiente iteración.'
   showModal.value = false
 }
 
@@ -59,12 +59,12 @@ onMounted(loadCvs)
 <template>
   <PostulanteShell
     title="Ofertas de Empleo"
-    subtitle="Explora las busquedas laborales de socios de San Jose"
+    subtitle="Explora las búsquedas laborales de socios de San José"
     active-section="ofertas"
   >
     <section class="postulante-offers">
       <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
-      <AppAlert v-else-if="loadingCvs" tone="info">Cargando CVs para postulacion...</AppAlert>
+      <AppAlert v-else-if="loadingCvs" tone="info">Cargando CVs para postulación...</AppAlert>
 
       <nav class="postulante-offers__tabs" aria-label="Ofertas y postulaciones">
         <button
@@ -128,7 +128,7 @@ onMounted(loadCvs)
           </div>
 
           <footer class="application-card__footer">
-            <p><strong>Estado de la postulacion:</strong> <span class="application-card__status">{{ application.status }}</span></p>
+            <p><strong>Estado de la postulación:</strong> <span class="application-card__status">{{ application.status }}</span></p>
             <AppButton variant="secondary">Ver perfil postulado</AppButton>
           </footer>
         </article>
@@ -141,7 +141,7 @@ onMounted(loadCvs)
         <header class="modal__header">
           <h3 id="apply-modal-title">Seleccionar Perfil</h3>
         </header>
-        <p class="modal__text">Para postularte a <b>{{ selectedOffer.title }}</b>, elegi cual perfil queres enviar.</p>
+        <p class="modal__text">Para postularte a <b>{{ selectedOffer.title }}</b>, elige cuál perfil quieres enviar.</p>
 
         <div class="modal__options">
           <label
@@ -160,7 +160,7 @@ onMounted(loadCvs)
 
         <footer class="modal__actions">
           <AppButton variant="secondary" @click="closeApplyModal">Cancelar</AppButton>
-          <AppButton @click="confirmApply">Confirmar Postulacion</AppButton>
+          <AppButton @click="confirmApply">Confirmar Postulación</AppButton>
         </footer>
       </section>
     </div>

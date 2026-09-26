@@ -25,8 +25,8 @@ const profiles = computed(() => {
       || (availability.value === 'Full-time' && profile.availability === 'FULL_TIME')
       || (availability.value === 'Part-time' && profile.availability === 'PART_TIME')
     const matchesVehicle = vehicle.value === 'Todos'
-      || (vehicle.value === 'Con vehiculo' && profile.hasVehicle)
-      || (vehicle.value === 'Sin vehiculo' && !profile.hasVehicle)
+      || (vehicle.value === 'Con vehículo' && profile.hasVehicle)
+      || (vehicle.value === 'Sin vehículo' && !profile.hasVehicle)
     return matchesRubro && matchesAvailability && matchesVehicle
   })
 
@@ -50,18 +50,18 @@ const profiles = computed(() => {
       <aside class="bolsa__filters" aria-label="Filtros de perfiles">
         <FilterGroup v-model="rubro" legend="Rubro laboral" :options="mockRubros" />
         <FilterGroup v-model="availability" legend="Disponibilidad" :options="['Todos', 'Full-time', 'Part-time']" />
-        <FilterGroup v-model="vehicle" legend="Vehiculo" :options="['Todos', 'Con vehiculo', 'Sin vehiculo']" />
+        <FilterGroup v-model="vehicle" legend="Vehículo" :options="['Todos', 'Con vehículo', 'Sin vehículo']" />
       </aside>
 
       <section class="bolsa__results" aria-labelledby="bolsa-results-title">
         <header class="bolsa__toolbar">
           <h2 id="bolsa-results-title" class="bolsa__count">
-            Resultados: <b>{{ profiles.length }} perfiles activos en San Jose</b>
+            Resultados: <b>{{ profiles.length }} perfiles activos en San José</b>
           </h2>
           <label class="bolsa__sort">
             Ordenar por:
             <select v-model="sortBy">
-              <option value="updated">Ultima actualizacion</option>
+              <option value="updated">Última actualización</option>
               <option value="name">Nombre</option>
             </select>
           </label>
