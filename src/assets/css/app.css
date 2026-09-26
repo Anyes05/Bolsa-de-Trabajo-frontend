@@ -2,6 +2,7 @@
   font-family: Arial, sans-serif;
   color: #27272a;
   background: #f7f8fa;
+  font-size: 16px;
 }
 
 * {
@@ -2841,4 +2842,254 @@ button:disabled {
 .new-company-check input { width: auto; height: auto; }
 .admin-modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; }
 .admin-modal__backdrop { position: absolute; inset: 0; border: 0; background: #1b2a2280; }
-.admin-modal__card { position: relative; z-index: 1; width: min(100%, 640px); max-height: calc(100vh - 48px); overflow: auto; margin: 0; }
+.admin-modal__card { position: relative; z-index: 1; width: min(100%, 960px); max-height: calc(100vh - 48px); overflow: auto; margin: 0; }
+
+/* Ancho completo (como el padrón de socios) y tipografía más legible */
+.admin-page,
+.socio-shell__body,
+.postulante-shell__body {
+  width: 100%;
+  max-width: none;
+}
+
+.admin-page {
+  padding: 28px 32px 40px;
+}
+
+.admin-page__heading h1 {
+  font-size: 30px;
+}
+
+.admin-page__heading p:last-child {
+  font-size: 15px;
+}
+
+.admin-page__eyebrow {
+  font-size: 12px;
+}
+
+.admin-nav__item {
+  font-size: 14px;
+  padding: 12px 14px;
+}
+
+.admin-sidebar__label,
+.admin-sidebar__footer {
+  font-size: 12px;
+}
+
+.admin-breadcrumb,
+.admin-topbar__identity strong {
+  font-size: 14px;
+}
+
+.admin-topbar__identity span {
+  font-size: 11px;
+}
+
+.company-search-card,
+.company-table-card,
+.cash-toolbar,
+.cash-table-card,
+.cash-metrics,
+.admin-metrics,
+.admin-dashboard-grid,
+.fee-settings,
+.new-company-card,
+.communications-layout,
+.offers-list,
+.applicant-list,
+.applicant-toolbar {
+  width: 100%;
+  max-width: none;
+}
+
+.fee-settings {
+  margin: 0;
+}
+
+.fee-current__intro p {
+  width: auto;
+  max-width: 40rem;
+  font-size: 14px;
+}
+
+.new-company-card {
+  margin: 0;
+  padding: 28px 32px;
+}
+
+.new-company-card__header h2 {
+  font-size: 22px;
+}
+
+.new-company-card__header p,
+.new-company-form small {
+  font-size: 13px;
+}
+
+.new-company-form label {
+  font-size: 13px;
+}
+
+.new-company-form input,
+.new-company-select,
+.new-company-form select.new-company-select {
+  height: 42px;
+  font-size: 14px;
+}
+
+.company-search {
+  flex: 1;
+  width: auto;
+  max-width: none;
+  height: 40px;
+}
+
+.company-search input,
+.company-search-card > span,
+.company-button,
+.admin-back-button {
+  font-size: 14px;
+}
+
+.company-button,
+.admin-back-button {
+  height: 40px;
+}
+
+.company-table {
+  min-width: 0;
+}
+
+.company-table th {
+  height: 44px;
+  font-size: 12px;
+}
+
+.company-table th small {
+  font-size: 11px;
+}
+
+.company-table td {
+  height: auto;
+  min-height: 64px;
+  padding: 14px 18px;
+  font-size: 14px;
+  white-space: normal;
+}
+
+.company-table__name strong {
+  font-size: 15px;
+}
+
+.company-table__name small {
+  font-size: 13px;
+  white-space: normal;
+}
+
+.cash-search {
+  flex: 1;
+  width: auto;
+  height: 40px;
+}
+
+.cash-search input,
+.cash-filter,
+.cash-download {
+  font-size: 14px;
+}
+
+.cash-filter,
+.cash-download {
+  height: 40px;
+}
+
+.cash-table th {
+  height: 44px;
+  font-size: 12px;
+}
+
+.cash-table td {
+  height: auto;
+  min-height: 52px;
+  padding: 12px 18px;
+  font-size: 14px;
+  white-space: normal;
+}
+
+.cash-status {
+  font-size: 13px;
+}
+
+.socio-header__title {
+  font-size: 28px;
+}
+
+.socio-header__subtitle {
+  font-size: 15px;
+}
+
+.socio-header__identity strong,
+.socio-nav__item {
+  font-size: 14px;
+}
+
+.socio-header__identity span {
+  font-size: 12px;
+}
+
+.socio-directory__table th {
+  font-size: 12px;
+}
+
+.socio-directory__table td,
+.socio-directory__table td small {
+  font-size: 14px;
+}
+
+.socio-directory__table td small {
+  font-size: 13px;
+}
+
+.socio-profile__card label,
+.socio-profile__card small {
+  font-size: 13px;
+}
+
+.socio-profile__card input,
+.socio-profile__card select {
+  font-size: 14px;
+}
+
+.postulante-header__title {
+  font-size: 30px;
+}
+
+.postulante-header__subtitle {
+  font-size: 16px;
+}
+
+.applicant-search {
+  flex: 1;
+  width: auto;
+  height: 40px;
+}
+
+.applicant-search input,
+.applicant-download,
+.offer-card__title h3,
+.offers-publish,
+.communication-editor label,
+.communication-editor input,
+.communication-editor textarea,
+.publish-form label,
+.publish-form input,
+.publish-form textarea {
+  font-size: 14px;
+}
+
+.communication-editor h2,
+.offers-heading h2 {
+  font-size: 20px;
+}
