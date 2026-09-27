@@ -2,6 +2,10 @@ export type Role = 'ADMIN' | 'SOCIO' | 'POSTULANTE'
 
 export type EstadoMorosidad = 'AL_DIA' | 'DEUDA_A_VENCER' | 'DEUDA_VENCIDA' | 'INACTIVO'
 
+export type EstadoCuota = 'PENDIENTE' | 'PAGADA' | 'FORZOSO' | 'ANULADA'
+
+export type MetodoPago = 'EFECTIVO' | 'TRANSFERENCIA' | 'COBRADOR'
+
 export type RubroOption = {
   id: number
   nombreRubro: string
@@ -59,6 +63,57 @@ export type SocioUpdatePayload = {
   esDirectivo: boolean
   fechaAniversario?: string | null
   estadoMorosidad?: EstadoMorosidad | null
+}
+
+export type CuentaCaja = {
+  socioId: number
+  bps: string | null
+  razonSocial: string
+  nombreRubro: string | null
+  telefono: string | null
+  estadoMorosidad: EstadoMorosidad
+  cuotaId: number | null
+  estadoCuota: EstadoCuota | null
+  montoCuota: number | null
+  periodo: string | null
+  fechaVencimiento: string | null
+}
+
+export type CajaResumen = {
+  totalSocios: number
+  alDia: number
+  pendiente: number
+  inactivos: number
+  cuentas: CuentaCaja[]
+}
+
+export type MovimientoCaja = {
+  cuotaId: number
+  periodo: string
+  fechaVencimiento: string
+  estadoCuota: EstadoCuota
+  montoCuota: number
+  montoCobrado: number | null
+  fechaCobro: string | null
+  metodoPago: MetodoPago | null
+  nroCobranzaExterno: string | null
+  observaciones: string | null
+}
+
+export type HistorialCaja = {
+  socioId: number
+  razonSocial: string
+  bps: string | null
+  nombreRubro: string | null
+  estadoMorosidad: EstadoMorosidad
+  movimientos: MovimientoCaja[]
+}
+
+export type RegistrarCobroPayload = {
+  cuotaId: number
+  metodoPago: MetodoPago
+  nroCobranzaExterno?: string | null
+  observaciones?: string | null
 }
 
 export type AuthResponse = {

@@ -1,40 +1,144 @@
 <script setup lang="ts">
-import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Printer, Search, UsersRound, X } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Search, UsersRound, X } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
+import AppAlert from '../../components/AppAlert.vue'
+import { cajaService } from '../../services/cajaService'
+import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
+import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago } from '../../services/types'
 
-const metrics = [
-  { label: 'Total Socios', value: '10', icon: UsersRound, tone: 'blue' },
-  { label: 'Al Día', value: '6', icon: CheckCircle2, tone: 'green' },
-  { label: 'Pendiente', value: '2', icon: Clock3, tone: 'orange' },
-  { label: 'Inactivos', value: '2', icon: AlertCircle, tone: 'red' },
+type CajaFilter = 'TODOS' | EstadoMorosidad
+
+const resumen = ref<CajaResumen | null>(null)
+const query = ref('')
+const filter = ref<CajaFilter>('TODOS')
+const error = ref('')
+const busy = ref(false)
+const selectedCompany = ref<CuentaCaja | null>(null)
+const selectedHistory = ref<HistorialCaja | null>(null)
+const historyBusy = ref(false)
+const historyError = ref('')
+const paymentMethod = ref<MetodoPago>('EFECTIVO')
+const chargeBusy = ref(false)
+const chargeError = ref('')
+
+const filters: Array<{ key: CajaFilter; label: string }> = [
+  { key: 'TODOS', label: 'Todos' },
+  { key: 'AL_DIA', label: 'Al dia' },
+  { key: 'DEUDA_VENCIDA', label: 'Pendiente' },
+  { key: 'INACTIVO', label: 'Inactivo' },
 ]
 
-const companies = [
-  ['#S001', 'Distribuidora Fernández Hnos.', '21234567', 'Distribución', '099 123 456', 'Al Día', 'green'],
-  ['#S002', 'Supermercado Don Carlos', '31234567', 'Comercio', '098 765 432', 'Al Día', 'green'],
-  ['#S003', 'Mueblería La Estrella', '41234567', 'Mueblería', '095 555 444', 'Pendiente', 'orange'],
-  ['#S004', 'Taller Mecánico Rodríguez', '51234567', 'Automotriz', '092 111 222', 'Inactivo', 'red'],
-  ['#S005', 'Ferretería El Martillo', '61234567', 'Ferretería', '091 999 888', 'Al Día', 'green'],
-  ['#S006', 'Panadería San José S.A.', '71234567', 'Alimentación', '097 333 444', 'Inactivo', 'red'],
-]
+const metrics = computed(() => [
+  { label: 'Total Socios', value: resumen.value?.totalSocios ?? 0, icon: UsersRound, tone: 'blue' },
+  { label: 'Al Dia', value: resumen.value?.alDia ?? 0, icon: CheckCircle2, tone: 'green' },
+  { label: 'Pendiente', value: resumen.value?.pendiente ?? 0, icon: Clock3, tone: 'orange' },
+  { label: 'Inactivos', value: resumen.value?.inactivos ?? 0, icon: AlertCircle, tone: 'red' },
+])
 
-const selectedCompany = ref<string[] | null>(null)
-const selectedHistory = ref<string[] | null>(null)
-const paymentMethod = ref('Efectivo')
+const companies = computed(() => {
+  const term = query.value.trim().toLowerCase()
+  return (resumen.value?.cuentas ?? []).filter((company) => {
+    const matchesFilter = filter.value === 'TODOS' || company.estadoMorosidad === filter.value
+    const matchesQuery = !term || [company.razonSocial, company.bps, company.nombreRubro, company.telefono]
+      .some((value) => (value ?? '').toLowerCase().includes(term))
+    return matchesFilter && matchesQuery
+  })
+})
 
-function openCharge(company: string[]) {
-  selectedCompany.value = company
-  paymentMethod.value = 'Efectivo'
+const canCharge = computed(() => selectedCompany.value?.cuotaId != null
+  && (selectedCompany.value.estadoCuota === 'PENDIENTE' || selectedCompany.value.estadoCuota === 'FORZOSO')
+  && selectedCompany.value.estadoMorosidad !== 'INACTIVO')
+
+onMounted(loadResumen)
+
+async function loadResumen() {
+  busy.value = true
+  error.value = ''
+  try {
+    resumen.value = await cajaService.getResumen()
+  } catch (exception) {
+    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el control de caja.'
+  } finally {
+    busy.value = false
+  }
 }
 
-function openHistory(company: string[]) {
-  selectedHistory.value = company
+function openCharge(company: CuentaCaja) {
+  selectedCompany.value = company
+  paymentMethod.value = 'EFECTIVO'
+  chargeError.value = ''
+}
+
+async function openHistory(company: CuentaCaja) {
+  selectedHistory.value = null
+  historyError.value = ''
+  historyBusy.value = true
+  try {
+    selectedHistory.value = await cajaService.getHistorial(company.socioId)
+  } catch (exception) {
+    historyError.value = exception instanceof Error ? exception.message : 'No fue posible cargar el historial.'
+  } finally {
+    historyBusy.value = false
+  }
+}
+
+function closeHistory() {
+  selectedHistory.value = null
+  historyError.value = ''
+}
+
+async function confirmCharge() {
+  if (!selectedCompany.value?.cuotaId) return
+  chargeBusy.value = true
+  chargeError.value = ''
+  try {
+    await cajaService.registrarCobro({
+      cuotaId: selectedCompany.value.cuotaId,
+      metodoPago: paymentMethod.value,
+    })
+    selectedCompany.value = null
+    await loadResumen()
+  } catch (exception) {
+    chargeError.value = exception instanceof Error ? exception.message : 'No fue posible registrar el cobro.'
+  } finally {
+    chargeBusy.value = false
+  }
+}
+
+function formatMoney(value: number | null | undefined) {
+  if (value == null) return 'Sin cuota emitida'
+  return new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 }).format(value)
+}
+
+function formatDate(value: string | null | undefined) {
+  if (!value) return '-'
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function canChargeCompany(company: CuentaCaja) {
+  return company.cuotaId != null
+    && (company.estadoCuota === 'PENDIENTE' || company.estadoCuota === 'FORZOSO')
+    && company.estadoMorosidad !== 'INACTIVO'
+}
+
+function cuotaLabel(company: CuentaCaja) {
+  if (!company.cuotaId) return 'Sin cuota emitida'
+  if (company.estadoCuota === 'PAGADA') return 'Pagada'
+  if (company.estadoCuota === 'ANULADA') return 'Anulada'
+  return 'Pendiente'
+}
+
+function paymentLabel(method: MetodoPago | null) {
+  if (method === 'TRANSFERENCIA') return 'Transferencia'
+  if (method === 'COBRADOR') return 'Cobrador'
+  return 'Efectivo'
 }
 </script>
 
 <template>
-  <AdminShell active="dashboard" title="Control de Caja y Cobranza" subtitle="Gestión de cuotas y cobros">
+  <AdminShell active="dashboard" title="Control de Caja y Cobranza" subtitle="Gestion de cuotas y cobros">
     <section class="cash-metrics" aria-label="Resumen de cobranza">
       <article v-for="metric in metrics" :key="metric.label" class="cash-metric">
         <span class="cash-metric__icon" :class="`cash-metric__icon--${metric.tone}`"><component :is="metric.icon" :size="20" /></span>
@@ -43,33 +147,43 @@ function openHistory(company: string[]) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input placeholder="Buscar socio o N°..."></label>
-      <div class="cash-filters"><button class="cash-filter cash-filter--active" type="button">Todos</button><button class="cash-filter" type="button">Al Día</button><button class="cash-filter" type="button">Pendiente</button><button class="cash-filter" type="button">Inactivo</button></div>
-      <button class="cash-download" type="button"><Download :size="16" /> Descargar Excel (10)</button>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, BPS o rubro..."></label>
+      <div class="cash-filters">
+        <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
+      </div>
+      <button class="cash-download" type="button"><Download :size="16" /> Descargar Excel</button>
     </section>
 
-    <section class="cash-table-card">
-      <div class="cash-table-wrap"><table class="cash-table"><thead><tr><th>N°</th><th>Razón social</th><th>BPS</th><th>Rubro</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody><tr v-for="company in companies" :key="company[0]"><td class="cash-table__number">{{ company[0] }}</td><td class="cash-table__company">{{ company[1] }}</td><td>{{ company[2] }}</td><td>{{ company[3] }}</td><td>{{ company[4] }}</td><td><span class="cash-status" :class="`cash-status--${company[6]}`"><i />{{ company[5] }}</span></td><td class="cash-table__actions"><button v-if="company[5] !== 'Inactivo'" class="cash-charge" type="button" @click="openCharge(company)">+ Cobro</button><button class="cash-history" type="button" @click="openHistory(company)">▣ Historial</button></td></tr></tbody></table></div>
+    <AppAlert v-if="error">{{ error }}</AppAlert>
+    <p v-else-if="busy" class="company-empty">Cargando control de caja...</p>
+    <p v-else-if="!companies.length" class="company-empty">No hay socios para mostrar.</p>
+    <section v-else class="cash-table-card">
+      <div class="cash-table-wrap"><table class="cash-table"><thead><tr><th>N°</th><th>Razon social</th><th>BPS</th><th>Rubro</th><th>Telefono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody><tr v-for="company in companies" :key="company.socioId"><td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td><td class="cash-table__company">{{ company.razonSocial }}</td><td>{{ company.bps || '-' }}</td><td>{{ company.nombreRubro || '-' }}</td><td>{{ company.telefono || '-' }}</td><td><span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span></td><td class="cash-table__actions"><button v-if="canChargeCompany(company)" class="cash-charge" type="button" @click="openCharge(company)">+ Cobro</button><span v-else>{{ cuotaLabel(company) }}</span><button class="cash-history" type="button" @click="openHistory(company)">Historial</button></td></tr></tbody></table></div>
     </section>
 
     <div v-if="selectedCompany" class="cash-modal-layer" @click.self="selectedCompany = null">
       <section class="cash-modal" role="dialog" aria-modal="true" aria-labelledby="cash-modal-title">
-        <header class="cash-modal__header"><div><h2 id="cash-modal-title">Registrar Cobro</h2><p>{{ selectedCompany[1] }}</p></div><button type="button" aria-label="Cerrar" @click="selectedCompany = null"><X :size="18" /></button></header>
+        <header class="cash-modal__header"><div><h2 id="cash-modal-title">Registrar Cobro</h2><p>{{ selectedCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" @click="selectedCompany = null"><X :size="18" /></button></header>
         <div class="cash-modal__body">
-          <fieldset class="cash-payment"><legend>Método de pago</legend><div><button v-for="method in ['💵 Efectivo', '🏦 Transf.', '▤ Cobrador']" :key="method" type="button" :class="{ 'cash-payment__option--active': paymentMethod === method.split(' ')[1] }" @click="paymentMethod = method.split(' ')[1]">{{ method }}</button></div></fieldset>
-          <label class="cash-amount">Monto a cobrar<input value="$ 3.500" readonly></label>
-          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>{{ selectedCompany[0].toLowerCase() }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany[2] }}</dd></div><div><dt>Concepto</dt><dd>Cuota mensual</dd></div><div><dt>Fecha</dt><dd>25/02/2026</dd></div></dl>
+          <fieldset class="cash-payment"><legend>Metodo de pago</legend><div><button v-for="method in [{ key: 'EFECTIVO', label: 'Efectivo' }, { key: 'TRANSFERENCIA', label: 'Transferencia' }, { key: 'COBRADOR', label: 'Cobrador' }]" :key="method.key" type="button" :class="{ 'cash-payment__option--active': paymentMethod === method.key }" @click="paymentMethod = method.key as MetodoPago">{{ method.label }}</button></div></fieldset>
+          <label class="cash-amount">Monto a cobrar<input :value="formatMoney(selectedCompany.montoCuota)" readonly></label>
+          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div><div><dt>Concepto</dt><dd>Cuota {{ formatDate(selectedCompany.periodo) }}</dd></div><div><dt>Vencimiento</dt><dd>{{ formatDate(selectedCompany.fechaVencimiento) }}</dd></div></dl>
+          <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
-        <footer class="cash-modal__footer"><button class="cash-modal__print" type="button"><Printer :size="14" /> Imprimir Recibo</button><button class="cash-modal__confirm" type="button" @click="selectedCompany = null">Confirmar Cobro</button></footer>
+        <footer class="cash-modal__footer"><button class="cash-modal__confirm" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
       </section>
     </div>
 
-    <div v-if="selectedHistory" class="cash-modal-layer" @click.self="selectedHistory = null">
+    <div v-if="historyBusy || selectedHistory || historyError" class="cash-modal-layer" @click.self="closeHistory">
       <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <header class="history-modal__header"><div><p>BITÁCORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory[1] }}</h2><span>{{ selectedHistory[0].toLowerCase() }} · {{ selectedHistory[3] }}</span></div><button type="button" aria-label="Cerrar" @click="selectedHistory = null"><X :size="18" /></button></header>
-        <div class="history-summary"><div><span>Estado actual</span><strong>Al día ✓</strong></div><div><span>Cuota Mensual</span><b>$3.500</b></div><div><span>Registros</span><b>8</b></div><em><LockKeyhole :size="11" /> Registro inmutable</em></div>
-        <div class="history-list"><article class="history-entry"><i class="history-entry__dot history-entry__dot--green" /><div><span class="history-entry__tag history-entry__tag--green">PAGO</span><strong>Cobro de cuota - Recibo #R-4890</strong><p>Efectivo · Operador: admin1</p><time>25 Feb, 2026</time></div><aside><b>+$3.500</b><span>Saldo: $0</span></aside></article><article class="history-entry"><i class="history-entry__dot history-entry__dot--red" /><div><span class="history-entry__tag history-entry__tag--red">CARGO</span><strong>Generación cuota mensual febrero</strong><p>Sistema automático</p><time>01 Feb, 2026</time></div><aside><b>-$3.500</b><span>Saldo: -$3.500</span></aside></article><article class="history-entry"><i class="history-entry__dot history-entry__dot--green" /><div><span class="history-entry__tag history-entry__tag--green">PAGO</span><strong>Cobro de cuota - Recibo #R-4310</strong><p>Transferencia · Operador: admin2</p><time>15 Ene, 2026</time></div><aside><b>+$3.500</b><span>Saldo: $0</span></aside></article><article class="history-entry"><i class="history-entry__dot history-entry__dot--green" /><div><span class="history-entry__tag history-entry__tag--blue">AJUSTE</span><strong>Ajuste de saldo a favor inicial</strong><p>Resolución de directiva</p><time>05 Ene, 2026</time></div><aside><b>+$1.200</b><span>Saldo: +$1.200</span></aside></article></div>
-        <footer class="history-modal__footer"><span>La bitácora refleja todas las operaciones sin excepción.</span><button type="button" @click="selectedHistory = null">Cerrar</button></footer>
+        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
+        <AppAlert v-if="historyError">{{ historyError }}</AppAlert>
+        <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
+        <template v-else-if="selectedHistory">
+          <div class="history-summary"><div><span>Estado actual</span><strong>{{ estadoMorosidadLabel[selectedHistory.estadoMorosidad] }}</strong></div><div><span>Registros</span><b>{{ selectedHistory.movimientos.length }}</b></div><em><LockKeyhole :size="11" /> Registro inmutable</em></div>
+          <div class="history-list"><article v-for="movement in selectedHistory.movimientos" :key="movement.cuotaId" class="history-entry"><i class="history-entry__dot" :class="movement.estadoCuota === 'PAGADA' ? 'history-entry__dot--green' : 'history-entry__dot--red'" /><div><span class="history-entry__tag" :class="movement.estadoCuota === 'PAGADA' ? 'history-entry__tag--green' : 'history-entry__tag--red'">{{ movement.estadoCuota === 'PAGADA' ? 'PAGO' : 'CARGO' }}</span><strong>{{ movement.estadoCuota === 'PAGADA' ? 'Cobro de cuota' : 'Cuota pendiente' }}</strong><p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p><time>{{ formatDate(movement.fechaCobro || movement.periodo) }}</time></div><aside><b>{{ movement.estadoCuota === 'PAGADA' ? '+' : '-' }}{{ formatMoney(movement.estadoCuota === 'PAGADA' ? movement.montoCobrado : movement.montoCuota) }}</b></aside></article><p v-if="!selectedHistory.movimientos.length" class="company-empty">No hay movimientos registrados.</p></div>
+        </template>
+        <footer class="history-modal__footer"><span>La bitacora refleja las cuotas y cobros registrados.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
     </div>
   </AdminShell>
