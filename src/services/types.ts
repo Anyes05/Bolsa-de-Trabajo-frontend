@@ -116,6 +116,28 @@ export type RegistrarCobroPayload = {
   observaciones?: string | null
 }
 
+export type Tarifa = {
+  id: number
+  periodo: string
+  montoBase: number
+  fechaVencimiento: string
+  createdAt: string
+}
+
+export type GuardarTarifaPayload = {
+  periodo: string
+  montoBase: number
+  fechaVencimiento: string
+}
+
+export type FacturacionGenerada = {
+  periodo: string
+  tarifaId: number
+  sociosActivos: number
+  cuotasGeneradas: number
+  cuotasExistentes: number
+}
+
 export type AuthResponse = {
   token: string
   email: string
