@@ -118,9 +118,7 @@ function formatDate(value: string | null | undefined) {
 }
 
 function canChargeCompany(company: CuentaCaja) {
-  return company.cuotaId != null
-    && (company.estadoCuota === 'PENDIENTE' || company.estadoCuota === 'FORZOSO')
-    && company.estadoMorosidad !== 'INACTIVO'
+  return company.estadoMorosidad !== 'INACTIVO'
 }
 
 function cuotaLabel(company: CuentaCaja) {
@@ -158,7 +156,7 @@ function paymentLabel(method: MetodoPago | null) {
     <p v-else-if="busy" class="company-empty">Cargando control de caja...</p>
     <p v-else-if="!companies.length" class="company-empty">No hay socios para mostrar.</p>
     <section v-else class="cash-table-card">
-      <div class="cash-table-wrap"><table class="cash-table"><thead><tr><th>N°</th><th>Razon social</th><th>BPS</th><th>Rubro</th><th>Telefono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody><tr v-for="company in companies" :key="company.socioId"><td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td><td class="cash-table__company">{{ company.razonSocial }}</td><td>{{ company.bps || '-' }}</td><td>{{ company.nombreRubro || '-' }}</td><td>{{ company.telefono || '-' }}</td><td><span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span></td><td class="cash-table__actions"><button v-if="canChargeCompany(company)" class="cash-charge" type="button" @click="openCharge(company)">+ Cobro</button><span v-else>{{ cuotaLabel(company) }}</span><button class="cash-history" type="button" @click="openHistory(company)">Historial</button></td></tr></tbody></table></div>
+      <div class="cash-table-wrap"><table class="cash-table"><thead><tr><th>N°</th><th>Razon social</th><th>BPS</th><th>Rubro</th><th>Telefono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody><tr v-for="company in companies" :key="company.socioId"><td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td><td class="cash-table__company">{{ company.razonSocial }}</td><td>{{ company.bps || '-' }}</td><td>{{ company.nombreRubro || '-' }}</td><td>{{ company.telefono || '-' }}</td><td><span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span></td><td class="cash-table__actions"><button v-if="canChargeCompany(company)" class="cash-charge" type="button" @click="openCharge(company)">+ Cobro</button><button class="cash-history" type="button" @click="openHistory(company)">Historial</button></td></tr></tbody></table></div>
     </section>
 
     <div v-if="selectedCompany" class="cash-modal-layer" @click.self="selectedCompany = null">
