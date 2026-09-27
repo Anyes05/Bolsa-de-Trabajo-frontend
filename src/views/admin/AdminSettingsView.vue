@@ -44,8 +44,8 @@ async function saveAmount() {
   successMessage.value = ''
   const numericAmount = Number(amount.value)
   const numericDueDay = Number(dueDay.value)
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0 || !Number.isInteger(numericDueDay) || numericDueDay < 1 || numericDueDay > 28) {
-    errorMessage.value = 'Ingrese un monto mayor a cero y un día de vencimiento entre 1 y 28.'
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0 || !Number.isInteger(numericDueDay) || numericDueDay < 1 || numericDueDay > 31) {
+    errorMessage.value = 'Ingrese un monto mayor a cero y un día de vencimiento entre 1 y 31.'
     return
   }
 
@@ -83,7 +83,7 @@ onMounted(loadTariffs)
     <div class="fee-settings">
       <section class="fee-panel fee-current">
         <div class="fee-current__intro"><h2>Tarifa anual</h2><p>Define el valor mensual de la cuota social para todo el año. Este monto se aplicará automáticamente a los socios activos al emitir cada mes.</p></div>
-        <div class="fee-config-fields"><label>Año<input v-model.number="year" type="number" min="2000" max="9999" @change="loadTariffs"></label><label>Día de vencimiento mensual<input v-model="dueDay" type="number" min="1" max="28" step="1"></label></div>
+        <div class="fee-config-fields"><label>Año<input v-model.number="year" type="number" min="2000" max="9999" @change="loadTariffs"></label><label>Día de vencimiento mensual<input v-model="dueDay" type="number" min="1" max="31" step="1"></label></div>
         <div class="fee-current__control"><label class="fee-input"><span>$</span><input v-model="amount" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente"></label><button class="fee-save" type="button" :disabled="saving || loading" @click="saveAmount"><Save :size="16" /> {{ saving ? 'Guardando...' : 'Guardar monto' }}</button></div>
         <p v-if="successMessage" class="fee-success"><CheckCircle2 :size="15" /> {{ successMessage }}</p>
         <p v-if="errorMessage" class="fee-warning"><AlertTriangle :size="15" /> {{ errorMessage }}</p>
