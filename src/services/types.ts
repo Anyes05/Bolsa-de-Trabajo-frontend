@@ -1,8 +1,8 @@
 export type Role = 'ADMIN' | 'SOCIO' | 'POSTULANTE'
 
-export type EstadoMorosidad = 'AL_DIA' | 'DEUDA_A_VENCER' | 'DEUDA_VENCIDA' | 'INACTIVO'
+export type EstadoMorosidad = 'AL_DIA' | 'DEUDA_2_MESES' | 'MOROSO' | 'INACTIVO'
 
-export type EstadoCuota = 'PENDIENTE' | 'PAGADA' | 'FORZOSO' | 'ANULADA'
+export type EstadoCuota = 'PENDIENTE' | 'PAGADO' | 'ANULADA'
 
 export type MetodoPago = 'EFECTIVO' | 'TRANSFERENCIA' | 'COBRADOR'
 

@@ -7,7 +7,7 @@ import { cajaService } from '../../services/cajaService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago } from '../../services/types'
 
-type CajaFilter = 'TODOS' | EstadoMorosidad
+type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
 const resumen = ref<CajaResumen | null>(null)
 const query = ref('')
@@ -25,7 +25,7 @@ const chargeError = ref('')
 const filters: Array<{ key: CajaFilter; label: string }> = [
   { key: 'TODOS', label: 'Todos' },
   { key: 'AL_DIA', label: 'Al dia' },
-  { key: 'DEUDA_VENCIDA', label: 'Pendiente' },
+  { key: 'DEUDA', label: 'En deuda' },
   { key: 'INACTIVO', label: 'Inactivo' },
 ]
 
@@ -39,7 +39,9 @@ const metrics = computed(() => [
 const companies = computed(() => {
   const term = query.value.trim().toLowerCase()
   return (resumen.value?.cuentas ?? []).filter((company) => {
-    const matchesFilter = filter.value === 'TODOS' || company.estadoMorosidad === filter.value
+    const matchesFilter = filter.value === 'TODOS'
+      || (filter.value === 'DEUDA' && (company.estadoMorosidad === 'DEUDA_2_MESES' || company.estadoMorosidad === 'MOROSO'))
+      || company.estadoMorosidad === filter.value
     const matchesQuery = !term || [company.razonSocial, company.bps, company.nombreRubro, company.telefono]
       .some((value) => (value ?? '').toLowerCase().includes(term))
     return matchesFilter && matchesQuery
@@ -47,7 +49,7 @@ const companies = computed(() => {
 })
 
 const canCharge = computed(() => selectedCompany.value?.cuotaId != null
-  && (selectedCompany.value.estadoCuota === 'PENDIENTE' || selectedCompany.value.estadoCuota === 'FORZOSO')
+  && selectedCompany.value.estadoCuota === 'PENDIENTE'
   && selectedCompany.value.estadoMorosidad !== 'INACTIVO')
 
 onMounted(loadResumen)
@@ -123,7 +125,7 @@ function canChargeCompany(company: CuentaCaja) {
 
 function cuotaLabel(company: CuentaCaja) {
   if (!company.cuotaId) return 'Sin cuota emitida'
-  if (company.estadoCuota === 'PAGADA') return 'Pagada'
+  if (company.estadoCuota === 'PAGADO') return 'Pagada'
   if (company.estadoCuota === 'ANULADA') return 'Anulada'
   return 'Pendiente'
 }
@@ -179,7 +181,7 @@ function paymentLabel(method: MetodoPago | null) {
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
           <div class="history-summary"><div><span>Estado actual</span><strong>{{ estadoMorosidadLabel[selectedHistory.estadoMorosidad] }}</strong></div><div><span>Registros</span><b>{{ selectedHistory.movimientos.length }}</b></div><em><LockKeyhole :size="11" /> Registro inmutable</em></div>
-          <div class="history-list"><article v-for="movement in selectedHistory.movimientos" :key="movement.cuotaId" class="history-entry"><i class="history-entry__dot" :class="movement.estadoCuota === 'PAGADA' ? 'history-entry__dot--green' : 'history-entry__dot--red'" /><div><span class="history-entry__tag" :class="movement.estadoCuota === 'PAGADA' ? 'history-entry__tag--green' : 'history-entry__tag--red'">{{ movement.estadoCuota === 'PAGADA' ? 'PAGO' : 'CARGO' }}</span><strong>{{ movement.estadoCuota === 'PAGADA' ? 'Cobro de cuota' : 'Cuota pendiente' }}</strong><p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p><time>{{ formatDate(movement.fechaCobro || movement.periodo) }}</time></div><aside><b>{{ movement.estadoCuota === 'PAGADA' ? '+' : '-' }}{{ formatMoney(movement.estadoCuota === 'PAGADA' ? movement.montoCobrado : movement.montoCuota) }}</b></aside></article><p v-if="!selectedHistory.movimientos.length" class="company-empty">No hay movimientos registrados.</p></div>
+          <div class="history-list"><article v-for="movement in selectedHistory.movimientos" :key="movement.cuotaId" class="history-entry"><i class="history-entry__dot" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__dot--green' : 'history-entry__dot--red'" /><div><span class="history-entry__tag" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__tag--green' : 'history-entry__tag--red'">{{ movement.estadoCuota === 'PAGADO' ? 'PAGO' : 'CARGO' }}</span><strong>{{ movement.estadoCuota === 'PAGADO' ? 'Cobro de cuota' : 'Cuota pendiente' }}</strong><p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p><time>{{ formatDate(movement.fechaCobro || movement.periodo) }}</time></div><aside><b>{{ movement.estadoCuota === 'PAGADO' ? '+' : '-' }}{{ formatMoney(movement.estadoCuota === 'PAGADO' ? movement.montoCobrado : movement.montoCuota) }}</b></aside></article><p v-if="!selectedHistory.movimientos.length" class="company-empty">No hay movimientos registrados.</p></div>
         </template>
         <footer class="history-modal__footer"><span>La bitacora refleja las cuotas y cobros registrados.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
       </section>

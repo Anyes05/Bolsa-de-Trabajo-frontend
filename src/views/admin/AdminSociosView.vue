@@ -252,8 +252,8 @@ async function toggleActive(socio: SocioRecord) {
           <label>Estado de cuenta
             <select v-model="editForm.estadoMorosidad" class="new-company-select">
               <option value="AL_DIA">Al día</option>
-              <option value="DEUDA_A_VENCER">Deuda a vencer</option>
-              <option value="DEUDA_VENCIDA">Deuda vencida</option>
+              <option value="DEUDA_2_MESES">Deuda hasta 2 meses</option>
+              <option value="MOROSO">Moroso</option>
               <option value="INACTIVO">Inactivo</option>
             </select>
           </label>

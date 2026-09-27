@@ -43,13 +43,13 @@ export const socioService = {
 
 export const estadoMorosidadLabel: Record<EstadoMorosidad, string> = {
   AL_DIA: 'Al día',
-  DEUDA_A_VENCER: 'Deuda a vencer',
-  DEUDA_VENCIDA: 'Deuda vencida',
+  DEUDA_2_MESES: 'Deuda hasta 2 meses',
+  MOROSO: 'Moroso',
   INACTIVO: 'Inactivo',
 }
 
 export function estadoMorosidadTone(estado: EstadoMorosidad | null | undefined) {
   if (estado === 'AL_DIA') return 'green'
-  if (estado === 'DEUDA_A_VENCER') return 'orange'
+  if (estado === 'DEUDA_2_MESES') return 'orange'
   return 'red'
 }
