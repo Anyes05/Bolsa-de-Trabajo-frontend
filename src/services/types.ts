@@ -118,16 +118,16 @@ export type RegistrarCobroPayload = {
 
 export type Tarifa = {
   id: number
-  periodo: string
+  anio: number
   montoBase: number
-  fechaVencimiento: string
+  diaVencimiento: number
   createdAt: string
 }
 
 export type GuardarTarifaPayload = {
-  periodo: string
+  anio: number
   montoBase: number
-  fechaVencimiento: string
+  diaVencimiento: number
 }
 
 export type FacturacionGenerada = {
