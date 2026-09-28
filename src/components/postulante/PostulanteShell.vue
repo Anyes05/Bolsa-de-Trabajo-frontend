@@ -9,7 +9,7 @@ import { authService } from '../../services/authService'
 defineProps<{
   title: string
   subtitle: string
-  activeSection: 'ofertas' | 'perfiles'
+  activeSection: 'ofertas' | 'perfiles' | 'mi-perfil'
 }>()
 
 const auth = useAuthStore()
@@ -52,7 +52,14 @@ function logout() {
           :class="{ 'postulante-nav__item--active': activeSection === 'perfiles' }"
           to="/postulante/mis-perfiles"
         >
-          Mis Perfiles
+          Mis Perfiles Profesionales
+        </RouterLink>
+        <RouterLink
+          class="postulante-nav__item"
+          :class="{ 'postulante-nav__item--active': activeSection === 'mi-perfil' }"
+          to="/postulante/mi-perfil"
+        >
+          Mi perfil
         </RouterLink>
       </nav>
       <small class="postulante-sidebar__footer">© 2026 CCISJ · San José</small>

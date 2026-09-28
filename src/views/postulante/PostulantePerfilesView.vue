@@ -26,6 +26,19 @@ const availabilityLabel: Record<ProfessionalProfile['disponibilidadHoraria'], st
   INDEFINIDO: 'Cualquier horario',
 }
 
+function blankProfile(): ProfessionalProfile {
+  return {
+    id: 0,
+    nombre: '',
+    disponibilidadHoraria: 'FULL_TIME',
+    tieneVehiculo: false,
+    ultimoEmpleo: null,
+    descripcionExperiencia: null,
+    visible: true,
+    rubros: [],
+  }
+}
+
 function copyProfile(profile: ProfessionalProfile) {
   return { ...profile, rubros: [...profile.rubros] }
 }
@@ -58,6 +71,11 @@ function openEditor(profile: ProfessionalProfile) {
   editing.value = copyProfile(profile)
 }
 
+function openNewProfile() {
+  selectedFile.value = null
+  editing.value = blankProfile()
+}
+
 function toggleSector(sector: string) {
   if (!editing.value) return
   editing.value.rubros = editing.value.rubros.includes(sector)
@@ -69,9 +87,14 @@ async function saveProfile() {
   if (!editing.value) return
   saving.value = true
   try {
-    const updated = await postulanteService.updateProfile(editing.value, auth.token ?? undefined)
-    profiles.value = profiles.value.map((profile) => profile.id === updated.id ? updated : profile)
-    editing.value = copyProfile(updated)
+    const { id, ...profile } = editing.value
+    const updated = id
+      ? await postulanteService.updateProfile(editing.value, auth.token ?? undefined)
+      : await postulanteService.createProfile(profile, auth.token ?? undefined)
+    profiles.value = id
+      ? profiles.value.map((current) => current.id === updated.id ? updated : current)
+      : [...profiles.value, updated]
+    editing.value = null
     messageTone.value = 'success'
     message.value = 'Perfil profesional actualizado.'
   } catch (error) {
@@ -79,6 +102,18 @@ async function saveProfile() {
     message.value = error instanceof Error ? error.message : 'No se pudo guardar el perfil.'
   } finally {
     saving.value = false
+  }
+}
+
+async function setVisibility(profile: ProfessionalProfile, visible: boolean) {
+  try {
+    const updated = await postulanteService.updateProfile({ ...profile, visible }, auth.token ?? undefined)
+    profiles.value = profiles.value.map((current) => current.id === updated.id ? updated : current)
+    messageTone.value = 'success'
+    message.value = visible ? 'Perfil visible en la bolsa.' : 'Perfil oculto de la bolsa.'
+  } catch (error) {
+    messageTone.value = 'error'
+    message.value = error instanceof Error ? error.message : 'No se pudo actualizar la visibilidad.'
   }
 }
 
@@ -144,6 +179,7 @@ onMounted(load)
     <section class="postulante-profiles">
       <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
       <AppAlert tone="info">Administra tus perfiles profesionales y los PDFs asociados a cada uno.</AppAlert>
+      <div class="postulante-profiles__toolbar"><AppButton @click="openNewProfile">Agregar perfil profesional</AppButton></div>
       <p v-if="loading">Cargando perfiles...</p>
 
       <article v-for="profile in profiles" :key="profile.id" class="profile-card-postulante">
@@ -152,7 +188,10 @@ onMounted(load)
             <h2>{{ profile.nombre }}</h2>
             <span class="profile-card-postulante__visibility" :class="profile.visible ? 'profile-card-postulante__visibility--visible' : 'profile-card-postulante__visibility--hidden'">{{ profile.visible ? 'Perfil visible' : 'Perfil oculto' }}</span>
           </div>
-          <AppButton variant="secondary" @click="openEditor(profile)">Editar</AppButton>
+          <div class="profile-card-postulante__actions">
+            <AppButton variant="secondary" @click="setVisibility(profile, !profile.visible)">{{ profile.visible ? 'Ocultar perfil' : 'Hacer visible' }}</AppButton>
+            <AppButton variant="secondary" @click="openEditor(profile)">Editar</AppButton>
+          </div>
         </header>
         <div class="profile-card-postulante__details">
           <p><strong>Habilidades y áreas de interés:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro">{{ rubro }}</span></span></p>
@@ -185,7 +224,7 @@ onMounted(load)
           <label>Detalle del último empleo *<input v-model="editing.ultimoEmpleo"></label>
           <label>Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
           <label class="modal__checkbox"><input v-model="editing.visible" type="checkbox"> Perfil visible para socios</label>
-          <section class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton></div></section>
+          <section v-if="editing.id" class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton></div></section>
         </div>
         <footer class="modal__actions"><AppButton variant="secondary" @click="editing = null">Cancelar</AppButton><AppButton :loading="saving" @click="saveProfile">Guardar cambios</AppButton></footer>
       </section>

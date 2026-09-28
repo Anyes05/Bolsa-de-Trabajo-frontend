@@ -192,6 +192,15 @@ export type ProfessionalProfile = {
   rubros: string[]
 }
 
+export type PersonalProfile = {
+  nombreCompleto: string
+  cedulaIdentidad: string | null
+  telefono: string | null
+  zonaResidencia: string | null
+  email: string
+  fotoUrl: string | null
+}
+
 export type CvDownloadResponse = {
   url: string
 }

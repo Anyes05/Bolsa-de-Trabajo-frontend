@@ -2699,6 +2699,26 @@ button:disabled {
 .profile-card-postulante__skills button { background: #edf1f5; border: 0; border-radius: 999px; color: #607084; font-size: 12px; padding: 5px 9px; }
 .profile-card-postulante__skills .profile-chip--selected { background: #e6f6ed; color: #078f45; }
 
+.postulante-profiles__toolbar { display: flex; justify-content: flex-end; }
+
+.personal-profile__form {
+  background: #fff;
+  border: 1px solid #e4ebf1;
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+  padding: 24px;
+}
+
+.personal-profile__form > label { display: grid; font-size: 13px; font-weight: 700; gap: 7px; }
+.personal-profile__form input { border: 1px solid #dfe3e8; border-radius: 8px; padding: 9px 10px; }
+.personal-profile__form footer { display: flex; justify-content: end; }
+.personal-profile__photo { align-items: center; display: flex; gap: 16px; }
+.personal-profile__photo img, .personal-profile__photo > span { background: #e6f6ed; border-radius: 50%; color: #078f45; height: 74px; object-fit: cover; width: 74px; display: grid; place-items: center; font-size: 23px; font-weight: 700; }
+.personal-profile__photo label { color: #078f45; cursor: pointer; font-weight: 700; }
+.personal-profile__photo input { display: none; }
+
 /* Block: modal */
 .modal {
   position: fixed;

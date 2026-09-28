@@ -135,6 +135,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['POSTULANTE'] },
     },
     {
+      path: '/postulante/mi-perfil',
+      name: 'postulante-mi-perfil',
+      component: () => import('../views/postulante/PostulanteMiPerfilView.vue'),
+      meta: { requiresAuth: true, roles: ['POSTULANTE'] },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
