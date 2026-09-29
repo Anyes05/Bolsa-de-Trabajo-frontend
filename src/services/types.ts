@@ -75,6 +75,8 @@ export type CuentaCaja = {
   cuotaId: number | null
   estadoCuota: EstadoCuota | null
   montoCuota: number | null
+  montoTimbre: number | null
+  timbreRecurrente: boolean
   periodo: string | null
   fechaVencimiento: string | null
 }
@@ -93,6 +95,8 @@ export type MovimientoCaja = {
   fechaVencimiento: string
   estadoCuota: EstadoCuota
   montoCuota: number
+  montoTimbre: number
+  timbreRecurrente: boolean
   montoCobrado: number | null
   fechaCobro: string | null
   metodoPago: MetodoPago | null
@@ -112,6 +116,8 @@ export type HistorialCaja = {
 export type RegistrarCobroPayload = {
   cuotaId: number
   metodoPago: MetodoPago
+  montoTimbre?: number | null
+  timbreRecurrente?: boolean | null
   nroCobranzaExterno?: string | null
   observaciones?: string | null
 }
