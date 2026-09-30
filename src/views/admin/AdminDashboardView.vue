@@ -5,7 +5,7 @@ import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { cajaService } from '../../services/cajaService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
-import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago } from '../../services/types'
+import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, MovimientoCaja } from '../../services/types'
 
 type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
@@ -21,6 +21,8 @@ const historyError = ref('')
 const paymentMethod = ref<MetodoPago>('EFECTIVO')
 const timbreAmount = ref('')
 const timbreRecurrent = ref(false)
+const externalReference = ref('')
+const paymentNotes = ref('')
 const chargeBusy = ref(false)
 const chargeError = ref('')
 
@@ -80,7 +82,31 @@ function openCharge(company: CuentaCaja) {
   paymentMethod.value = 'EFECTIVO'
   timbreAmount.value = company.montoTimbre ? String(company.montoTimbre) : ''
   timbreRecurrent.value = company.timbreRecurrente
+  externalReference.value = ''
+  paymentNotes.value = ''
   chargeError.value = ''
+}
+
+function openChargeFromHistory(movement: MovimientoCaja) {
+  const history = selectedHistory.value
+  if (!history || movement.estadoCuota !== 'PENDIENTE') return
+  const company: CuentaCaja = {
+    socioId: history.socioId,
+    bps: history.bps,
+    razonSocial: history.razonSocial,
+    nombreRubro: history.nombreRubro,
+    telefono: null,
+    estadoMorosidad: history.estadoMorosidad,
+    cuotaId: movement.cuotaId,
+    estadoCuota: movement.estadoCuota,
+    montoCuota: movement.montoCuota,
+    montoTimbre: movement.montoTimbre,
+    timbreRecurrente: movement.timbreRecurrente,
+    periodo: movement.periodo,
+    fechaVencimiento: movement.fechaVencimiento,
+  }
+  closeHistory()
+  openCharge(company)
 }
 
 async function openHistory(company: CuentaCaja) {
@@ -115,6 +141,8 @@ async function confirmCharge() {
       metodoPago: paymentMethod.value,
       montoTimbre: timbreValue.value,
       timbreRecurrente: timbreValue.value > 0 && timbreRecurrent.value,
+      nroCobranzaExterno: externalReference.value.trim() || null,
+      observaciones: paymentNotes.value.trim() || null,
     })
     selectedCompany.value = null
     await loadResumen()
@@ -137,7 +165,7 @@ function formatDate(value: string | null | undefined) {
 }
 
 function canChargeCompany(company: CuentaCaja) {
-  return company.estadoMorosidad !== 'INACTIVO'
+  return company.cuotaId != null && company.estadoCuota === 'PENDIENTE' && company.estadoMorosidad !== 'INACTIVO'
 }
 
 function cuotaLabel(company: CuentaCaja) {
@@ -186,6 +214,8 @@ function paymentLabel(method: MetodoPago | null) {
           <label class="cash-amount">Monto de cuota<input :value="formatMoney(selectedCompany.montoCuota)" readonly></label>
           <fieldset class="cash-timbre"><legend>Timbre / gasto extra</legend><label>Importe<input v-model="timbreAmount" type="number" min="0" step="0.01" placeholder="0"></label><label class="cash-timbre__repeat"><input v-model="timbreRecurrent" type="checkbox" :disabled="timbreValue === 0"> Mantener para el próximo mes</label></fieldset>
           <label class="cash-amount">Total a cobrar<input :value="formatMoney(totalToCharge)" readonly></label>
+          <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" maxlength="80" placeholder="Opcional"></label>
+          <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" maxlength="2000" placeholder="Opcional"></textarea></label>
           <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div><div><dt>Concepto</dt><dd>Cuota {{ formatDate(selectedCompany.periodo) }}</dd></div><div><dt>Vencimiento</dt><dd>{{ formatDate(selectedCompany.fechaVencimiento) }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
@@ -200,7 +230,7 @@ function paymentLabel(method: MetodoPago | null) {
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
           <div class="history-summary"><div><span>Estado actual</span><strong>{{ estadoMorosidadLabel[selectedHistory.estadoMorosidad] }}</strong></div><div><span>Registros</span><b>{{ selectedHistory.movimientos.length }}</b></div><em><LockKeyhole :size="11" /> Registro inmutable</em></div>
-          <div class="history-list"><article v-for="movement in selectedHistory.movimientos" :key="movement.cuotaId" class="history-entry"><i class="history-entry__dot" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__dot--green' : 'history-entry__dot--red'" /><div><span class="history-entry__tag" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__tag--green' : 'history-entry__tag--red'">{{ movement.estadoCuota === 'PAGADO' ? 'PAGO' : 'CARGO' }}</span><strong>{{ movement.estadoCuota === 'PAGADO' ? 'Cobro de cuota' : 'Cuota pendiente' }}</strong><p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}<template v-if="movement.montoTimbre > 0"> · Timbre {{ formatMoney(movement.montoTimbre) }}<template v-if="movement.timbreRecurrente"> (continúa)</template></template></p><time>{{ formatDate(movement.fechaCobro || movement.periodo) }}</time></div><aside><b>{{ movement.estadoCuota === 'PAGADO' ? '+' : '-' }}{{ formatMoney(movement.estadoCuota === 'PAGADO' ? movement.montoCobrado : movement.montoCuota) }}</b></aside></article><p v-if="!selectedHistory.movimientos.length" class="company-empty">No hay movimientos registrados.</p></div>
+          <div class="history-list"><article v-for="movement in selectedHistory.movimientos" :key="movement.cuotaId" class="history-entry"><i class="history-entry__dot" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__dot--green' : 'history-entry__dot--red'" /><div><span class="history-entry__tag" :class="movement.estadoCuota === 'PAGADO' ? 'history-entry__tag--green' : 'history-entry__tag--red'">{{ movement.estadoCuota === 'PAGADO' ? 'PAGO' : 'CARGO' }}</span><strong>{{ movement.estadoCuota === 'PAGADO' ? 'Cobro de cuota' : 'Cuota pendiente' }}</strong><p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}<template v-if="movement.montoTimbre > 0"> · Timbre {{ formatMoney(movement.montoTimbre) }}<template v-if="movement.timbreRecurrente"> (continúa)</template></template></p><time>{{ formatDate(movement.fechaCobro || movement.periodo) }}</time></div><aside><b>{{ movement.estadoCuota === 'PAGADO' ? '+' : '-' }}{{ formatMoney(movement.estadoCuota === 'PAGADO' ? movement.montoCobrado : movement.montoCuota) }}</b><button v-if="movement.estadoCuota === 'PENDIENTE'" class="history-entry__pay" type="button" @click="openChargeFromHistory(movement)">Cobrar</button></aside></article><p v-if="!selectedHistory.movimientos.length" class="company-empty">No hay movimientos registrados.</p></div>
         </template>
         <footer class="history-modal__footer"><span>La bitacora refleja las cuotas y cobros registrados.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
