@@ -44,7 +44,7 @@ const companies = computed(() => {
   const term = query.value.trim().toLowerCase()
   return (resumen.value?.cuentas ?? []).filter((company) => {
     const matchesFilter = filter.value === 'TODOS'
-      || (filter.value === 'DEUDA' && (company.estadoMorosidad === 'DEUDA_2_MESES' || company.estadoMorosidad === 'MOROSO'))
+      || (filter.value === 'DEUDA' && company.estadoMorosidad === 'MOROSO')
       || company.estadoMorosidad === filter.value
     const matchesQuery = !term || [company.razonSocial, company.bps, company.nombreRubro, company.telefono]
       .some((value) => (value ?? '').toLowerCase().includes(term))

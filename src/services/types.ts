@@ -1,6 +1,6 @@
 export type Role = 'ADMIN' | 'SOCIO' | 'POSTULANTE'
 
-export type EstadoMorosidad = 'AL_DIA' | 'DEUDA_2_MESES' | 'MOROSO' | 'INACTIVO'
+export type EstadoMorosidad = 'AL_DIA' | 'MOROSO' | 'INACTIVO'
 
 export type EstadoCuota = 'PENDIENTE' | 'PAGADO' | 'ANULADA'
 
