@@ -207,6 +207,37 @@ export type PersonalProfile = {
   fotoUrl: string | null
 }
 
+export type OfferStatus = 'ACTIVA' | 'PAUSADA' | 'CERRADA' | 'VENCIDA'
+export type Availability = 'FULL_TIME' | 'PART_TIME' | 'INDEFINIDO'
+export type ContractType = 'EFECTIVO' | 'TEMPORARIA' | 'ZAFRA' | 'PASANTIA'
+
+export type JobOffer = {
+  id: number
+  socioId: number
+  socioNombre: string
+  rubroId: number
+  rubro: string
+  titulo: string
+  cargo: string | null
+  descripcion: string
+  requisitos: string | null
+  zona: string | null
+  salario: string | null
+  tipoContrato: ContractType | null
+  disponibilidadHoraria: Availability
+  vacantes: number
+  fechaPublicacion: string
+  fechaCierre: string | null
+  estado: OfferStatus
+  postulaciones: number
+}
+
+export type JobOfferPayload = Omit<JobOffer, 'id' | 'socioId' | 'socioNombre' | 'rubro' | 'fechaPublicacion' | 'estado' | 'postulaciones'> & {
+  socioId?: number | null
+}
+
+export type ActiveSocioOption = { id: number; razonSocial: string }
+
 export type CvDownloadResponse = {
   url: string
 }
