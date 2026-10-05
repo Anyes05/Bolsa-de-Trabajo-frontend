@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import AppButton from '../../components/AppButton.vue'
+import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, Pause, Play, Plus, Search, UsersRound, X } from 'lucide-vue-next'
+import AdminShell from '../../components/admin/AdminShell.vue'
+import AppAlert from '../../components/AppAlert.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import { offerService } from '../../services/offerService'
 import type { ActiveSocioOption, JobOffer, JobOfferPayload } from '../../services/types'
@@ -9,7 +11,6 @@ const offers = ref<JobOffer[]>([])
 const sectors = ref<{ id: number; nombreRubro: string }[]>([])
 const socios = ref<ActiveSocioOption[]>([])
 const loading = ref(false)
-const saving = ref(false)
 const error = ref('')
 const modalOpen = ref(false)
 const selectedOffer = ref<JobOffer | null>(null)
@@ -51,7 +52,6 @@ function openEdit(offer: JobOffer) {
 }
 
 async function saveOffer(payload: JobOfferPayload) {
-  saving.value = true
   error.value = ''
   try {
     if (selectedOffer.value) await offerService.update(selectedOffer.value.id, payload)
@@ -60,8 +60,6 @@ async function saveOffer(payload: JobOfferPayload) {
     await loadData()
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : 'No se pudo guardar la oferta.'
-  } finally {
-    saving.value = false
   }
 }
 
@@ -86,49 +84,59 @@ onMounted(loadData)
 </script>
 
 <template>
-  <section class="admin-offers">
-    <header class="page-heading">
-      <div>
-        <p class="eyebrow">GESTIÓN DE EMPLEO</p>
-        <h1>Ofertas laborales</h1>
-        <p class="subtitle">Administrá las vacantes publicadas por los socios.</p>
+  <AdminShell active="ofertas" title="Ofertas Laborales" subtitle="Vacantes publicadas por los socios de San José">
+    <template #header-actions>
+      <button class="offers-publish" type="button" @click="openCreate"><Plus :size="15" /> Nueva oferta</button>
+    </template>
+
+    <AppAlert v-if="error">{{ error }}</AppAlert>
+
+    <div class="admin-toolbar">
+      <label class="admin-search">
+        <Search :size="16" aria-hidden="true" />
+        <input v-model="search" type="search" placeholder="Buscar oferta o socio..." aria-label="Buscar oferta o socio">
+      </label>
+      <div class="cash-filters" aria-label="Filtrar ofertas por estado">
+        <button
+          v-for="filter in ['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA']"
+          :key="filter"
+          class="cash-filter"
+          :class="{ 'cash-filter--active': statusFilter === filter }"
+          type="button"
+          @click="statusFilter = filter"
+        >{{ filter === 'TODAS' ? 'Todas' : statusLabels[filter as JobOffer['estado']] }}</button>
       </div>
-      <AppButton variant="primary" @click="openCreate">Nueva oferta</AppButton>
-    </header>
-
-    <p v-if="error" class="feedback error" role="alert">{{ error }}</p>
-
-    <div class="toolbar">
-      <input v-model="search" type="search" placeholder="Buscar oferta o socio" aria-label="Buscar oferta o socio">
-      <select v-model="statusFilter" aria-label="Filtrar por estado">
-        <option value="TODAS">Todos los estados</option>
-        <option value="ACTIVA">Activas</option>
-        <option value="PAUSADA">Pausadas</option>
-        <option value="CERRADA">Cerradas</option>
-        <option value="VENCIDA">Vencidas</option>
-      </select>
     </div>
 
-    <p v-if="loading" class="feedback">Cargando ofertas...</p>
-    <p v-else-if="!filteredOffers.length" class="feedback">No hay ofertas para mostrar.</p>
-    <div v-else class="offer-list">
-      <article v-for="offer in filteredOffers" :key="offer.id" class="offer-row">
-        <div class="offer-main">
-          <div class="offer-title-line">
-            <h2>{{ offer.titulo }}</h2>
-            <span class="status" :class="`status-${offer.estado.toLowerCase()}`">{{ statusLabels[offer.estado] }}</span>
+    <p v-if="loading" class="company-empty">Cargando ofertas...</p>
+    <p v-else-if="!filteredOffers.length" class="company-empty">No hay ofertas para mostrar.</p>
+    <section v-else class="offers-list">
+      <article v-for="offer in filteredOffers" :key="offer.id" class="offer-card">
+        <div class="offer-card__content">
+          <div class="offer-card__title">
+            <h3>{{ offer.titulo }}</h3>
+            <span class="offer-status" :class="`offer-status--${offer.estado === 'VENCIDA' ? 'cerrada' : offer.estado.toLowerCase()}`">{{ statusLabels[offer.estado] }}</span>
+            <small>{{ offer.socioNombre }} · {{ offer.rubro }}</small>
           </div>
-          <p class="partner">{{ offer.socioNombre }} · {{ offer.rubro }}</p>
-          <p class="meta">{{ offer.zona || 'Zona no especificada' }} · {{ availabilityLabels[offer.disponibilidadHoraria] }} · {{ offer.fechaCierre || 'Vigencia indefinida' }}</p>
+          <p class="offer-card__meta">
+            <span><MapPin :size="12" /> {{ offer.zona || 'Zona no especificada' }}</span>
+            <span><BriefcaseBusiness :size="12" /> {{ availabilityLabels[offer.disponibilidadHoraria] }}</span>
+            <span><CalendarDays :size="12" /> {{ offer.fechaCierre || 'Vigencia indefinida' }}</span>
+            <span><UsersRound :size="12" /> {{ offer.vacantes }} {{ offer.vacantes === 1 ? 'vacante' : 'vacantes' }}</span>
+          </p>
+          <p>{{ offer.descripcion }}</p>
+          <RouterLink class="offer-applications" :to="{ name: 'admin-offer-applications', params: { offerId: offer.id } }">
+            {{ offer.postulaciones }} {{ offer.postulaciones === 1 ? 'postulación' : 'postulaciones' }}
+          </RouterLink>
         </div>
-        <div class="actions">
-          <button class="icon-button" type="button" title="Editar oferta" aria-label="Editar oferta" :disabled="offer.estado === 'CERRADA' || offer.estado === 'VENCIDA'" @click="openEdit(offer)">Editar</button>
-          <button v-if="offer.estado === 'ACTIVA'" class="icon-button" type="button" @click="changeStatus(offer, 'PAUSADA')">Pausar</button>
-          <button v-if="offer.estado === 'PAUSADA'" class="icon-button" type="button" @click="changeStatus(offer, 'ACTIVA')">Reanudar</button>
-          <button v-if="offer.estado === 'ACTIVA' || offer.estado === 'PAUSADA'" class="icon-button danger" type="button" @click="changeStatus(offer, 'CERRADA')">Cerrar</button>
-        </div>
+        <aside class="offer-card__actions">
+          <button class="offer-edit" type="button" :disabled="offer.estado === 'CERRADA' || offer.estado === 'VENCIDA'" @click="openEdit(offer)"><Pencil :size="12" /> Editar</button>
+          <button v-if="offer.estado === 'ACTIVA'" class="offer-action" type="button" @click="changeStatus(offer, 'PAUSADA')"><Pause :size="12" /> Pausar</button>
+          <button v-if="offer.estado === 'PAUSADA'" class="offer-action" type="button" @click="changeStatus(offer, 'ACTIVA')"><Play :size="12" /> Reanudar</button>
+          <button v-if="offer.estado === 'ACTIVA' || offer.estado === 'PAUSADA'" class="offer-action" type="button" @click="changeStatus(offer, 'CERRADA')"><X :size="12" /> Cerrar</button>
+        </aside>
       </article>
-    </div>
+    </section>
 
     <OfferFormModal
       v-if="modalOpen"
@@ -140,29 +148,5 @@ onMounted(loadData)
       @close="modalOpen = false"
       @save="saveOffer"
     />
-  </section>
+  </AdminShell>
 </template>
-
-<style scoped>
-.admin-offers { display: grid; gap: 1.25rem; }
-.page-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-.eyebrow { margin: 0 0 .3rem; color: #47755b; font-size: .72rem; font-weight: 700; letter-spacing: .08em; }
-h1 { margin: 0; color: #173e2c; font-size: 1.65rem; }
-.subtitle, .partner, .meta { margin: .35rem 0 0; color: #64736a; }
-.toolbar { display: flex; gap: .75rem; }
-.toolbar input, .toolbar select { min-height: 2.6rem; padding: .5rem .75rem; border: 1px solid #d4ddd6; border-radius: 6px; background: white; color: #26372d; }
-.toolbar input { flex: 1; }
-.offer-list { border-top: 1px solid #dce4dd; }
-.offer-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.1rem .25rem; border-bottom: 1px solid #dce4dd; }
-.offer-title-line, .actions { display: flex; align-items: center; gap: .65rem; }
-h2 { margin: 0; color: #20382a; font-size: 1rem; }
-.status { padding: .2rem .5rem; border-radius: 999px; background: #edf3ee; color: #31563e; font-size: .75rem; }
-.status-pausada { background: #fff4df; color: #805a12; }
-.status-cerrada, .status-vencida { background: #f2eeee; color: #685454; }
-.icon-button { border: 0; background: transparent; color: #326544; cursor: pointer; font: inherit; font-size: .85rem; }
-.icon-button:disabled { color: #9ca7a0; cursor: not-allowed; }
-.danger { color: #9b4242; }
-.feedback { margin: 0; padding: .75rem 0; color: #607067; }
-.error { color: #a33d3d; }
-@media (max-width: 760px) { .page-heading, .offer-row { align-items: flex-start; flex-direction: column; } .toolbar { flex-direction: column; } .actions { flex-wrap: wrap; } }
-</style>
