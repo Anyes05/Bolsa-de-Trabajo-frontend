@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { BriefcaseBusiness, CalendarDays, MapPin, Pencil, Pause, Play, Plus, Search, UsersRound, X } from 'lucide-vue-next'
+import { Pencil, Pause, Play, Plus, Search, X } from 'lucide-vue-next'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
@@ -110,30 +110,44 @@ onMounted(loadData)
 
     <p v-if="loading" class="company-empty">Cargando ofertas...</p>
     <p v-else-if="!filteredOffers.length" class="company-empty">No hay ofertas para mostrar.</p>
-    <section v-else class="offers-list">
-      <article v-for="offer in filteredOffers" :key="offer.id" class="offer-card">
-        <div class="offer-card__content">
-          <div class="offer-card__title">
-            <h3>{{ offer.titulo }}</h3>
-            <span class="offer-status" :class="`offer-status--${offer.estado === 'VENCIDA' ? 'cerrada' : offer.estado.toLowerCase()}`">{{ statusLabels[offer.estado] }}</span>
-            <small>{{ offer.socioNombre }} · {{ offer.rubro }}</small>
-          </div>
-          <p class="offer-card__meta">
-            <span><MapPin :size="12" /> {{ offer.zona || 'Zona no especificada' }}</span>
-            <span><BriefcaseBusiness :size="12" /> {{ availabilityLabels[offer.disponibilidadHoraria] }}</span>
-            <span><CalendarDays :size="12" /> {{ offer.fechaCierre || 'Vigencia indefinida' }}</span>
-            <span><UsersRound :size="12" /> {{ offer.vacantes }} {{ offer.vacantes === 1 ? 'vacante' : 'vacantes' }}</span>
+    <section v-else class="socio-offers" aria-label="Ofertas laborales">
+      <article
+        v-for="offer in filteredOffers"
+        :key="offer.id"
+        class="socio-offer-card"
+        :class="`socio-offer-card--${offer.estado === 'VENCIDA' ? 'cerrada' : offer.estado.toLowerCase()}`"
+      >
+        <div class="socio-offer-card__body">
+          <header class="socio-offer-card__header">
+            <h2>{{ offer.titulo }}</h2>
+            <span class="socio-offer-card__status">{{ statusLabels[offer.estado] }}</span>
+          </header>
+          <p class="socio-offer-card__meta">
+            <span>{{ offer.socioNombre }} · {{ offer.rubro }}</span>
+            <span>{{ offer.zona || 'Sin zona' }}</span>
+            <span>{{ availabilityLabels[offer.disponibilidadHoraria] }}</span>
+            <span v-if="offer.salario">{{ offer.salario }}</span>
+            <span>{{ offer.fechaCierre || 'Indefinida' }}</span>
+            <span>{{ offer.vacantes }} {{ offer.vacantes === 1 ? 'vacante' : 'vacantes' }}</span>
           </p>
-          <p>{{ offer.descripcion }}</p>
-          <RouterLink class="offer-applications" :to="{ name: 'admin-offer-applications', params: { offerId: offer.id } }">
+          <p class="socio-offer-card__text">{{ offer.descripcion }}</p>
+          <RouterLink class="socio-offer-card__apps" :to="{ name: 'admin-offer-applications', params: { offerId: offer.id } }">
             {{ offer.postulaciones }} {{ offer.postulaciones === 1 ? 'postulación' : 'postulaciones' }}
           </RouterLink>
         </div>
-        <aside class="offer-card__actions">
-          <button class="offer-edit" type="button" :disabled="offer.estado === 'CERRADA' || offer.estado === 'VENCIDA'" @click="openEdit(offer)"><Pencil :size="12" /> Editar</button>
-          <button v-if="offer.estado === 'ACTIVA'" class="offer-action" type="button" @click="changeStatus(offer, 'PAUSADA')"><Pause :size="12" /> Pausar</button>
-          <button v-if="offer.estado === 'PAUSADA'" class="offer-action" type="button" @click="changeStatus(offer, 'ACTIVA')"><Play :size="12" /> Reanudar</button>
-          <button v-if="offer.estado === 'ACTIVA' || offer.estado === 'PAUSADA'" class="offer-action" type="button" @click="changeStatus(offer, 'CERRADA')"><X :size="12" /> Cerrar</button>
+        <aside class="socio-offer-card__actions">
+          <button v-if="offer.estado === 'ACTIVA' || offer.estado === 'PAUSADA'" class="socio-offer-card__edit" type="button" @click="openEdit(offer)">
+            <Pencil :size="13" aria-hidden="true" /> Editar
+          </button>
+          <button v-if="offer.estado === 'ACTIVA'" class="socio-offer-card__pause" type="button" @click="changeStatus(offer, 'PAUSADA')">
+            <Pause :size="12" aria-hidden="true" /> Pausar
+          </button>
+          <button v-else-if="offer.estado === 'PAUSADA'" class="socio-offer-card__resume" type="button" @click="changeStatus(offer, 'ACTIVA')">
+            <Play :size="12" aria-hidden="true" /> Reactivar
+          </button>
+          <button v-if="offer.estado === 'ACTIVA' || offer.estado === 'PAUSADA'" class="socio-offer-card__close" type="button" @click="changeStatus(offer, 'CERRADA')">
+            <X :size="13" aria-hidden="true" /> Cerrar
+          </button>
         </aside>
       </article>
     </section>
