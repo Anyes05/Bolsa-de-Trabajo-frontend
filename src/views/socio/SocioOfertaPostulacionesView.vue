@@ -106,10 +106,14 @@ async function updateStatus(application: ReceivedApplication, event: Event) {
 }
 
 async function downloadCv(applicationId: string) {
+  const downloadWindow = window.open('about:blank', '_blank')
   try {
     const { url } = await socioApplicationsService.downloadCv(Number(applicationId))
-    window.open(url, '_blank', 'noopener,noreferrer')
+    if (!downloadWindow) throw new Error('El navegador bloqueó la ventana de descarga.')
+    downloadWindow.opener = null
+    downloadWindow.location.href = url
   } catch (cause) {
+    downloadWindow?.close()
     error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
   }
 }
