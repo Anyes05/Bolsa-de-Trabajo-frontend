@@ -110,7 +110,6 @@ async function downloadCv(applicationId: string) {
   try {
     const { url } = await socioApplicationsService.downloadCv(Number(applicationId))
     if (!downloadWindow) throw new Error('El navegador bloqueó la ventana de descarga.')
-    downloadWindow.opener = null
     downloadWindow.location.href = url
   } catch (cause) {
     downloadWindow?.close()
