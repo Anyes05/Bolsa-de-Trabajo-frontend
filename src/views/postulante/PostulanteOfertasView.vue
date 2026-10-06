@@ -76,8 +76,8 @@ async function confirmApply() {
   if (!selectedOffer.value || !selectedProfileCv.value) return
   submitting.value = true
   try {
-    const application = await applicantOfferService.apply(selectedOffer.value.id, selectedProfileId.value)
-    applications.value = [application, ...applications.value]
+    await applicantOfferService.apply(selectedOffer.value.id, selectedProfileId.value)
+    applications.value = await applicantOfferService.listApplications()
     messageTone.value = 'success'
     message.value = 'Tu postulación fue enviada.'
     showModal.value = false
@@ -89,7 +89,8 @@ async function confirmApply() {
   }
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null | undefined) {
+  if (!value) return 'Fecha no disponible'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
 }
