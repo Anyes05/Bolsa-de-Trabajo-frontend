@@ -192,11 +192,35 @@ export type ProfessionalProfile = {
   nombre: string
   disponibilidadHoraria: 'FULL_TIME' | 'PART_TIME' | 'INDEFINIDO'
   tieneVehiculo: boolean
+  libreta: string | null
   ultimoEmpleo: string | null
   descripcionExperiencia: string | null
   visible: boolean
   rubros: string[]
 }
+
+export type ApplicantProfileCard = {
+  id: number
+  fullName: string
+  initials: string
+  profileName: string
+  categoryLabel: string
+  location: string | null
+  sectors: string[]
+  availability: Availability
+  license: string | null
+  hasVehicle: boolean
+  hasApplication: boolean
+  hasCv: boolean
+  identityCard: string | null
+  age: number | null
+  experienceSummary: string | null
+  latestJob: string | null
+  cvFileName: string | null
+  cvMeta: string | null
+}
+
+export type SocioCvLink = { url: string }
 
 export type PersonalProfile = {
   nombreCompleto: string
@@ -237,6 +261,41 @@ export type JobOfferPayload = Omit<JobOffer, 'id' | 'socioId' | 'socioNombre' | 
 }
 
 export type ActiveSocioOption = { id: number; razonSocial: string }
+
+export type ApplicantApplication = {
+  id: number
+  ofertaId: number
+  ofertaTitulo: string
+  socioNombre: string
+  rubro: string
+  fecha: string
+  estado: 'RECIBIDA' | 'REVISADA' | 'CONTACTADA' | 'SELECCIONADA' | 'DESCARTADA'
+  perfilId: number | null
+  perfilNombre: string | null
+  cvId: number | null
+  cvNombre: string | null
+}
+
+export type ReceivedApplication = {
+  id: number
+  fullName: string
+  initials: string
+  profileId: number
+  profileName: string
+  location: string | null
+  tags: string[]
+  status: ApplicantApplication['estado']
+  appliedOn: string
+  availability: Availability
+  hasVehicle: boolean
+  license: string | null
+  latestJob: string | null
+  experienceSummary: string | null
+  identityCard: string | null
+  cvId: number | null
+  cvFileName: string | null
+  cvMeta: string | null
+}
 
 export type CvDownloadResponse = {
   url: string

@@ -32,6 +32,7 @@ function blankProfile(): ProfessionalProfile {
     nombre: '',
     disponibilidadHoraria: 'FULL_TIME',
     tieneVehiculo: false,
+    libreta: '',
     ultimoEmpleo: null,
     descripcionExperiencia: null,
     visible: true,
@@ -197,6 +198,7 @@ onMounted(load)
           <p><strong>Habilidades y áreas de interés:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro">{{ rubro }}</span></span></p>
           <p><strong>Disponibilidad horaria:</strong> {{ availabilityLabel[profile.disponibilidadHoraria] }}</p>
           <p><strong>Vehículo propio:</strong> {{ profile.tieneVehiculo ? 'Sí' : 'No' }}</p>
+          <p><strong>Libreta de conducir:</strong> {{ profile.libreta || 'No informada' }}</p>
           <p><strong>Detalle del último empleo:</strong> {{ profile.ultimoEmpleo || 'No informado' }}</p>
           <p><strong>Resumen de experiencia laboral y presentación:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
         </div>
@@ -221,6 +223,7 @@ onMounted(load)
           <fieldset><legend>Habilidades y áreas de interés</legend><div class="profile-card-postulante__skills"><button v-for="sector in sectors" :key="sector" type="button" :class="{ 'profile-chip--selected': editing.rubros.includes(sector) }" @click="toggleSector(sector)">{{ sector }}</button></div></fieldset>
           <label>Disponibilidad Horaria *<select v-model="editing.disponibilidadHoraria"><option value="FULL_TIME">Tiempo completo</option><option value="INDEFINIDO">Cualquier horario</option><option value="PART_TIME">Part-time</option></select></label>
           <label class="modal__checkbox"><input v-model="editing.tieneVehiculo" type="checkbox"> Posee vehículo propio / libreta de conducir al día</label>
+          <label>Libreta de conducir<input v-model="editing.libreta" maxlength="120" placeholder="Ej. Cat. A, G2"></label>
           <label>Detalle del último empleo *<input v-model="editing.ultimoEmpleo"></label>
           <label>Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
           <label class="modal__checkbox"><input v-model="editing.visible" type="checkbox"> Perfil visible para socios</label>

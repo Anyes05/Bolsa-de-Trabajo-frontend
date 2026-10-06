@@ -1126,6 +1126,12 @@ button:disabled {
   display: grid;
   place-items: center;
   padding: 24px;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
 }
 
 .profile-modal__backdrop {
@@ -1615,6 +1621,22 @@ button:disabled {
   font-size: 11px;
   font-weight: 700;
   padding: 4px 8px;
+}
+
+.socio-application-card__status select {
+  max-width: 150px;
+  border: 1px solid #d8dee7;
+  border-radius: 6px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 7px;
+}
+
+.socio-application-card__status select:disabled {
+  opacity: 0.65;
 }
 
 .socio-application-card__status--contactada span {

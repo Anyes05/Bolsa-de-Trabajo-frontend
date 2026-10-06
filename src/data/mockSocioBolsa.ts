@@ -1,4 +1,4 @@
-export type Availability = 'FULL_TIME' | 'PART_TIME'
+export type Availability = 'FULL_TIME' | 'PART_TIME' | 'INDEFINIDO'
 export type SortOption = 'updated' | 'name'
 
 export type MockApplicantProfile = {
@@ -21,11 +21,14 @@ export type MockApplicantProfile = {
   cvFileName: string
   cvMeta: string
   updatedAt: string
+  hasApplication?: boolean
+  hasCv?: boolean
 }
 
 export const availabilityLabel: Record<Availability, string> = {
   FULL_TIME: 'Full-time',
   PART_TIME: 'Part-time',
+  INDEFINIDO: 'Cualquier horario',
 }
 
 export const mockCompany = {

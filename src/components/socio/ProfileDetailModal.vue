@@ -10,6 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{
   close: []
+  downloadCv: [profileId: string]
 }>()
 
 function onKeydown(event: KeyboardEvent) {
@@ -26,7 +27,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="profile-modal" role="dialog" aria-modal="true" :aria-labelledby="`profile-modal-title-${profile.id}`">
+  <dialog open class="profile-modal" aria-modal="true" :aria-labelledby="`profile-modal-title-${profile.id}`">
     <div class="profile-modal__backdrop" @click="emit('close')"></div>
     <section class="profile-modal__panel">
       <header class="profile-modal__header">
@@ -34,7 +35,9 @@ onUnmounted(() => {
           <h2 :id="`profile-modal-title-${profile.id}`" class="profile-modal__name">{{ profile.fullName }}</h2>
           <p class="profile-modal__meta">
             <MapPin :size="13" aria-hidden="true" />
-            {{ profile.location }} · CI: {{ profile.identityCard }} · {{ profile.age }} años
+            {{ profile.location }}
+            <template v-if="profile.identityCard"> · CI: {{ profile.identityCard }}</template>
+            <template v-if="profile.age"> · {{ profile.age }} años</template>
           </p>
           <ul class="profile-modal__pills">
             <li>{{ availabilityLabel[profile.availability] }}</li>
@@ -57,12 +60,12 @@ onUnmounted(() => {
 
         <section class="profile-modal__block">
           <h3>Resumen de experiencia</h3>
-          <p>{{ profile.experienceSummary }}</p>
+          <p>{{ profile.hasApplication ? profile.experienceSummary || 'No informado' : 'Disponible después de una postulación a una oferta propia' }}</p>
         </section>
 
         <section class="profile-modal__block">
           <h3>Último empleo</h3>
-          <p><b>{{ profile.latestJob }}</b></p>
+          <p><b>{{ profile.hasApplication ? profile.latestJob || 'No informado' : 'Disponible después de una postulación a una oferta propia' }}</b></p>
         </section>
 
         <section class="profile-modal__block">
@@ -73,11 +76,11 @@ onUnmounted(() => {
                 <FileText :size="18" />
               </span>
               <div>
-                <strong>{{ profile.cvFileName }}</strong>
-                <small>{{ profile.cvMeta }}</small>
+                <strong>{{ profile.cvFileName || 'CV asociado al perfil' }}</strong>
+                <small>{{ !profile.hasApplication ? 'Disponible después de una postulación a una oferta propia' : profile.hasCv ? profile.cvMeta || 'CV asociado' : 'No se adjuntó un CV' }}</small>
               </div>
             </div>
-            <AppButton variant="secondary" type="button">
+            <AppButton variant="secondary" type="button" :disabled="!profile.hasCv" @click="emit('downloadCv', profile.id)">
               <Download :size="14" aria-hidden="true" />
               Descargar CV
             </AppButton>
@@ -93,5 +96,5 @@ onUnmounted(() => {
         </AppButton>
       </footer>
     </section>
-  </div>
+  </dialog>
 </template>
