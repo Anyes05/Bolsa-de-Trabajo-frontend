@@ -544,7 +544,6 @@ function paymentLabel(method: MetodoPago | null) {
             <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
             <label class="cash-payment-detail">Importe<input v-model="expenseAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
             <label class="expense-recurring"><input v-model="expenseRecurring" type="checkbox"> Recurrente mensual</label>
-            <button class="cash-charge expense-add" type="submit" :disabled="expenseBusy || expenseLoading"><Plus :size="14" /> {{ expenseBusy ? 'Guardando...' : 'Registrar reintegro' }}</button>
           </form>
           <section
             v-show="expenseTab === 'RECURRENTES'"
@@ -639,7 +638,18 @@ function paymentLabel(method: MetodoPago | null) {
           <AppAlert v-if="expenseError">{{ expenseError }}</AppAlert>
           <p v-if="expenseSuccess" class="expense-success" role="status">{{ expenseSuccess }}</p>
         </div>
-        <footer class="cash-modal__footer"><button class="cash-history" type="button" :disabled="expenseBusy || expenseLoading" @click="closeExpense">Cerrar</button></footer>
+        <footer class="cash-modal__footer expense-modal__footer">
+          <button class="cash-history" type="button" :disabled="expenseBusy || expenseLoading" @click="closeExpense">Cerrar</button>
+          <button
+            v-if="expenseTab === 'GASTOS'"
+            class="cash-history"
+            type="submit"
+            form="expense-panel-gastos"
+            :disabled="expenseBusy || expenseLoading"
+          >
+            {{ expenseBusy ? 'Guardando...' : 'Registrar reintegro' }}
+          </button>
+        </footer>
       </section>
     </div>
   </AdminShell>
@@ -649,7 +659,7 @@ function paymentLabel(method: MetodoPago | null) {
 .cash-modal, .history-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); border-radius: 8px; }
 .cash-modal__body, .history-list { overflow-y: auto; min-height: 0; }
 .cash-modal__header, .cash-modal__footer, .history-modal__header, .history-modal__footer { flex-shrink: 0; }
-.cash-table__actions button, .expense-add, .expense-programmed button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.cash-table__actions button, .expense-programmed button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .cash-table__actions { min-width: 260px; }
 .account-summary { display: grid; gap: 9px; margin: 0 0 20px; font-size: 12px; }
 .account-summary div { display: flex; justify-content: space-between; gap: 12px; }
@@ -675,7 +685,8 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-tabs button:focus-visible { outline: 2px solid #07974e; outline-offset: -4px; }
 .expense-recurring { display: flex; align-items: center; gap: 8px; margin: 16px 0; color: #526159; font-size: 12px; }
 .expense-recurring input { accent-color: #07974e; }
-.expense-add { min-height: 36px; }
+.expense-modal__footer { display: flex; gap: 12px; }
+.expense-modal__footer button { flex: 1; min-width: 0; width: auto; min-height: 36px; white-space: normal; }
 .expense-programmed { margin-top: 0; }
 .expense-programmed h3 { margin: 16px 0; font-size: 14px; line-height: 1.5; }
 .expense-programmed__count { display: block; color: #68737c; font-size: 12px; font-weight: 400; }
