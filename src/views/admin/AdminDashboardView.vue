@@ -660,12 +660,12 @@ function paymentLabel(method: MetodoPago | null) {
 .account-debt { color: #a52c32 !important; }
 .history-summary { grid-template-columns: 1fr 1fr; }
 .history-summary strong { font-size: 14px; }
-.history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 36px; align-items: end; gap: 10px; margin: 0 0 16px; flex-shrink: 0; }
+.history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 36px; align-items: end; gap: 14px; width: calc(100% - 48px); max-width: 480px; margin: 8px auto 24px; flex-shrink: 0; }
 .history-date-filters label { display: grid; gap: 6px; min-width: 0; color: #526159; font-size: 12px; }
 .history-date-filters input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 36px; padding: 6px 8px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; }
 .history-date-filters button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
 .history-date-filters input:focus-visible, .history-date-filters button:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
-.history-date-error { margin: 0 0 12px; color: #a52c32; font-size: 12px; }
+.history-date-error { width: calc(100% - 48px); max-width: 480px; margin: 0 auto 16px; color: #a52c32; font-size: 12px; }
 .history-entry { padding-bottom: 16px; grid-template-columns: 14px minmax(0, 1fr) auto; }
 .history-entry p, .history-entry strong { overflow-wrap: anywhere; }
 .expense-modal { width: min(100%, 480px); }
@@ -699,6 +699,8 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 450px) {
   .cash-modal-layer { padding: 10px; }
   .cash-modal, .history-modal { max-height: calc(100dvh - 20px); }
+  .history-date-filters, .history-date-error { width: calc(100% - 32px); }
+  .history-date-filters { gap: 10px; }
   .history-entry { grid-template-columns: 12px minmax(0, 1fr); }
   .history-entry aside { grid-column: 2; justify-items: start; padding-top: 0; }
 }
