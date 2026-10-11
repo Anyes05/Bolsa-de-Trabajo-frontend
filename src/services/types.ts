@@ -116,7 +116,6 @@ export type ReintegroProgramado = {
 export type RegistrarReintegroPayload = {
   concepto: string
   monto: number
-  fecha: string
   recurrente: boolean
 }
 

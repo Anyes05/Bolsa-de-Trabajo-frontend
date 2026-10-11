@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Plus, Save, Search, UsersRound, X } from 'lucide-vue-next'
+import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
@@ -26,13 +26,15 @@ const expenseCompany = ref<CuentaCaja | null>(null)
 const expenseTab = ref<'GASTOS' | 'RECURRENTES'>('GASTOS')
 const expenseConcept = ref('')
 const expenseAmount = ref('')
-const expenseDate = ref(localDate())
 const expenseRecurring = ref(false)
 const expenseBusy = ref(false)
 const expenseLoading = ref(false)
 const expenseError = ref('')
 const expenseSuccess = ref('')
 const programmed = ref<ReintegroProgramado[]>([])
+const programmedConcept = ref('')
+const programmedAmount = ref('')
+const programmedToDelete = ref<number | null>(null)
 const externalReference = ref('')
 const paymentNotes = ref('')
 const chargeBusy = ref(false)
@@ -168,11 +170,6 @@ async function confirmCharge() {
   }
 }
 
-function localDate() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
-
 function validAmount(value: string | number) {
   return /^\d+(\.\d{1,2})?$/.test(String(value)) && Number(value) > 0 && Number(value) < 10000000000
 }
@@ -188,11 +185,13 @@ async function openExpense(company: CuentaCaja) {
   expenseTab.value = 'GASTOS'
   expenseConcept.value = ''
   expenseAmount.value = ''
-  expenseDate.value = localDate()
   expenseRecurring.value = false
   expenseError.value = ''
   expenseSuccess.value = ''
   programmed.value = []
+  programmedConcept.value = ''
+  programmedAmount.value = ''
+  programmedToDelete.value = null
   expenseLoading.value = true
   try {
     const history = await cajaService.getHistorial(company.socioId)
@@ -208,8 +207,8 @@ async function saveExpense() {
   if (!expenseCompany.value || expenseBusy.value) return
   expenseError.value = ''
   expenseSuccess.value = ''
-  if (!expenseConcept.value.trim() || !validAmount(expenseAmount.value) || !expenseDate.value || expenseDate.value > localDate()) {
-    expenseError.value = 'Ingrese concepto, monto positivo con hasta dos decimales y una fecha no futura.'
+  if (!expenseConcept.value.trim() || !validAmount(expenseAmount.value)) {
+    expenseError.value = 'Ingrese concepto y monto positivo con hasta dos decimales.'
     return
   }
   expenseBusy.value = true
@@ -217,7 +216,6 @@ async function saveExpense() {
     const account = await cajaService.registrarReintegro(expenseCompany.value.socioId, {
       concepto: expenseConcept.value.trim(),
       monto: Number(expenseAmount.value),
-      fecha: expenseDate.value,
       recurrente: expenseRecurring.value,
     })
     await loadResumen()
@@ -230,7 +228,7 @@ async function saveExpense() {
   }
 }
 
-async function saveProgrammed(entry: ReintegroProgramado) {
+async function saveProgrammed(entry: ReintegroProgramado, active = entry.activo) {
   if (!expenseCompany.value || expenseBusy.value) return
   expenseError.value = ''
   expenseSuccess.value = ''
@@ -240,10 +238,64 @@ async function saveProgrammed(entry: ReintegroProgramado) {
   }
   expenseBusy.value = true
   try {
-    await cajaService.actualizarProgramado(expenseCompany.value.socioId, entry)
+    const saved = await cajaService.actualizarProgramado(expenseCompany.value.socioId, {
+      ...entry,
+      activo: active,
+    })
+    Object.assign(entry, saved)
     expenseSuccess.value = 'Configuración guardada. Los cargos anteriores no se modificaron.'
   } catch (exception) {
     expenseError.value = exception instanceof Error ? exception.message : 'No fue posible guardar la configuración.'
+  } finally {
+    expenseBusy.value = false
+  }
+}
+
+function toggleProgrammed(entry: ReintegroProgramado, event: Event) {
+  const checkbox = event.target as HTMLInputElement
+  const active = checkbox.checked
+  checkbox.checked = entry.activo
+  void saveProgrammed(entry, active)
+}
+
+async function addProgrammed() {
+  if (!expenseCompany.value || expenseBusy.value || expenseLoading.value) return
+  expenseError.value = ''
+  expenseSuccess.value = ''
+  if (!programmedConcept.value.trim() || !validAmount(programmedAmount.value)) {
+    expenseError.value = 'Ingrese concepto y monto positivo con hasta dos decimales.'
+    return
+  }
+  expenseBusy.value = true
+  try {
+    const created = await cajaService.registrarProgramado(expenseCompany.value.socioId, {
+      concepto: programmedConcept.value.trim(),
+      monto: Number(programmedAmount.value),
+      recurrente: true,
+    })
+    programmed.value.push(created)
+    programmedConcept.value = ''
+    programmedAmount.value = ''
+    expenseSuccess.value = 'Reintegro recurrente agregado. Se aplicará desde el próximo mes.'
+  } catch (exception) {
+    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible agregar el reintegro recurrente.'
+  } finally {
+    expenseBusy.value = false
+  }
+}
+
+async function deleteProgrammed(entry: ReintegroProgramado) {
+  if (!expenseCompany.value || expenseBusy.value || programmedToDelete.value !== entry.id) return
+  expenseError.value = ''
+  expenseSuccess.value = ''
+  expenseBusy.value = true
+  try {
+    await cajaService.eliminarProgramado(expenseCompany.value.socioId, entry.id)
+    programmed.value = programmed.value.filter((item) => item.id !== entry.id)
+    programmedToDelete.value = null
+    expenseSuccess.value = 'Reintegro recurrente eliminado. Los cargos anteriores se conservaron.'
+  } catch (exception) {
+    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible eliminar el reintegro recurrente.'
   } finally {
     expenseBusy.value = false
   }
@@ -260,6 +312,7 @@ function closeExpense() {
 function selectExpenseTab(tab: 'GASTOS' | 'RECURRENTES') {
   if (expenseBusy.value || expenseTab.value === tab) return
   expenseTab.value = tab
+  programmedToDelete.value = null
   expenseError.value = ''
   expenseSuccess.value = ''
 }
@@ -467,7 +520,6 @@ function paymentLabel(method: MetodoPago | null) {
           >
             <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
             <label class="cash-payment-detail">Importe<input v-model="expenseAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
-            <label class="cash-payment-detail">Fecha del gasto<input v-model="expenseDate" type="date" :max="localDate()" required></label>
             <label class="expense-recurring"><input v-model="expenseRecurring" type="checkbox"> Recurrente mensual</label>
             <button class="cash-charge expense-add" type="submit" :disabled="expenseBusy || expenseLoading"><Plus :size="14" /> {{ expenseBusy ? 'Guardando...' : 'Registrar reintegro' }}</button>
           </form>
@@ -478,6 +530,24 @@ function paymentLabel(method: MetodoPago | null) {
             role="tabpanel"
             aria-labelledby="expense-tab-recurrentes"
           >
+            <form class="expense-programmed__entry" @submit.prevent="addProgrammed">
+              <h3>Nuevo reintegro recurrente</h3>
+              <label class="cash-payment-detail">
+                Concepto
+                <input v-model="programmedConcept" maxlength="200" required :disabled="expenseBusy || expenseLoading">
+              </label>
+              <label class="cash-payment-detail">
+                Importe mensual
+                <input v-model="programmedAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy || expenseLoading">
+              </label>
+              <button class="cash-charge expense-add" type="submit" :disabled="expenseBusy || expenseLoading">
+                <Plus :size="14" /> Agregar recurrente
+              </button>
+            </form>
+            <h3 v-if="!expenseLoading">
+              Reintegros registrados
+              <span class="expense-programmed__count">{{ programmed.filter((entry) => entry.activo).length }} activos · {{ programmed.filter((entry) => !entry.activo).length }} inactivos</span>
+            </h3>
             <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
             <p v-else-if="!programmed.length && !expenseError" class="company-empty">No hay reintegros recurrentes registrados.</p>
             <form
@@ -486,18 +556,45 @@ function paymentLabel(method: MetodoPago | null) {
               class="expense-programmed__entry"
               @submit.prevent="saveProgrammed(entry)"
             >
+              <div class="expense-programmed__header">
+                <span class="expense-programmed__status" :class="{ 'expense-programmed__status--active': entry.activo }">
+                  {{ entry.activo ? 'Activo' : 'Inactivo' }}
+                </span>
+                <button
+                  class="expense-programmed__delete"
+                  type="button"
+                  :disabled="expenseBusy"
+                  :aria-label="`Eliminar ${entry.concepto}`"
+                  title="Eliminar reintegro recurrente"
+                  @click="programmedToDelete = entry.id"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
               <label class="cash-payment-detail">
                 Concepto
-                <input v-model="entry.concepto" maxlength="200" required>
+                <input v-model="entry.concepto" maxlength="200" required :disabled="expenseBusy">
               </label>
               <label class="cash-payment-detail">
                 Importe mensual
-                <input v-model.number="entry.monto" type="number" min="0.01" max="9999999999.99" step="0.01" required>
+                <input v-model.number="entry.monto" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy">
               </label>
-              <label class="expense-recurring"><input v-model="entry.activo" type="checkbox"> Activo</label>
+              <label class="expense-recurring">
+                <input :checked="entry.activo" type="checkbox" :disabled="expenseBusy" @change="toggleProgrammed(entry, $event)">
+                Activar reintegro
+              </label>
               <button class="cash-history" type="submit" :disabled="expenseBusy">
                 <Save :size="14" /> Guardar configuración
               </button>
+              <div v-if="programmedToDelete === entry.id" class="expense-programmed__confirmation">
+                <p>¿Eliminar «{{ entry.concepto }}»? Los gastos ya registrados se conservarán.</p>
+                <div class="expense-programmed__actions">
+                  <button class="cash-history" type="button" :disabled="expenseBusy" @click="programmedToDelete = null">Cancelar</button>
+                  <button class="expense-programmed__delete" type="button" :disabled="expenseBusy" @click="deleteProgrammed(entry)">
+                    <Trash2 :size="14" /> Eliminar
+                  </button>
+                </div>
+              </div>
             </form>
           </section>
           <AppAlert v-if="expenseError">{{ expenseError }}</AppAlert>
@@ -535,7 +632,16 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-recurring input { accent-color: #07974e; }
 .expense-add { min-height: 36px; }
 .expense-programmed { margin-top: 0; }
-.expense-programmed__entry { padding-bottom: 16px; border-bottom: 1px solid #e0e6eb; }
+.expense-programmed h3 { margin: 16px 0; font-size: 14px; line-height: 1.5; }
+.expense-programmed__count { display: block; color: #68737c; font-size: 12px; font-weight: 400; }
+.expense-programmed__entry { padding: 16px 0; border-bottom: 1px solid #e0e6eb; }
+.expense-programmed__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.expense-programmed__status { color: #68737c; font-size: 12px; font-weight: 600; }
+.expense-programmed__status--active { color: #08775f; }
+.expense-programmed__delete { min-width: 36px; min-height: 36px; padding: 6px 10px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #a52c32; font: inherit; font-size: 12px; cursor: pointer; }
+.expense-programmed__delete:focus-visible { outline: 2px solid #a52c32; outline-offset: 2px; }
+.expense-programmed__confirmation { margin-top: 16px; color: #a52c32; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.expense-programmed__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .expense-success { color: #08775f; font-size: 12px; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 450px) {
