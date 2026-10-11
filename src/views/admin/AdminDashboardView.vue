@@ -23,6 +23,7 @@ const receivedAmount = ref('')
 const chargeHistory = ref<HistorialCaja | null>(null)
 const chargeLoading = ref(false)
 const expenseCompany = ref<CuentaCaja | null>(null)
+const expenseTab = ref<'GASTOS' | 'RECURRENTES'>('GASTOS')
 const expenseConcept = ref('')
 const expenseAmount = ref('')
 const expenseDate = ref(localDate())
@@ -184,6 +185,7 @@ function balanceLabel(value: number) {
 
 async function openExpense(company: CuentaCaja) {
   expenseCompany.value = company
+  expenseTab.value = 'GASTOS'
   expenseConcept.value = ''
   expenseAmount.value = ''
   expenseDate.value = localDate()
@@ -253,6 +255,13 @@ function closeCharge() {
 
 function closeExpense() {
   if (!expenseBusy.value && !expenseLoading.value) expenseCompany.value = null
+}
+
+function selectExpenseTab(tab: 'GASTOS' | 'RECURRENTES') {
+  if (expenseBusy.value || expenseTab.value === tab) return
+  expenseTab.value = tab
+  expenseError.value = ''
+  expenseSuccess.value = ''
 }
 
 function formatMoney(value: number | null | undefined) {
@@ -423,18 +432,54 @@ function paymentLabel(method: MetodoPago | null) {
 
     <div v-if="expenseCompany" class="cash-modal-layer" @click.self="closeExpense">
       <section class="cash-modal expense-modal" role="dialog" aria-modal="true" aria-labelledby="expense-title">
-        <header class="cash-modal__header"><div><h2 id="expense-title">Reintegros de gastos</h2><p>{{ expenseCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="expenseBusy || expenseLoading" @click="closeExpense"><X :size="18" /></button></header>
+        <header class="cash-modal__header"><div><h2 id="expense-title">Reintegros</h2><p>{{ expenseCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="expenseBusy || expenseLoading" @click="closeExpense"><X :size="18" /></button></header>
+        <div class="expense-tabs" role="tablist" aria-label="Tipo de reintegro">
+          <button
+            id="expense-tab-gastos"
+            type="button"
+            role="tab"
+            aria-controls="expense-panel-gastos"
+            :aria-selected="expenseTab === 'GASTOS'"
+            :disabled="expenseBusy"
+            @click="selectExpenseTab('GASTOS')"
+          >
+            Reintegro de gastos
+          </button>
+          <button
+            id="expense-tab-recurrentes"
+            type="button"
+            role="tab"
+            aria-controls="expense-panel-recurrentes"
+            :aria-selected="expenseTab === 'RECURRENTES'"
+            :disabled="expenseBusy"
+            @click="selectExpenseTab('RECURRENTES')"
+          >
+            Reintegros recurrentes
+          </button>
+        </div>
         <div class="cash-modal__body">
-          <form @submit.prevent="saveExpense">
+          <form
+            v-show="expenseTab === 'GASTOS'"
+            id="expense-panel-gastos"
+            role="tabpanel"
+            aria-labelledby="expense-tab-gastos"
+            @submit.prevent="saveExpense"
+          >
             <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
             <label class="cash-payment-detail">Importe<input v-model="expenseAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
             <label class="cash-payment-detail">Fecha del gasto<input v-model="expenseDate" type="date" :max="localDate()" required></label>
             <label class="expense-recurring"><input v-model="expenseRecurring" type="checkbox"> Recurrente mensual</label>
             <button class="cash-charge expense-add" type="submit" :disabled="expenseBusy || expenseLoading"><Plus :size="14" /> {{ expenseBusy ? 'Guardando...' : 'Registrar reintegro' }}</button>
           </form>
-          <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
-          <section v-if="programmed.length" class="expense-programmed">
-            <h3>Reintegros recurrentes</h3>
+          <section
+            v-show="expenseTab === 'RECURRENTES'"
+            id="expense-panel-recurrentes"
+            class="expense-programmed"
+            role="tabpanel"
+            aria-labelledby="expense-tab-recurrentes"
+          >
+            <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
+            <p v-else-if="!programmed.length && !expenseError" class="company-empty">No hay reintegros recurrentes registrados.</p>
             <form
               v-for="entry in programmed"
               :key="entry.id"
@@ -482,11 +527,14 @@ function paymentLabel(method: MetodoPago | null) {
 .history-entry { padding-bottom: 16px; grid-template-columns: 14px minmax(0, 1fr) auto; }
 .history-entry p, .history-entry strong { overflow-wrap: anywhere; }
 .expense-modal { width: min(100%, 480px); }
+.expense-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; border-bottom: 1px solid #e0e6eb; }
+.expense-tabs button { min-height: 48px; padding: 12px 8px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #526159; font: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
+.expense-tabs button[aria-selected="true"] { border-bottom-color: #07974e; color: #08775f; background: #eef8f2; }
+.expense-tabs button:focus-visible { outline: 2px solid #07974e; outline-offset: -4px; }
 .expense-recurring { display: flex; align-items: center; gap: 8px; margin: 16px 0; color: #526159; font-size: 12px; }
 .expense-recurring input { accent-color: #07974e; }
 .expense-add { min-height: 36px; }
-.expense-programmed { margin-top: 24px; border-top: 1px solid #e0e6eb; }
-.expense-programmed h3 { font-size: 14px; margin: 18px 0 0; }
+.expense-programmed { margin-top: 0; }
 .expense-programmed__entry { padding-bottom: 16px; border-bottom: 1px solid #e0e6eb; }
 .expense-success { color: #08775f; font-size: 12px; }
 button:disabled { opacity: .55; cursor: not-allowed; }
