@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { CajaResumen, CuentaCaja, HistorialCaja, RegistrarCobroPayload } from './types'
+import type { CajaResumen, CuentaCaja, HistorialCaja, RegistrarCobroPayload, RegistrarReintegroPayload, ReintegroProgramado } from './types'
 
 export const cajaService = {
   getResumen() {
@@ -13,6 +13,20 @@ export const cajaService = {
   registrarCobro(payload: RegistrarCobroPayload) {
     return request<CuentaCaja>('/admin/caja/cobros', {
       method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  registrarReintegro(socioId: number, payload: RegistrarReintegroPayload) {
+    return request<CuentaCaja>(`/admin/caja/socios/${socioId}/reintegros`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  actualizarProgramado(socioId: number, payload: ReintegroProgramado) {
+    return request<ReintegroProgramado>(`/admin/caja/socios/${socioId}/reintegros-programados/${payload.id}`, {
+      method: 'PUT',
       body: JSON.stringify(payload),
     })
   },

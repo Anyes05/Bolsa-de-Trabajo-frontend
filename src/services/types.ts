@@ -79,6 +79,8 @@ export type CuentaCaja = {
   timbreRecurrente: boolean
   periodo: string | null
   fechaVencimiento: string | null
+  saldo: number
+  deudaVencida: number
 }
 
 export type CajaResumen = {
@@ -90,18 +92,32 @@ export type CajaResumen = {
 }
 
 export type MovimientoCaja = {
-  cuotaId: number
-  periodo: string
-  fechaVencimiento: string
-  estadoCuota: EstadoCuota
-  montoCuota: number
-  montoTimbre: number
-  timbreRecurrente: boolean
-  montoCobrado: number | null
-  fechaCobro: string | null
+  id: number
+  tipo: 'CUOTA' | 'REINTEGRO' | 'PAGO'
+  concepto: string
+  fecha: string
+  fechaVencimiento: string | null
+  monto: number
+  saldoAnterior: number
+  saldoResultante: number
+  pendiente: number
   metodoPago: MetodoPago | null
-  nroCobranzaExterno: string | null
+  referencia: string | null
   observaciones: string | null
+}
+
+export type ReintegroProgramado = {
+  id: number
+  concepto: string
+  monto: number
+  activo: boolean
+}
+
+export type RegistrarReintegroPayload = {
+  concepto: string
+  monto: number
+  fecha: string
+  recurrente: boolean
 }
 
 export type HistorialCaja = {
@@ -110,14 +126,16 @@ export type HistorialCaja = {
   bps: string | null
   nombreRubro: string | null
   estadoMorosidad: EstadoMorosidad
+  saldo: number
+  deudaVencida: number
   movimientos: MovimientoCaja[]
+  reintegrosProgramados: ReintegroProgramado[]
 }
 
 export type RegistrarCobroPayload = {
-  cuotaId: number
+  socioId: number
   metodoPago: MetodoPago
-  montoTimbre?: number | null
-  timbreRecurrente?: boolean | null
+  montoRecibido: number
   nroCobranzaExterno?: string | null
   observaciones?: string | null
 }

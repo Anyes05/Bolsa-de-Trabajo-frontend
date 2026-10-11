@@ -9,7 +9,6 @@ const today = new Date()
 const billingPeriod = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`)
 const year = ref(today.getFullYear())
 const amount = ref('')
-const dueDay = ref('')
 const history = ref<Tarifa[]>([])
 const loading = ref(false)
 const saving = ref(false)
@@ -31,7 +30,6 @@ async function loadTariffs() {
     history.value = await tarifaService.list()
     const selectedTariff = history.value.find((tariff) => tariff.anio === year.value)
     amount.value = selectedTariff ? String(selectedTariff.montoBase) : ''
-    dueDay.value = selectedTariff ? String(selectedTariff.diaVencimiento) : ''
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : 'No fue posible cargar las tarifas.'
   } finally {
@@ -43,15 +41,14 @@ async function saveAmount() {
   errorMessage.value = ''
   successMessage.value = ''
   const numericAmount = Number(amount.value)
-  const numericDueDay = Number(dueDay.value)
-  if (!Number.isFinite(numericAmount) || numericAmount <= 0 || !Number.isInteger(numericDueDay) || numericDueDay < 1 || numericDueDay > 31) {
-    errorMessage.value = 'Ingrese un monto mayor a cero y un día de vencimiento entre 1 y 31.'
+  if (!Number.isFinite(numericAmount) || numericAmount <= 0 || !/^\d+(\.\d{1,2})?$/.test(amount.value)) {
+    errorMessage.value = 'Ingrese un monto mayor a cero con hasta dos decimales.'
     return
   }
 
   saving.value = true
   try {
-    await tarifaService.save({ anio: year.value, montoBase: numericAmount, diaVencimiento: numericDueDay })
+    await tarifaService.save({ anio: year.value, montoBase: numericAmount, diaVencimiento: 31 })
     successMessage.value = 'Tarifa anual guardada. Se aplicará a cada cuota mensual de este año.'
     await loadTariffs()
   } catch (error) {
@@ -83,7 +80,7 @@ onMounted(loadTariffs)
     <div class="fee-settings">
       <section class="fee-panel fee-current">
         <div class="fee-current__intro"><h2>Tarifa anual</h2><p>Define el valor mensual de la cuota social para todo el año. Este monto se aplicará automáticamente a los socios activos al emitir cada mes.</p></div>
-        <div class="fee-config-fields"><label>Año<input v-model.number="year" type="number" min="2000" max="9999" @change="loadTariffs"></label><label>Día de vencimiento mensual<input v-model="dueDay" type="number" min="1" max="31" step="1"></label></div>
+        <div class="fee-config-fields"><label>Año<input v-model.number="year" type="number" min="2000" max="9999" @change="loadTariffs"></label><label>Vencimiento<input value="Último día del mes siguiente" readonly></label></div>
         <div class="fee-current__control"><label class="fee-input"><span>$</span><input v-model="amount" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente"></label><button class="fee-save" type="button" :disabled="saving || loading" @click="saveAmount"><Save :size="16" /> {{ saving ? 'Guardando...' : 'Guardar monto' }}</button></div>
         <p v-if="successMessage" class="fee-success"><CheckCircle2 :size="15" /> {{ successMessage }}</p>
         <p v-if="errorMessage" class="fee-warning"><AlertTriangle :size="15" /> {{ errorMessage }}</p>
@@ -96,7 +93,7 @@ onMounted(loadTariffs)
         <button class="fee-save" type="button" :disabled="generating || loading" @click="generateBilling"><FilePlus2 :size="16" /> {{ generating ? 'Generando...' : 'Generar cuotas' }}</button>
       </section>
 
-      <section class="fee-panel fee-history"><h2>Historial de tarifas</h2><div v-for="entry in history" :key="entry.id" class="fee-history__entry"><span>$</span><div><strong>{{ formatMoney(entry.montoBase) }} / mes</strong><small>Año {{ entry.anio }} · Vence el día {{ entry.diaVencimiento }} de cada mes</small></div><b v-if="entry.anio === year">Seleccionada</b></div></section>
+      <section class="fee-panel fee-history"><h2>Historial de tarifas</h2><div v-for="entry in history" :key="entry.id" class="fee-history__entry"><span>$</span><div><strong>{{ formatMoney(entry.montoBase) }} / mes</strong><small>Año {{ entry.anio }} · Nuevas cuotas: vencimiento al final del mes siguiente</small></div><b v-if="entry.anio === year">Seleccionada</b></div></section>
     </div>
   </AdminShell>
 </template>
