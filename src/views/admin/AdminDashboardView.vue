@@ -18,6 +18,8 @@ const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
 const historyError = ref('')
+const historyFrom = ref('')
+const historyTo = ref('')
 const paymentMethod = ref<MetodoPago>('EFECTIVO')
 const receivedAmount = ref('')
 const chargeHistory = ref<HistorialCaja | null>(null)
@@ -79,7 +81,19 @@ const balanceAfterPayment = computed(() => {
   return Math.round((currentBalance - paymentAmount) * 100) / 100
 })
 
-const historyMovements = computed(() => [...(selectedHistory.value?.movimientos ?? [])].reverse())
+const historyRangeInvalid = computed(() => !!historyFrom.value && !!historyTo.value
+  && historyFrom.value > historyTo.value)
+
+const historyMovements = computed(() => {
+  if (historyRangeInvalid.value) return []
+  return (selectedHistory.value?.movimientos ?? [])
+    .filter((movement) => {
+      const date = movement.fecha.slice(0, 10)
+      return (!historyFrom.value || date >= historyFrom.value)
+        && (!historyTo.value || date <= historyTo.value)
+    })
+    .reverse()
+})
 
 const chargeTotals = computed(() => {
   const entries = chargeHistory.value?.movimientos ?? []
@@ -129,6 +143,7 @@ async function openCharge(company: CuentaCaja) {
 async function openHistory(company: CuentaCaja) {
   selectedHistory.value = null
   historyError.value = ''
+  clearHistoryDates()
   historyBusy.value = true
   try {
     selectedHistory.value = await cajaService.getHistorial(company.socioId)
@@ -142,6 +157,11 @@ async function openHistory(company: CuentaCaja) {
 function closeHistory() {
   selectedHistory.value = null
   historyError.value = ''
+}
+
+function clearHistoryDates() {
+  historyFrom.value = ''
+  historyTo.value = ''
 }
 
 async function confirmCharge() {
@@ -435,6 +455,20 @@ function paymentLabel(method: MetodoPago | null) {
             <div><span>Deuda vencida</span><b>{{ formatMoney(selectedHistory.deudaVencida) }}</b></div>
             <em><LockKeyhole :size="11" /> Registro inmutable</em>
           </div>
+          <div class="history-date-filters">
+            <label>
+              Desde
+              <input v-model="historyFrom" type="date" :max="historyTo || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
+            </label>
+            <label>
+              Hasta
+              <input v-model="historyTo" type="date" :min="historyFrom || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
+            </label>
+            <button type="button" title="Limpiar filtro de fechas" aria-label="Limpiar filtro de fechas" :disabled="!historyFrom && !historyTo" @click="clearHistoryDates">
+              <X :size="16" />
+            </button>
+          </div>
+          <p v-if="historyRangeInvalid" id="history-date-error" class="history-date-error" role="alert">La fecha desde no puede ser posterior a la fecha hasta.</p>
           <div class="history-list">
             <article v-for="movement in historyMovements" :key="`${movement.tipo}:${movement.id}`" class="history-entry">
               <i
@@ -463,7 +497,9 @@ function paymentLabel(method: MetodoPago | null) {
                 </b>
               </aside>
             </article>
-            <p v-if="!historyMovements.length" class="company-empty">No hay movimientos registrados.</p>
+            <p v-if="!historyMovements.length && !historyRangeInvalid" class="company-empty">
+              {{ selectedHistory.movimientos.length ? 'No hay movimientos en el rango seleccionado.' : 'No hay movimientos registrados.' }}
+            </p>
           </div>
         </template>
         <footer class="history-modal__footer"><span>La bitacora refleja las cuotas y cobros registrados.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
@@ -624,6 +660,12 @@ function paymentLabel(method: MetodoPago | null) {
 .account-debt { color: #a52c32 !important; }
 .history-summary { grid-template-columns: 1fr 1fr; }
 .history-summary strong { font-size: 14px; }
+.history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 36px; align-items: end; gap: 10px; margin: 0 0 16px; flex-shrink: 0; }
+.history-date-filters label { display: grid; gap: 6px; min-width: 0; color: #526159; font-size: 12px; }
+.history-date-filters input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 36px; padding: 6px 8px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; }
+.history-date-filters button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
+.history-date-filters input:focus-visible, .history-date-filters button:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
+.history-date-error { margin: 0 0 12px; color: #a52c32; font-size: 12px; }
 .history-entry { padding-bottom: 16px; grid-template-columns: 14px minmax(0, 1fr) auto; }
 .history-entry p, .history-entry strong { overflow-wrap: anywhere; }
 .expense-modal { width: min(100%, 480px); }
