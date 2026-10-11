@@ -259,7 +259,7 @@ async function saveProgrammed(entry: ReintegroProgramado) {
     const saved = await cajaService.actualizarProgramado(expenseCompany.value.socioId, entry)
     programmed.value = programmed.value.map((item) => item.id === saved.id ? saved : item)
     programmedEditing.value = null
-    expenseSuccess.value = 'Configuración guardada. Los cargos anteriores no se modificaron.'
+    expenseSuccess.value = 'Configuración guardada. Los cambios se aplicarán desde el próximo mes; el cargo de este mes y los anteriores se conservan.'
   } catch (exception) {
     expenseError.value = exception instanceof Error ? exception.message : 'No fue posible guardar la configuración.'
   } finally {
@@ -299,7 +299,7 @@ async function deleteProgrammed(entry: ReintegroProgramado) {
     await cajaService.eliminarProgramado(expenseCompany.value.socioId, entry.id)
     programmed.value = programmed.value.filter((item) => item.id !== entry.id)
     programmedToDelete.value = null
-    expenseSuccess.value = 'Reintegro recurrente eliminado. Los cargos anteriores se conservaron.'
+    expenseSuccess.value = 'Reintegro recurrente eliminado. No se generarán nuevos cargos; el cargo de este mes y los anteriores se conservan.'
   } catch (exception) {
     expenseError.value = exception instanceof Error ? exception.message : 'No fue posible eliminar el reintegro recurrente.'
   } finally {
@@ -556,6 +556,10 @@ function paymentLabel(method: MetodoPago | null) {
               Reintegros registrados
               <span class="expense-programmed__count">{{ programmed.filter((entry) => entry.activo).length }} activos · {{ programmed.filter((entry) => !entry.activo).length }} inactivos</span>
             </h3>
+            <p class="expense-programmed__notice" role="note">
+              <AlertCircle :size="16" aria-hidden="true" />
+              <span>Las modificaciones y la activación o desactivación se aplican desde el próximo mes. El reintegro de este mes y los gastos anteriores no cambian.</span>
+            </p>
             <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
             <p v-else-if="!programmed.length && !expenseError" class="company-empty">No hay reintegros recurrentes registrados.</p>
             <article
@@ -625,11 +629,11 @@ function paymentLabel(method: MetodoPago | null) {
                 </div>
               </form>
               <div v-if="programmedToDelete === entry.id" class="expense-programmed__confirmation">
-                <p>¿Eliminar «{{ entry.concepto }}»? Los gastos ya registrados se conservarán.</p>
+                <p>¿Estás seguro de que querés eliminar el reintegro recurrente «{{ entry.concepto }}»? No se generarán cargos desde el próximo mes. El reintegro de este mes y los gastos anteriores se conservarán. Esta acción no se puede deshacer.</p>
                 <div class="expense-programmed__actions">
                   <button class="cash-history" type="button" :disabled="expenseBusy" @click="programmedToDelete = null">Cancelar</button>
                   <button class="expense-programmed__delete" type="button" :disabled="expenseBusy" @click="deleteProgrammed(entry)">
-                    <Trash2 :size="14" /> Eliminar
+                    <Trash2 :size="14" /> Sí, eliminar
                   </button>
                 </div>
               </div>
@@ -690,6 +694,8 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-programmed { margin-top: 0; }
 .expense-programmed h3 { margin: 16px 0; font-size: 14px; line-height: 1.5; }
 .expense-programmed__count { display: block; color: #68737c; font-size: 12px; font-weight: 400; }
+.expense-programmed__notice { display: flex; align-items: flex-start; gap: 8px; margin: 16px 0; padding: 12px 0; border-top: 1px solid #e0e6eb; border-bottom: 1px solid #e0e6eb; color: #526159; font-size: 12px; line-height: 1.5; }
+.expense-programmed__notice svg { flex-shrink: 0; margin-top: 2px; }
 .expense-programmed__entry { padding: 16px 0; border-bottom: 1px solid #e0e6eb; }
 .expense-programmed__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .expense-programmed__detail { display: grid; gap: 4px; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
