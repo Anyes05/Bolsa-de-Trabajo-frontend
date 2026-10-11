@@ -247,6 +247,13 @@ async function saveProgrammed(entry: ReintegroProgramado) {
   }
 }
 
+function toggleProgrammed(entry: ReintegroProgramado, event: Event) {
+  const checkbox = event.target as HTMLInputElement
+  const active = checkbox.checked
+  checkbox.checked = entry.activo
+  void saveProgrammed({ ...entry, activo: active })
+}
+
 function editProgrammed(entry: ReintegroProgramado) {
   if (expenseBusy.value) return
   programmedEditing.value = { ...entry }
@@ -525,9 +532,16 @@ function paymentLabel(method: MetodoPago | null) {
                 <div class="expense-programmed__detail">
                   <strong>{{ entry.concepto }}</strong>
                   <span>{{ formatMoney(entry.monto) }}</span>
-                  <span class="expense-programmed__status" :class="{ 'expense-programmed__status--active': entry.activo }">
+                  <label class="expense-programmed__toggle" :class="{ 'expense-programmed__status--active': entry.activo }">
+                    <input
+                      type="checkbox"
+                      :checked="entry.activo"
+                      :disabled="expenseBusy"
+                      :aria-label="`${entry.activo ? 'Desactivar' : 'Activar'} ${entry.concepto}`"
+                      @change="toggleProgrammed(entry, $event)"
+                    >
                     {{ entry.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
+                  </label>
                 </div>
                 <div class="expense-programmed__actions">
                   <button
@@ -628,7 +642,8 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-programmed__detail { display: grid; gap: 4px; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
 .expense-programmed__detail strong { font-size: 13px; }
 .expense-programmed__header .expense-programmed__actions { flex-shrink: 0; }
-.expense-programmed__status { color: #68737c; font-size: 12px; font-weight: 600; }
+.expense-programmed__toggle { display: inline-flex; align-items: center; gap: 8px; color: #68737c; font-size: 12px; font-weight: 600; cursor: pointer; }
+.expense-programmed__toggle input { margin: 0; accent-color: #07974e; }
 .expense-programmed__status--active { color: #08775f; }
 .expense-programmed__edit, .expense-programmed__delete { min-width: 36px; min-height: 36px; padding: 6px 10px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; cursor: pointer; }
 .expense-programmed__edit { color: #08775f; }
