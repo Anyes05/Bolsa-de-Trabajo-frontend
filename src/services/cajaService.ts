@@ -31,13 +31,6 @@ export const cajaService = {
     })
   },
 
-  registrarProgramado(socioId: number, payload: RegistrarReintegroPayload) {
-    return request<ReintegroProgramado>(`/admin/caja/socios/${socioId}/reintegros-programados`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-  },
-
   eliminarProgramado(socioId: number, reintegroId: number) {
     return request<void>(`/admin/caja/socios/${socioId}/reintegros-programados/${reintegroId}`, {
       method: 'DELETE',

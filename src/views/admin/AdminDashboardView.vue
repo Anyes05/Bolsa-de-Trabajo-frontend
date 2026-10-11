@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
+import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Pencil, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
@@ -32,8 +32,7 @@ const expenseLoading = ref(false)
 const expenseError = ref('')
 const expenseSuccess = ref('')
 const programmed = ref<ReintegroProgramado[]>([])
-const programmedConcept = ref('')
-const programmedAmount = ref('')
+const programmedEditing = ref<ReintegroProgramado | null>(null)
 const programmedToDelete = ref<number | null>(null)
 const externalReference = ref('')
 const paymentNotes = ref('')
@@ -189,8 +188,7 @@ async function openExpense(company: CuentaCaja) {
   expenseError.value = ''
   expenseSuccess.value = ''
   programmed.value = []
-  programmedConcept.value = ''
-  programmedAmount.value = ''
+  programmedEditing.value = null
   programmedToDelete.value = null
   expenseLoading.value = true
   try {
@@ -228,7 +226,7 @@ async function saveExpense() {
   }
 }
 
-async function saveProgrammed(entry: ReintegroProgramado, active = entry.activo) {
+async function saveProgrammed(entry: ReintegroProgramado) {
   if (!expenseCompany.value || expenseBusy.value) return
   expenseError.value = ''
   expenseSuccess.value = ''
@@ -238,11 +236,9 @@ async function saveProgrammed(entry: ReintegroProgramado, active = entry.activo)
   }
   expenseBusy.value = true
   try {
-    const saved = await cajaService.actualizarProgramado(expenseCompany.value.socioId, {
-      ...entry,
-      activo: active,
-    })
-    Object.assign(entry, saved)
+    const saved = await cajaService.actualizarProgramado(expenseCompany.value.socioId, entry)
+    programmed.value = programmed.value.map((item) => item.id === saved.id ? saved : item)
+    programmedEditing.value = null
     expenseSuccess.value = 'Configuración guardada. Los cargos anteriores no se modificaron.'
   } catch (exception) {
     expenseError.value = exception instanceof Error ? exception.message : 'No fue posible guardar la configuración.'
@@ -251,37 +247,20 @@ async function saveProgrammed(entry: ReintegroProgramado, active = entry.activo)
   }
 }
 
-function toggleProgrammed(entry: ReintegroProgramado, event: Event) {
-  const checkbox = event.target as HTMLInputElement
-  const active = checkbox.checked
-  checkbox.checked = entry.activo
-  void saveProgrammed(entry, active)
-}
-
-async function addProgrammed() {
-  if (!expenseCompany.value || expenseBusy.value || expenseLoading.value) return
+function editProgrammed(entry: ReintegroProgramado) {
+  if (expenseBusy.value) return
+  programmedEditing.value = { ...entry }
+  programmedToDelete.value = null
   expenseError.value = ''
   expenseSuccess.value = ''
-  if (!programmedConcept.value.trim() || !validAmount(programmedAmount.value)) {
-    expenseError.value = 'Ingrese concepto y monto positivo con hasta dos decimales.'
-    return
-  }
-  expenseBusy.value = true
-  try {
-    const created = await cajaService.registrarProgramado(expenseCompany.value.socioId, {
-      concepto: programmedConcept.value.trim(),
-      monto: Number(programmedAmount.value),
-      recurrente: true,
-    })
-    programmed.value.push(created)
-    programmedConcept.value = ''
-    programmedAmount.value = ''
-    expenseSuccess.value = 'Reintegro recurrente agregado. Se aplicará desde el próximo mes.'
-  } catch (exception) {
-    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible agregar el reintegro recurrente.'
-  } finally {
-    expenseBusy.value = false
-  }
+}
+
+function requestProgrammedDeletion(entry: ReintegroProgramado) {
+  if (expenseBusy.value) return
+  programmedToDelete.value = entry.id
+  programmedEditing.value = null
+  expenseError.value = ''
+  expenseSuccess.value = ''
 }
 
 async function deleteProgrammed(entry: ReintegroProgramado) {
@@ -312,6 +291,7 @@ function closeExpense() {
 function selectExpenseTab(tab: 'GASTOS' | 'RECURRENTES') {
   if (expenseBusy.value || expenseTab.value === tab) return
   expenseTab.value = tab
+  programmedEditing.value = null
   programmedToDelete.value = null
   expenseError.value = ''
   expenseSuccess.value = ''
@@ -530,62 +510,71 @@ function paymentLabel(method: MetodoPago | null) {
             role="tabpanel"
             aria-labelledby="expense-tab-recurrentes"
           >
-            <form class="expense-programmed__entry" @submit.prevent="addProgrammed">
-              <h3>Nuevo reintegro recurrente</h3>
-              <label class="cash-payment-detail">
-                Concepto
-                <input v-model="programmedConcept" maxlength="200" required :disabled="expenseBusy || expenseLoading">
-              </label>
-              <label class="cash-payment-detail">
-                Importe mensual
-                <input v-model="programmedAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy || expenseLoading">
-              </label>
-              <button class="cash-charge expense-add" type="submit" :disabled="expenseBusy || expenseLoading">
-                <Plus :size="14" /> Agregar recurrente
-              </button>
-            </form>
             <h3 v-if="!expenseLoading">
               Reintegros registrados
               <span class="expense-programmed__count">{{ programmed.filter((entry) => entry.activo).length }} activos · {{ programmed.filter((entry) => !entry.activo).length }} inactivos</span>
             </h3>
             <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
             <p v-else-if="!programmed.length && !expenseError" class="company-empty">No hay reintegros recurrentes registrados.</p>
-            <form
+            <article
               v-for="entry in programmed"
               :key="entry.id"
               class="expense-programmed__entry"
-              @submit.prevent="saveProgrammed(entry)"
             >
               <div class="expense-programmed__header">
-                <span class="expense-programmed__status" :class="{ 'expense-programmed__status--active': entry.activo }">
-                  {{ entry.activo ? 'Activo' : 'Inactivo' }}
-                </span>
-                <button
-                  class="expense-programmed__delete"
-                  type="button"
-                  :disabled="expenseBusy"
-                  :aria-label="`Eliminar ${entry.concepto}`"
-                  title="Eliminar reintegro recurrente"
-                  @click="programmedToDelete = entry.id"
-                >
-                  <Trash2 :size="16" />
-                </button>
+                <div class="expense-programmed__detail">
+                  <strong>{{ entry.concepto }}</strong>
+                  <span>{{ formatMoney(entry.monto) }}</span>
+                  <span class="expense-programmed__status" :class="{ 'expense-programmed__status--active': entry.activo }">
+                    {{ entry.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </div>
+                <div class="expense-programmed__actions">
+                  <button
+                    class="expense-programmed__edit"
+                    type="button"
+                    :disabled="expenseBusy"
+                    :aria-label="`Modificar ${entry.concepto}`"
+                    title="Modificar reintegro recurrente"
+                    @click="editProgrammed(entry)"
+                  >
+                    <Pencil :size="16" />
+                  </button>
+                  <button
+                    class="expense-programmed__delete"
+                    type="button"
+                    :disabled="expenseBusy"
+                    :aria-label="`Eliminar ${entry.concepto}`"
+                    title="Eliminar reintegro recurrente"
+                    @click="requestProgrammedDeletion(entry)"
+                  >
+                    <Trash2 :size="16" />
+                  </button>
+                </div>
               </div>
-              <label class="cash-payment-detail">
-                Concepto
-                <input v-model="entry.concepto" maxlength="200" required :disabled="expenseBusy">
-              </label>
-              <label class="cash-payment-detail">
-                Importe mensual
-                <input v-model.number="entry.monto" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy">
-              </label>
-              <label class="expense-recurring">
-                <input :checked="entry.activo" type="checkbox" :disabled="expenseBusy" @change="toggleProgrammed(entry, $event)">
-                Activar reintegro
-              </label>
-              <button class="cash-history" type="submit" :disabled="expenseBusy">
-                <Save :size="14" /> Guardar configuración
-              </button>
+              <form
+                v-if="programmedEditing && programmedEditing.id === entry.id"
+                @submit.prevent="saveProgrammed(programmedEditing)"
+              >
+                <label class="cash-payment-detail">
+                  Concepto
+                  <input v-model="programmedEditing.concepto" maxlength="200" required :disabled="expenseBusy">
+                </label>
+                <label class="cash-payment-detail">
+                  Importe mensual
+                  <input v-model.number="programmedEditing.monto" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy">
+                </label>
+                <label class="expense-recurring">
+                  <input v-model="programmedEditing.activo" type="checkbox" :disabled="expenseBusy">
+                  Activo
+                </label>
+                <div class="expense-programmed__actions">
+                  <button class="cash-history" type="button" :disabled="expenseBusy" @click="programmedEditing = null">Cancelar</button>
+                  <button class="cash-history" type="submit" :disabled="expenseBusy">
+                    <Save :size="14" /> {{ expenseBusy ? 'Guardando...' : 'Guardar cambios' }}
+                  </button>
+                </div>
+              </form>
               <div v-if="programmedToDelete === entry.id" class="expense-programmed__confirmation">
                 <p>¿Eliminar «{{ entry.concepto }}»? Los gastos ya registrados se conservarán.</p>
                 <div class="expense-programmed__actions">
@@ -595,7 +584,7 @@ function paymentLabel(method: MetodoPago | null) {
                   </button>
                 </div>
               </div>
-            </form>
+            </article>
           </section>
           <AppAlert v-if="expenseError">{{ expenseError }}</AppAlert>
           <p v-if="expenseSuccess" class="expense-success" role="status">{{ expenseSuccess }}</p>
@@ -636,9 +625,15 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-programmed__count { display: block; color: #68737c; font-size: 12px; font-weight: 400; }
 .expense-programmed__entry { padding: 16px 0; border-bottom: 1px solid #e0e6eb; }
 .expense-programmed__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.expense-programmed__detail { display: grid; gap: 4px; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
+.expense-programmed__detail strong { font-size: 13px; }
+.expense-programmed__header .expense-programmed__actions { flex-shrink: 0; }
 .expense-programmed__status { color: #68737c; font-size: 12px; font-weight: 600; }
 .expense-programmed__status--active { color: #08775f; }
-.expense-programmed__delete { min-width: 36px; min-height: 36px; padding: 6px 10px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #a52c32; font: inherit; font-size: 12px; cursor: pointer; }
+.expense-programmed__edit, .expense-programmed__delete { min-width: 36px; min-height: 36px; padding: 6px 10px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; cursor: pointer; }
+.expense-programmed__edit { color: #08775f; }
+.expense-programmed__edit:focus-visible { outline: 2px solid #08775f; outline-offset: 2px; }
+.expense-programmed__delete { color: #a52c32; }
 .expense-programmed__delete:focus-visible { outline: 2px solid #a52c32; outline-offset: 2px; }
 .expense-programmed__confirmation { margin-top: 16px; color: #a52c32; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .expense-programmed__actions { display: flex; flex-wrap: wrap; gap: 8px; }
