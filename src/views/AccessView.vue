@@ -50,7 +50,7 @@ async function submitLogin() {
   if (!role.value) return
   const identifierValue = loginIdentifier()
   if (role.value === 'SOCIO' && !identifierValue) {
-    error.value = 'Ingresa tu número de BPS.'
+    error.value = 'Ingresa tu número de BPS o cédula.'
     return
   }
   busy.value = true

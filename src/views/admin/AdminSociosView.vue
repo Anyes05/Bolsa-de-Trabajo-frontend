@@ -3,7 +3,12 @@ import { Pencil, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
-import { estadoMorosidadLabel, estadoMorosidadTone, socioService } from '../../services/socioService'
+import {
+  estadoMorosidadLabel,
+  estadoMorosidadTone,
+  socioIdentificadorLabel,
+  socioService,
+} from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
 
 const socios = ref<SocioRecord[]>([])
@@ -27,6 +32,7 @@ const editForm = reactive({
   localidad: '',
   rubroId: '',
   esDirectivo: false,
+  fechaAlta: '',
   fechaAniversario: '',
   estadoMorosidad: 'AL_DIA' as EstadoMorosidad,
 })
@@ -37,6 +43,7 @@ const filtered = computed(() => {
   return socios.value.filter((socio) => [
     socio.razonSocial,
     socio.bps,
+    socio.cedula,
     socio.rut,
     socio.nombreRubro,
     socio.emailUsuario,
@@ -84,6 +91,7 @@ function openEdit(socio: SocioRecord) {
   editForm.localidad = socio.localidad ?? ''
   editForm.rubroId = socio.rubroId != null ? String(socio.rubroId) : ''
   editForm.esDirectivo = socio.esDirectivo
+  editForm.fechaAlta = socio.fechaAlta?.slice(0, 10) ?? ''
   editForm.fechaAniversario = socio.fechaAniversario?.slice(0, 10) ?? ''
   editForm.estadoMorosidad = socio.estadoMorosidad
 }
@@ -117,6 +125,7 @@ async function saveEdit() {
       localidad: editForm.localidad.trim(),
       rubroId: Number(editForm.rubroId),
       esDirectivo: editForm.esDirectivo,
+      fechaAlta: emptyToNull(editForm.fechaAlta),
       fechaAniversario: emptyToNull(editForm.fechaAniversario),
       estadoMorosidad: editForm.estadoMorosidad,
     })
@@ -175,7 +184,7 @@ async function resetClave() {
     <section class="company-search-card">
       <label class="company-search">
         <Search :size="17" />
-        <input v-model="query" placeholder="Buscar por razón social, RUT, BPS o rubro...">
+        <input v-model="query" placeholder="Buscar por razón social, RUT, BPS, cédula o rubro...">
       </label>
       <span>{{ filtered.length }} de {{ socios.length }} socios listados</span>
     </section>
@@ -189,7 +198,7 @@ async function resetClave() {
         <table class="company-table">
           <thead>
             <tr>
-              <th>Socio<br><small>BPS</small></th>
+              <th>Socio<br><small>BPS / Cédula</small></th>
               <th>RUT</th>
               <th>Rubro</th>
               <th>Estado</th>
@@ -203,7 +212,7 @@ async function resetClave() {
             <tr v-for="socio in filtered" :key="socio.id">
               <td class="company-table__name">
                 <strong>{{ socio.razonSocial }}</strong>
-                <small>{{ socio.bps || 'Sin BPS' }}</small>
+                <small>{{ socioIdentificadorLabel(socio) }}</small>
                 <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
                 <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
               </td>
@@ -243,11 +252,15 @@ async function resetClave() {
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
           <h2 id="edit-socio-title">Editar socio</h2>
-          <p>BPS y email de cuenta no se cambian aquí. El de contacto puede ser el mismo u otro.</p>
+          <p>El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
           <label class="new-company-form__wide">Razón social *
             <input v-model="editForm.razonSocial" required>
+          </label>
+          <label>Identificador de acceso
+            <input :value="socioIdentificadorLabel(editing)" readonly>
+            <small>Se define solo en el alta: BPS o cédula, no ambos.</small>
           </label>
           <label>RUT *
             <input v-model="editForm.rut" required>
@@ -262,6 +275,9 @@ async function resetClave() {
           <label>Email de contacto
             <input v-model="editForm.emailContacto" type="email" placeholder="contacto@empresa.com">
             <small>Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
+          </label>
+          <label>Fecha de alta en el CCISJ
+            <input v-model="editForm.fechaAlta" type="date">
           </label>
           <label>Fecha de aniversario
             <input v-model="editForm.fechaAniversario" type="date">

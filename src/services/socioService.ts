@@ -59,3 +59,17 @@ export function estadoMorosidadTone(estado: EstadoMorosidad | null | undefined) 
   if (estado === 'INACTIVO') return 'gray'
   return 'red'
 }
+
+export function socioIdentificadorLabel(socio: { tipoIdentificador?: string | null; bps?: string | null; cedula?: string | null }) {
+  if (socio.tipoIdentificador === 'CEDULA' || (!socio.bps && socio.cedula)) {
+    return `Cédula ${socio.cedula}`
+  }
+  if (socio.bps) {
+    return `BPS ${socio.bps}`
+  }
+  return 'Sin identificador'
+}
+
+export function socioIdentificadorValue(socio: { bps?: string | null; cedula?: string | null }) {
+  return socio.bps || socio.cedula || ''
+}

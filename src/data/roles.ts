@@ -22,9 +22,9 @@ export const roleOptions: Array<{
   {
     role: 'SOCIO',
     title: 'Socio',
-    label: 'Número de BPS',
-    placeholder: 'Ingresa tu número de BPS',
-    description: 'Accede con tu número de BPS',
+    label: 'BPS o cédula',
+    placeholder: 'Ingresa tu BPS o cédula',
+    description: 'Accede con tu BPS o cédula de registro',
     icon: Building2,
     modifier: 'role-option--member',
   },

@@ -11,9 +11,13 @@ export type RubroOption = {
   nombreRubro: string
 }
 
+export type TipoIdentificadorSocio = 'BPS' | 'CEDULA'
+
 export type SocioRecord = {
   id: number
   bps: string | null
+  cedula: string | null
+  tipoIdentificador: TipoIdentificadorSocio | null
   razonSocial: string
   rut: string | null
   giro: string | null
@@ -34,7 +38,8 @@ export type SocioRecord = {
 }
 
 export type SocioCreatePayload = {
-  bps: string
+  tipoIdentificador: TipoIdentificadorSocio
+  identificador: string
   email: string
   password: string
   razonSocial: string
@@ -47,6 +52,7 @@ export type SocioCreatePayload = {
   localidad: string
   rubroId: number
   esDirectivo: boolean
+  fechaAlta?: string | null
   fechaAniversario?: string | null
 }
 
@@ -61,6 +67,7 @@ export type SocioUpdatePayload = {
   localidad: string
   rubroId: number
   esDirectivo: boolean
+  fechaAlta?: string | null
   fechaAniversario?: string | null
   estadoMorosidad?: EstadoMorosidad | null
 }

@@ -142,9 +142,9 @@ function logout() {
           </select>
         </label>
         <label>
-          N° BPS
+          BPS / Cédula
           <input :value="form.bps" disabled>
-          <small>No editable</small>
+          <small>Identificador de acceso (no editable)</small>
         </label>
         <p v-if="savedHint" class="socio-profile__hint">{{ savedHint }}</p>
         <AppButton type="submit">Guardar cambios</AppButton>

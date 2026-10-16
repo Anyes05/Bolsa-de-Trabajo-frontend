@@ -356,7 +356,7 @@ function paymentLabel(method: MetodoPago | null) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, BPS o rubro..."></label>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, BPS, cédula o rubro..."></label>
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
@@ -373,7 +373,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr>
               <th>N°</th>
               <th>Razón social</th>
-              <th>BPS</th>
+              <th>BPS / Cédula</th>
               <th>Rubro</th>
               <th>Saldo</th>
               <th>Estado</th>
@@ -437,7 +437,7 @@ function paymentLabel(method: MetodoPago | null) {
           <p v-if="validAmount(receivedAmount)" class="account-result" role="status">Saldo después del pago: <strong>{{ balanceLabel(balanceAfterPayment) }}</strong></p>
           <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" maxlength="80" placeholder="Opcional"></label>
           <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" maxlength="2000" placeholder="Opcional"></textarea></label>
-          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div></dl>
+          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS / Cédula</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
         <footer class="cash-modal__footer"><button class="cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>

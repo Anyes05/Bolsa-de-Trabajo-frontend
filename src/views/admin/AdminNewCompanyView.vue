@@ -1,24 +1,27 @@
 <script setup lang="ts">
 import { ArrowLeft } from 'lucide-vue-next'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { socioService } from '../../services/socioService'
-import type { RubroOption } from '../../services/types'
+import type { RubroOption, TipoIdentificadorSocio } from '../../services/types'
 
 const router = useRouter()
 const rubros = ref<RubroOption[]>([])
 const error = ref('')
 const busy = ref(false)
+const today = new Date().toISOString().slice(0, 10)
 const form = reactive({
-  bps: '',
+  tipoIdentificador: 'BPS' as TipoIdentificadorSocio,
+  identificador: '',
   email: '',
   password: '',
   razonSocial: '',
   rut: '',
   telefono: '',
   emailContacto: '',
+  fechaAlta: today,
   fechaAniversario: '',
   esDirectivo: false,
   calle: '',
@@ -26,6 +29,10 @@ const form = reactive({
   localidad: '',
   rubroId: '',
 })
+
+const identificadorLabel = computed(() => (
+  form.tipoIdentificador === 'CEDULA' ? 'Número de cédula' : 'Número de BPS'
+))
 
 onMounted(async () => {
   try {
@@ -49,9 +56,24 @@ function toIsoDate(value: string) {
   return trimmed
 }
 
+function onTipoChange() {
+  form.identificador = ''
+}
+
 async function submit() {
+  const identificador = form.identificador.replace(/\D/g, '')
+  if (!identificador) {
+    error.value = form.tipoIdentificador === 'CEDULA'
+      ? 'Ingresa el número de cédula.'
+      : 'Ingresa el número de BPS.'
+    return
+  }
   if (!form.rubroId) {
     error.value = 'Selecciona un rubro.'
+    return
+  }
+  if (!form.fechaAlta) {
+    error.value = 'Indica la fecha de alta en el CCISJ.'
     return
   }
   if (form.password.length < 12) {
@@ -62,7 +84,8 @@ async function submit() {
   error.value = ''
   try {
     await socioService.createSocio({
-      bps: form.bps.replace(/\D/g, ''),
+      tipoIdentificador: form.tipoIdentificador,
+      identificador,
       email: form.email.trim(),
       password: form.password,
       razonSocial: form.razonSocial.trim(),
@@ -74,6 +97,7 @@ async function submit() {
       localidad: form.localidad.trim(),
       rubroId: Number(form.rubroId),
       esDirectivo: form.esDirectivo,
+      fechaAlta: toIsoDate(form.fechaAlta),
       fechaAniversario: toIsoDate(form.fechaAniversario),
     })
     await router.push({ name: 'admin-socios' })
@@ -95,11 +119,26 @@ async function submit() {
     <section class="new-company-card">
       <header class="new-company-card__header">
         <h2>Ficha del Socio</h2>
-        <p>El socio entra con su BPS. El email de cuenta y el de contacto pueden ser el mismo o distintos, según prefiera.</p>
+        <p>Registra al socio con BPS o cédula (una sola opción). Elige también la fecha de alta en el CCISJ.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
-        <label>BPS *
-          <input v-model="form.bps" inputmode="numeric" required placeholder="123456789">
+        <label>Registrar con *
+          <select v-model="form.tipoIdentificador" class="new-company-select" required @change="onTipoChange">
+            <option value="BPS">Número de BPS</option>
+            <option value="CEDULA">Número de cédula</option>
+          </select>
+        </label>
+        <label>{{ identificadorLabel }} *
+          <input
+            v-model="form.identificador"
+            inputmode="numeric"
+            required
+            :placeholder="form.tipoIdentificador === 'CEDULA' ? '12345678' : '123456789'"
+          >
+          <small>El socio ingresará al sistema con este mismo número. No puede tener BPS y cédula a la vez.</small>
+        </label>
+        <label>Fecha de alta en el CCISJ *
+          <input v-model="form.fechaAlta" type="date" required>
         </label>
         <label>Email de cuenta *
           <input v-model="form.email" type="email" required placeholder="cuenta@empresa.com">
