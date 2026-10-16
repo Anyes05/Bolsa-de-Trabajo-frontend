@@ -105,8 +105,9 @@ async function submit() {
           <input v-model="form.email" type="email" required placeholder="cuenta@empresa.com">
           <small>Con este correo se registra el usuario en el sistema.</small>
         </label>
-        <label class="new-company-form__wide">Contraseña inicial *
+        <label class="new-company-form__wide">Contraseña provisional *
           <input v-model="form.password" type="password" required minlength="12" placeholder="Mínimo 12 caracteres">
+          <small>El socio deberá cambiarla en las primeras 24 horas al ingresar.</small>
         </label>
         <label class="new-company-form__wide">Razón social *
           <input v-model="form.razonSocial" required>

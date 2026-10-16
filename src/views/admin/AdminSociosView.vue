@@ -14,6 +14,9 @@ const busy = ref(false)
 const editing = ref<SocioRecord | null>(null)
 const editError = ref('')
 const editBusy = ref(false)
+const resetBusy = ref(false)
+const resetHint = ref('')
+const resetPassword = ref('')
 const editForm = reactive({
   razonSocial: '',
   rut: '',
@@ -70,6 +73,8 @@ function emptyToNull(value: string) {
 function openEdit(socio: SocioRecord) {
   editing.value = socio
   editError.value = ''
+  resetHint.value = ''
+  resetPassword.value = ''
   editForm.razonSocial = socio.razonSocial ?? ''
   editForm.rut = socio.rut ?? ''
   editForm.telefono = socio.telefono ?? ''
@@ -85,6 +90,8 @@ function openEdit(socio: SocioRecord) {
 
 function closeEdit() {
   editing.value = null
+  resetHint.value = ''
+  resetPassword.value = ''
 }
 
 function replaceSocio(updated: SocioRecord) {
@@ -131,6 +138,28 @@ async function toggleActive(socio: SocioRecord) {
     replaceSocio(updated)
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible actualizar el estado.'
+  }
+}
+
+async function resetClave() {
+  if (!editing.value) return
+  if (resetPassword.value.length < 12) {
+    editError.value = 'La clave provisional debe tener al menos 12 caracteres.'
+    return
+  }
+  resetBusy.value = true
+  editError.value = ''
+  resetHint.value = ''
+  try {
+    const updated = await socioService.resetClaveProvisional(editing.value.id, resetPassword.value)
+    replaceSocio(updated)
+    editing.value = updated
+    resetPassword.value = ''
+    resetHint.value = 'Clave provisional restablecida. El socio tiene 24 horas para cambiarla.'
+  } catch (exception) {
+    editError.value = exception instanceof Error ? exception.message : 'No fue posible restablecer la clave.'
+  } finally {
+    resetBusy.value = false
   }
 }
 </script>
@@ -263,6 +292,17 @@ async function toggleActive(socio: SocioRecord) {
             <input v-model="editForm.esDirectivo" type="checkbox">
             Es directivo
           </label>
+          <fieldset class="new-company-form__wide socio-reset-clave">
+            <legend>Restablecer clave provisional</legend>
+            <p>Genera una nueva clave temporal. El socio deberá cambiarla en las siguientes 24 horas.</p>
+            <label>Nueva clave provisional
+              <input v-model="resetPassword" type="password" minlength="12" placeholder="Mínimo 12 caracteres" autocomplete="new-password">
+            </label>
+            <button class="company-edit" type="button" :disabled="resetBusy" @click="resetClave">
+              {{ resetBusy ? 'Restableciendo...' : 'Restablecer clave' }}
+            </button>
+            <small v-if="resetHint">{{ resetHint }}</small>
+          </fieldset>
           <AppAlert v-if="editError">{{ editError }}</AppAlert>
           <footer class="new-company-form__footer">
             <button class="new-company-cancel" type="button" @click="closeEdit">Cancelar</button>
@@ -275,3 +315,33 @@ async function toggleActive(socio: SocioRecord) {
     </div>
   </AdminShell>
 </template>
+
+<style scoped>
+.socio-reset-clave {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 14px;
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+  background: #f7faf8;
+}
+
+.socio-reset-clave legend {
+  padding: 0 6px;
+  color: #2f3e35;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.socio-reset-clave p,
+.socio-reset-clave small {
+  color: #6a7685;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.socio-reset-clave .company-edit {
+  justify-self: start;
+}
+</style>

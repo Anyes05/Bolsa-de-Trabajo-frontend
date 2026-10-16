@@ -39,6 +39,13 @@ export const socioService = {
       method: 'POST',
     })
   },
+
+  resetClaveProvisional(id: number, password: string) {
+    return request<SocioRecord>(`/admin/socios/${id}/clave-provisional`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    })
+  },
 }
 
 export const estadoMorosidadLabel: Record<EstadoMorosidad, string> = {
@@ -49,5 +56,6 @@ export const estadoMorosidadLabel: Record<EstadoMorosidad, string> = {
 
 export function estadoMorosidadTone(estado: EstadoMorosidad | null | undefined) {
   if (estado === 'AL_DIA') return 'green'
+  if (estado === 'INACTIVO') return 'gray'
   return 'red'
 }

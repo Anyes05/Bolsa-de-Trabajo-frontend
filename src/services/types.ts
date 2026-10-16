@@ -167,6 +167,7 @@ export type AuthResponse = {
   role: Role
   fullName?: string | null
   esDirectivo?: boolean | null
+  debeCambiarPassword?: boolean | null
 }
 
 export type CurrentUserResponse = {
@@ -174,6 +175,12 @@ export type CurrentUserResponse = {
   roles: unknown[]
   fullName: string | null
   esDirectivo?: boolean | null
+  debeCambiarPassword?: boolean | null
+}
+
+export type ChangePasswordPayload = {
+  currentPassword: string
+  newPassword: string
 }
 
 export type RegisterApplicantPayload = {

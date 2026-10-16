@@ -58,6 +58,10 @@ async function submitLogin() {
   try {
     const session = await authService.login(role.value, identifierValue, password.value)
     auth.setSession(session)
+    if (session.debeCambiarPassword) {
+      await router.replace({ name: 'socio-cambiar-clave' })
+      return
+    }
     const target = routeByRole(session.role)
     await router.replace({ name: target.name })
     if (window.location.pathname !== target.path) {

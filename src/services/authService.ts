@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { AuthResponse, CurrentUserResponse, RegisterApplicantPayload, Role } from './types'
+import type { AuthResponse, ChangePasswordPayload, CurrentUserResponse, RegisterApplicantPayload, Role } from './types'
 
 export const authService = {
   currentUser() {
@@ -10,6 +10,13 @@ export const authService = {
     return request<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ role, identifier, password }),
+    })
+  },
+
+  changePassword(payload: ChangePasswordPayload) {
+    return request<AuthResponse>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     })
   },
 

@@ -33,6 +33,7 @@ function readStoredSession(): AuthResponse | null {
       role,
       fullName: parsed.fullName?.trim() || null,
       esDirectivo: resolveDirectivo(role, parsed.email, parsed.esDirectivo),
+      debeCambiarPassword: parsed.debeCambiarPassword === true,
     }
   } catch {
     return null
@@ -46,10 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
   const role = ref<Role | null>(stored?.role ?? null)
   const fullName = ref<string | null>(stored?.fullName?.trim() || null)
   const esDirectivo = ref(stored?.esDirectivo === true)
+  const debeCambiarPassword = ref(stored?.debeCambiarPassword === true)
 
   const isAuthenticated = computed(() => Boolean(token.value && email.value && role.value))
   const isDirectivo = computed(() => role.value === 'SOCIO' && esDirectivo.value)
   const homeRoute = computed(() => {
+    if (role.value === 'SOCIO' && debeCambiarPassword.value) return 'socio-cambiar-clave'
     if (role.value === 'SOCIO') return 'socio-bolsa-empleo'
     if (role.value === 'POSTULANTE') return 'postulante-bolsa-empleo'
     if (role.value === 'ADMIN') return 'admin-dashboard'
@@ -67,6 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       role: role.value,
       fullName: fullName.value,
       esDirectivo: role.value === 'SOCIO' ? esDirectivo.value : null,
+      debeCambiarPassword: debeCambiarPassword.value,
     }
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
   }
@@ -81,6 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
     role.value = normalizedRole
     fullName.value = session.fullName?.trim() || null
     esDirectivo.value = resolveDirectivo(normalizedRole, session.email, session.esDirectivo)
+    debeCambiarPassword.value = session.debeCambiarPassword === true
     persist()
   }
 
@@ -101,12 +106,18 @@ export const useAuthStore = defineStore('auth', () => {
     persist()
   }
 
+  function setDebeCambiarPassword(value: boolean) {
+    debeCambiarPassword.value = value
+    persist()
+  }
+
   function logout() {
     token.value = null
     email.value = null
     role.value = null
     fullName.value = null
     esDirectivo.value = false
+    debeCambiarPassword.value = false
     sessionStorage.removeItem(STORAGE_KEY)
   }
 
@@ -117,10 +128,12 @@ export const useAuthStore = defineStore('auth', () => {
     fullName,
     isAuthenticated,
     isDirectivo,
+    debeCambiarPassword,
     homeRoute,
     setSession,
     setFullName,
     setEsDirectivo,
+    setDebeCambiarPassword,
     logout,
   }
 })

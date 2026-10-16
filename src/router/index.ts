@@ -76,6 +76,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['SOCIO'] },
     },
     {
+      path: '/socio/cambiar-clave',
+      name: 'socio-cambiar-clave',
+      component: () => import('../views/socio/SocioCambiarClaveView.vue'),
+      meta: { requiresAuth: true, roles: ['SOCIO'], allowPendingPasswordChange: true },
+    },
+    {
       path: '/admin',
       name: 'admin-dashboard',
       component: AdminDashboardView,
@@ -165,6 +171,12 @@ router.beforeEach((to) => {
   }
   if (allowedRoles && currentRole && !normalizedAllowedRoles.includes(currentRole)) {
     return { name: auth.homeRoute }
+  }
+  if (auth.isAuthenticated && auth.debeCambiarPassword && !to.meta.allowPendingPasswordChange) {
+    return { name: 'socio-cambiar-clave' }
+  }
+  if (to.name === 'socio-cambiar-clave' && auth.isAuthenticated && !auth.debeCambiarPassword) {
+    return { name: 'socio-bolsa-empleo' }
   }
   if (to.meta.requiresDirectivo && !auth.isDirectivo) {
     return { name: 'socio-bolsa-empleo' }

@@ -6,7 +6,7 @@ export class ApiRequestError extends Error {
   payload: unknown
 
   constructor(status: number, path: string, payload: unknown, detail: string) {
-    super(`${status}: ${detail}`)
+    super(detail)
     this.name = 'ApiRequestError'
     this.status = status
     this.path = path
