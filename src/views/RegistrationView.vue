@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Eye, EyeOff, Lightbulb, Paperclip } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Eye, EyeOff, GraduationCap, Lightbulb, Paperclip, Plus, Trash2, Wrench } from 'lucide-vue-next'
 import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
@@ -26,6 +26,7 @@ const showConfirmPassword = ref(false)
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
 const cvFiles = ref<File[]>([])
+const cvMode = ref<'upload' | 'manual' | null>(null)
 const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive({
   fullName: '',
@@ -40,6 +41,49 @@ const form = reactive({
   hasVehicle: false,
   latestJob: '',
   experienceDescription: '',
+})
+
+type ManualExperience = {
+  company: string
+  role: string
+  startDate: string
+  endDate: string
+  current: boolean
+  description: string
+}
+
+type ManualEducation = {
+  institution: string
+  degree: string
+  level: string
+  startYear: string
+  endYear: string
+}
+
+type ManualLanguage = {
+  name: string
+  level: string
+}
+
+function blankExperience(): ManualExperience {
+  return { company: '', role: '', startDate: '', endDate: '', current: false, description: '' }
+}
+
+function blankEducation(): ManualEducation {
+  return { institution: '', degree: '', level: '', startYear: '', endYear: '' }
+}
+
+function blankLanguage(): ManualLanguage {
+  return { name: '', level: '' }
+}
+
+const manualCv = reactive({
+  summary: '',
+  experiences: [blankExperience()],
+  education: [blankEducation()],
+  technicalSkills: '',
+  languages: [blankLanguage()],
+  certifications: '',
 })
 
 onMounted(async () => {
@@ -74,26 +118,55 @@ function routeByRole(role: string) {
 }
 
 function buildManualCvFile() {
-  const latestJob = form.latestJob.trim()
-  const experience = form.experienceDescription.trim()
-  if (!latestJob && !experience) {
+  if (!hasManualCvContent()) {
     return null
   }
 
   const doc = new jsPDF()
-  const createdAt = new Date().toLocaleString('es-UY')
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const contentWidth = 180
   let y = 20
 
+  const ensureSpace = (height: number) => {
+    if (y + height > pageHeight - 18) {
+      doc.addPage()
+      y = 20
+    }
+  }
+
+  const addHeading = (title: string) => {
+    ensureSpace(12)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.setTextColor(0, 112, 62)
+    doc.text(title, 14, y)
+    doc.setTextColor(0, 0, 0)
+    y += 8
+  }
+
+  const addParagraph = (value: string) => {
+    const lines = doc.splitTextToSize(value, contentWidth)
+    ensureSpace(lines.length * 5 + 4)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.text(lines, 14, y)
+    y += lines.length * 5 + 4
+  }
+
+  const nonEmptyExperiences = manualCv.experiences.filter((item) => item.company.trim() || item.role.trim() || item.description.trim())
+  const nonEmptyEducation = manualCv.education.filter((item) => item.institution.trim() || item.degree.trim())
+  const nonEmptyLanguages = manualCv.languages.filter((item) => item.name.trim())
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(16)
-  doc.text('Curriculum Vitae', 14, y)
+  doc.setFontSize(18)
+  doc.setTextColor(0, 112, 62)
+  doc.text(form.fullName || 'Curriculum Vitae', 14, y)
   y += 10
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(11)
-  doc.text(`Nombre: ${form.fullName}`, 14, y)
-  y += 7
-  doc.text(`Email: ${form.email}`, 14, y)
+  doc.setFontSize(10)
+  doc.setTextColor(0, 0, 0)
+  doc.text(`Correo: ${form.email}`, 14, y)
   y += 7
   doc.text(`Teléfono: ${form.phone}`, 14, y)
   y += 7
@@ -102,28 +175,104 @@ function buildManualCvFile() {
   doc.text(`Perfil: ${form.profileName}`, 14, y)
   y += 10
 
-  doc.setFont('helvetica', 'bold')
-  doc.text('Ultimo empleo / empresa actual', 14, y)
-  y += 7
-  doc.setFont('helvetica', 'normal')
-  const latestLines = doc.splitTextToSize(latestJob || 'No informado', 180)
-  doc.text(latestLines, 14, y)
-  y += latestLines.length * 6 + 4
+  if (manualCv.summary.trim()) {
+    addHeading('Perfil profesional')
+    addParagraph(manualCv.summary.trim())
+  }
 
-  doc.setFont('helvetica', 'bold')
-  doc.text('Descripción de experiencia', 14, y)
-  y += 7
-  doc.setFont('helvetica', 'normal')
-  const expLines = doc.splitTextToSize(experience || 'No informada', 180)
-  doc.text(expLines, 14, y)
-  y += expLines.length * 6 + 8
+  if (nonEmptyExperiences.length) {
+    addHeading('Experiencia laboral')
+    nonEmptyExperiences.forEach((experience) => {
+      const period = [experience.startDate, experience.current ? 'Actualidad' : experience.endDate].filter(Boolean).join(' - ')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      ensureSpace(11)
+      doc.text([experience.role, experience.company].filter(Boolean).join(' | '), 14, y)
+      y += 5
+      if (period) {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.text(period, 14, y)
+        y += 5
+      }
+      if (experience.description.trim()) addParagraph(experience.description.trim())
+      else y += 3
+    })
+  }
 
-  doc.setFontSize(9)
-  doc.setTextColor(90, 90, 90)
-  doc.text(`Generado automáticamente durante el registro el ${createdAt}`, 14, y)
+  if (nonEmptyEducation.length) {
+    addHeading('Formación académica')
+    nonEmptyEducation.forEach((education) => {
+      const period = [education.startYear, education.endYear].filter(Boolean).join(' - ')
+      addParagraph([education.degree, education.institution, education.level, period].filter(Boolean).join(' | '))
+    })
+  }
+
+  if (manualCv.technicalSkills.trim()) {
+    addHeading('Habilidades técnicas')
+    addParagraph(manualCv.technicalSkills.trim())
+  }
+
+  if (nonEmptyLanguages.length) {
+    addHeading('Idiomas')
+    addParagraph(nonEmptyLanguages.map((language) => [language.name, language.level].filter(Boolean).join(' - ')).join(', '))
+  }
+
+  if (manualCv.certifications.trim()) {
+    addHeading('Cursos y certificaciones')
+    addParagraph(manualCv.certifications.trim())
+  }
 
   const blob = doc.output('blob')
-  return new File([blob], 'cv-registro.pdf', { type: 'application/pdf' })
+  return new File([blob], 'cv-manual.pdf', { type: 'application/pdf' })
+}
+
+function hasManualCvContent() {
+  return Boolean(
+    manualCv.summary.trim()
+    || manualCv.technicalSkills.trim()
+    || manualCv.certifications.trim()
+    || manualCv.experiences.some((item) => item.company.trim() || item.role.trim() || item.description.trim())
+    || manualCv.education.some((item) => item.institution.trim() || item.degree.trim())
+    || manualCv.languages.some((item) => item.name.trim()),
+  )
+}
+
+function selectCvMode(mode: 'upload' | 'manual') {
+  cvMode.value = mode
+  if (mode === 'manual') clearCvFiles()
+}
+
+function addExperience() {
+  manualCv.experiences.push(blankExperience())
+}
+
+function removeExperience(index: number) {
+  manualCv.experiences.splice(index, 1)
+}
+
+function addEducation() {
+  manualCv.education.push(blankEducation())
+}
+
+function removeEducation(index: number) {
+  manualCv.education.splice(index, 1)
+}
+
+function addLanguage() {
+  manualCv.languages.push(blankLanguage())
+}
+
+function removeLanguage(index: number) {
+  manualCv.languages.splice(index, 1)
+}
+
+function manualProfileSummary() {
+  const firstExperience = manualCv.experiences.find((item) => item.company.trim() || item.role.trim())
+  return {
+    latestJob: firstExperience ? [firstExperience.role, firstExperience.company].filter(Boolean).join(' - ') : '',
+    experienceDescription: manualCv.summary.trim() || firstExperience?.description.trim() || '',
+  }
 }
 
 function validateStep(current: number) {
@@ -242,22 +391,22 @@ async function complete() {
   busy.value = true
   clearFeedback()
   try {
+    const manualSummary = cvMode.value === 'manual' ? manualProfileSummary() : null
     const session = await authService.registerApplicant({
       ...form,
+      ...(manualSummary ?? {}),
       sectors: chosen.value,
     })
     auth.setSession(session)
 
     // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
-    const filesToUpload = cvFiles.value.length ? cvFiles.value : (() => {
-      const generated = buildManualCvFile()
-      return generated ? [generated] : []
-    })()
+    const generatedManualCv = cvMode.value === 'manual' ? buildManualCvFile() : null
+    const filesToUpload = cvMode.value === 'upload' ? cvFiles.value : generatedManualCv ? [generatedManualCv] : []
 
     if (filesToUpload.length) {
       for (const file of filesToUpload) {
         try {
-          await uploadCvWithRetry(file, form.experienceDescription, session.token)
+          await uploadCvWithRetry(file, manualSummary?.experienceDescription || form.experienceDescription, session.token)
         } catch (uploadError) {
           logApiFailure('register-upload-final', uploadError, {
             fileName: file.name,
@@ -402,43 +551,84 @@ async function complete() {
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
         <h2 id="step-cv">Curriculum Vitae</h2>
-        <p>Para finalizar el registro, puedes adjuntar uno o varios CVs y completar tu experiencia.</p>
-        <div class="upload-placeholder">
-          <Paperclip :size="22" aria-hidden="true" />
-          <div>
-            <b>Adjuntar archivo de CV</b>
-            <small>PDF, tamaño máximo de 5MB por archivo (hasta 5 CVs).</small>
-          </div>
-          <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
-          <input
-            id="cv-file-input"
-            class="upload-placeholder__input"
-            type="file"
-            multiple
-            accept=".pdf,application/pdf"
-            @change="onCvFileChange"
-          >
+        <p>Elige una modalidad: adjunta un PDF existente o crea uno nuevo con tu información.</p>
+        <div class="cv-mode-actions" aria-label="Modalidad de curriculum">
+          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'upload' }" @click="selectCvMode('upload')">
+            <Paperclip :size="17" aria-hidden="true" /> Adjuntar CV
+          </button>
+          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'manual' }" @click="selectCvMode('manual')">
+            <Wrench :size="17" aria-hidden="true" /> Crear CV manualmente
+          </button>
         </div>
-        <div v-if="cvFiles.length" class="upload-files">
-          <div class="upload-files__header">
-            <strong>Archivos seleccionados ({{ cvFiles.length }})</strong>
-            <button type="button" class="upload-files__clear" @click="clearCvFiles">Quitar todos</button>
+
+        <section v-if="cvMode === 'upload'" class="cv-option-panel" aria-labelledby="attach-cv-title">
+          <h3 id="attach-cv-title"><Paperclip :size="18" aria-hidden="true" /> Adjuntar archivo de CV</h3>
+          <div class="upload-placeholder">
+            <div><small>PDF, tamaño máximo de 5MB por archivo (hasta 5 CVs).</small></div>
+            <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
+            <input id="cv-file-input" class="upload-placeholder__input" type="file" multiple accept=".pdf,application/pdf" @change="onCvFileChange">
           </div>
-          <ul class="upload-files__list">
-            <li v-for="(file, index) in cvFiles" :key="`${file.name}-${index}`" class="upload-files__item">
-              <span>{{ file.name }}</span>
-              <button type="button" class="upload-files__remove" @click="removeCvFile(index)">Quitar</button>
-            </li>
-          </ul>
-        </div>
-        <section class="experience-form">
-          <h3><BriefcaseBusiness :size="18" aria-hidden="true" /> Completar experiencia manualmente</h3>
-          <AppField id="latestJob" label="Último empleo / empresa actual">
-            <input id="latestJob" v-model="form.latestJob" placeholder="Ej: Auxiliar administrativo">
+          <div v-if="cvFiles.length" class="upload-files">
+            <div class="upload-files__header">
+              <strong>Archivos seleccionados ({{ cvFiles.length }})</strong>
+              <button type="button" class="upload-files__clear" @click="clearCvFiles">Quitar todos</button>
+            </div>
+            <ul class="upload-files__list">
+              <li v-for="(file, index) in cvFiles" :key="`${file.name}-${index}`" class="upload-files__item">
+                <span>{{ file.name }}</span>
+                <button type="button" class="upload-files__remove" @click="removeCvFile(index)">Quitar</button>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section v-else-if="cvMode === 'manual'" class="experience-form" aria-labelledby="manual-cv-title">
+          <h3 id="manual-cv-title"><BriefcaseBusiness :size="18" aria-hidden="true" /> Crear CV manualmente</h3>
+          <p class="experience-form__intro">Al completar el registro se generará un PDF y se guardará como tu CV activo.</p>
+          <AppField id="manualSummary" label="Perfil profesional">
+            <textarea id="manualSummary" v-model="manualCv.summary" placeholder="Resume tu experiencia, fortalezas y objetivo laboral..."></textarea>
           </AppField>
-          <AppField id="experienceDescription" label="Descripción de la experiencia">
-            <textarea id="experienceDescription" v-model="form.experienceDescription" placeholder="Detalla tareas y logros clave..."></textarea>
-          </AppField>
+
+          <section class="manual-cv-section">
+            <div class="manual-cv-section__heading"><h4>Experiencia laboral</h4><button type="button" @click="addExperience"><Plus :size="14" /> Agregar experiencia</button></div>
+            <article v-for="(experience, index) in manualCv.experiences" :key="index" class="manual-cv-entry">
+              <div class="manual-cv-entry__grid">
+                <label>Cargo<input v-model="experience.role" placeholder="Ej: Auxiliar administrativo"></label>
+                <label>Empresa<input v-model="experience.company" placeholder="Ej: Empresa Ejemplo"></label>
+                <label>Desde<input v-model="experience.startDate" type="month"></label>
+                <label>Hasta<input v-model="experience.endDate" type="month" :disabled="experience.current"></label>
+              </div>
+              <label class="manual-cv-entry__check"><input v-model="experience.current" type="checkbox"> Trabajo actual</label>
+              <label>Responsabilidades y logros<textarea v-model="experience.description" placeholder="Describe tareas, herramientas usadas y logros..."></textarea></label>
+              <button v-if="manualCv.experiences.length > 1" type="button" class="manual-cv-entry__remove" @click="removeExperience(index)"><Trash2 :size="13" /> Quitar</button>
+            </article>
+          </section>
+
+          <section class="manual-cv-section">
+            <div class="manual-cv-section__heading"><h4>Formación académica</h4><button type="button" @click="addEducation"><Plus :size="14" /> Agregar formación</button></div>
+            <article v-for="(education, index) in manualCv.education" :key="index" class="manual-cv-entry">
+              <div class="manual-cv-entry__grid">
+                <label>Institución<input v-model="education.institution" placeholder="Ej: UTU"></label>
+                <label>Título o carrera<input v-model="education.degree" placeholder="Ej: Técnico en administración"></label>
+                <label>Nivel<select v-model="education.level"><option value="">Seleccionar</option><option>Secundaria</option><option>Técnico</option><option>Terciario</option><option>Universitario</option><option>Curso</option></select></label>
+                <label>Período<input v-model="education.startYear" placeholder="Desde"></label>
+                <label>Hasta<input v-model="education.endYear" placeholder="Hasta / En curso"></label>
+              </div>
+              <button v-if="manualCv.education.length > 1" type="button" class="manual-cv-entry__remove" @click="removeEducation(index)"><Trash2 :size="13" /> Quitar</button>
+            </article>
+          </section>
+
+          <section class="manual-cv-section">
+            <h4><GraduationCap :size="15" aria-hidden="true" /> Competencias</h4>
+            <label>Habilidades técnicas<textarea v-model="manualCv.technicalSkills" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
+            <label>Cursos y certificaciones<textarea v-model="manualCv.certifications" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
+            <div class="manual-cv-section__heading"><h4>Idiomas</h4><button type="button" @click="addLanguage"><Plus :size="14" /> Agregar idioma</button></div>
+            <div v-for="(language, index) in manualCv.languages" :key="index" class="manual-cv-language">
+              <input v-model="language.name" placeholder="Idioma">
+              <select v-model="language.level"><option value="">Nivel</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select>
+              <button v-if="manualCv.languages.length > 1" type="button" aria-label="Quitar idioma" @click="removeLanguage(index)"><Trash2 :size="14" /></button>
+            </div>
+          </section>
         </section>
       </section>
 
