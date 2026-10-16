@@ -79,11 +79,12 @@ function blankLanguage(): ManualLanguage {
 
 const manualCv = reactive({
   summary: '',
-  experiences: [blankExperience()],
-  education: [blankEducation()],
+  experiences: [] as ManualExperience[],
+  education: [] as ManualEducation[],
   technicalSkills: '',
-  languages: [blankLanguage()],
+  languages: [] as ManualLanguage[],
   certifications: '',
+  showCompetencies: false,
 })
 
 onMounted(async () => {
@@ -619,9 +620,11 @@ async function complete() {
           </section>
 
           <section class="manual-cv-section">
-            <h4><GraduationCap :size="15" aria-hidden="true" /> Competencias</h4>
-            <label>Habilidades técnicas<textarea v-model="manualCv.technicalSkills" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
-            <label>Cursos y certificaciones<textarea v-model="manualCv.certifications" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
+            <div class="manual-cv-section__heading"><h4><GraduationCap :size="15" aria-hidden="true" /> Competencias</h4><button v-if="!manualCv.showCompetencies" type="button" @click="manualCv.showCompetencies = true"><Plus :size="14" /> Agregar competencias</button></div>
+            <template v-if="manualCv.showCompetencies">
+              <label>Habilidades técnicas<textarea v-model="manualCv.technicalSkills" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
+              <label>Cursos y certificaciones<textarea v-model="manualCv.certifications" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
+            </template>
             <div class="manual-cv-section__heading"><h4>Idiomas</h4><button type="button" @click="addLanguage"><Plus :size="14" /> Agregar idioma</button></div>
             <div v-for="(language, index) in manualCv.languages" :key="index" class="manual-cv-language">
               <input v-model="language.name" placeholder="Idioma">
