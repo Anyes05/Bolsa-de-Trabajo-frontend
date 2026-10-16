@@ -1,49 +1,151 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Camera } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
-import { mockCompany } from '../../data/mockSocioBolsa'
-import { mockOfferSectors } from '../../data/mockSocioOfertas'
-import { mockDirectivoProfile, mockSocioProfile } from '../../data/mockSocioPerfil'
+import { authService } from '../../services/authService'
+import { socioIdentificadorLabel } from '../../services/socioService'
+import { socioPerfilService } from '../../services/socioPerfilService'
+import type { RubroOption, SocioRecord } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioProfileStore } from '../../stores/socioProfile'
 
 const auth = useAuthStore()
 const profile = useSocioProfileStore()
 const router = useRouter()
+
+const socio = ref<SocioRecord | null>(null)
+const rubros = ref<RubroOption[]>([])
+const busy = ref(false)
+const saving = ref(false)
+const passwordBusy = ref(false)
+const error = ref('')
+const savedHint = ref('')
+const passwordHint = ref('')
+const passwordError = ref('')
 const photoError = ref('')
-const saved = reactive({
-  ...(auth.isDirectivo ? mockDirectivoProfile : mockSocioProfile),
-  ...(auth.fullName ? { fullName: auth.fullName } : {}),
+
+const form = reactive({
+  razonSocial: '',
+  telefono: '',
+  emailContacto: '',
+  calle: '',
+  numero: '',
+  localidad: '',
+  rubroId: '',
+  fechaAniversario: '',
 })
-const form = reactive({ ...saved })
+
 const password = reactive({
   current: '',
   next: '',
   repeat: '',
 })
-const savedHint = ref('')
-const passwordHint = ref('')
+
+const displayName = computed(() => socio.value?.razonSocial || auth.fullName || 'Socio')
+const initials = computed(() => (
+  displayName.value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S'
+))
+const emailCuenta = computed(() => socio.value?.emailUsuario || auth.email || '')
+const identificador = computed(() => (socio.value ? socioIdentificadorLabel(socio.value) : '—'))
 
 const canUpdatePassword = computed(() => (
   password.current.length > 0
-  && password.next.length >= 6
+  && password.next.length >= 12
   && password.next === password.repeat
 ))
 
-function saveProfile() {
-  Object.assign(saved, form)
-  savedHint.value = 'Los cambios se guardaron en esta pantalla (mock).'
+onMounted(load)
+
+async function load() {
+  busy.value = true
+  error.value = ''
+  try {
+    const [perfil, catalog] = await Promise.all([
+      socioPerfilService.get(),
+      socioPerfilService.listRubros(),
+    ])
+    applyPerfil(perfil)
+    rubros.value = catalog
+    auth.setFullName(perfil.razonSocial)
+  } catch (exception) {
+    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el perfil.'
+  } finally {
+    busy.value = false
+  }
 }
 
-function updatePassword() {
-  if (!canUpdatePassword.value) return
-  password.current = ''
-  password.next = ''
-  password.repeat = ''
-  passwordHint.value = 'La contraseña se actualizó en esta pantalla (mock).'
+function applyPerfil(perfil: SocioRecord) {
+  socio.value = perfil
+  form.razonSocial = perfil.razonSocial ?? ''
+  form.telefono = perfil.telefono ?? ''
+  form.emailContacto = perfil.emailContacto ?? ''
+  form.calle = perfil.calle ?? ''
+  form.numero = perfil.numero ?? ''
+  form.localidad = perfil.localidad ?? ''
+  form.rubroId = perfil.rubroId != null ? String(perfil.rubroId) : ''
+  form.fechaAniversario = perfil.fechaAniversario?.slice(0, 10) ?? ''
+}
+
+function emptyToNull(value: string) {
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
+async function saveProfile() {
+  if (!form.rubroId) {
+    error.value = 'Selecciona un rubro.'
+    return
+  }
+  saving.value = true
+  error.value = ''
+  savedHint.value = ''
+  try {
+    const updated = await socioPerfilService.update({
+      razonSocial: form.razonSocial.trim(),
+      telefono: emptyToNull(form.telefono),
+      emailContacto: emptyToNull(form.emailContacto),
+      calle: form.calle.trim(),
+      numero: emptyToNull(form.numero),
+      localidad: form.localidad.trim(),
+      rubroId: Number(form.rubroId),
+      fechaAniversario: emptyToNull(form.fechaAniversario),
+    })
+    applyPerfil(updated)
+    auth.setFullName(updated.razonSocial)
+    savedHint.value = 'Los cambios se guardaron correctamente.'
+  } catch (exception) {
+    error.value = exception instanceof Error ? exception.message : 'No fue posible guardar el perfil.'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function updatePassword() {
+  if (!canUpdatePassword.value) {
+    passwordError.value = 'Completa la clave actual y una nueva de al menos 12 caracteres.'
+    return
+  }
+  passwordBusy.value = true
+  passwordError.value = ''
+  passwordHint.value = ''
+  try {
+    const session = await authService.changePassword({
+      currentPassword: password.current,
+      newPassword: password.next,
+    })
+    auth.setSession(session)
+    password.current = ''
+    password.next = ''
+    password.repeat = ''
+    passwordHint.value = 'La contraseña se actualizó correctamente.'
+  } catch (exception) {
+    passwordError.value = exception instanceof Error ? exception.message : 'No fue posible actualizar la contraseña.'
+  } finally {
+    passwordBusy.value = false
+  }
 }
 
 function onPhotoChange(event: Event) {
@@ -74,107 +176,137 @@ function logout() {
   <SocioShell
     active-nav="perfil"
     title="Mi Perfil"
-    subtitle="Edita tus datos personales y de acceso"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
+    subtitle="Edita tus datos de contacto y de la firma"
+    :company-name="displayName"
+    :company-initials="initials"
+    :company-role="auth.isDirectivo ? 'SOCIO DIRECTIVO' : 'SOCIO'"
   >
     <div class="socio-profile">
-      <section class="socio-profile__identity">
-        <div class="socio-profile__photo">
-          <label class="socio-profile__avatar">
-            <img v-if="profile.photoUrl" :src="profile.photoUrl" alt="Foto de perfil">
-            <template v-else>{{ saved.initials }}</template>
-            <input type="file" accept="image/*" class="visually-hidden" @change="onPhotoChange">
-            <span class="socio-profile__camera" aria-hidden="true">
-              <Camera :size="14" />
-            </span>
-          </label>
-          <div class="socio-profile__photo-actions">
-            <label class="socio-profile__photo-button">
-              Cambiar foto
+      <AppAlert v-if="error">{{ error }}</AppAlert>
+      <p v-if="busy" class="socio-profile__hint">Cargando perfil...</p>
+
+      <template v-else-if="socio">
+        <section class="socio-profile__identity">
+          <div class="socio-profile__photo">
+            <label class="socio-profile__avatar">
+              <img v-if="profile.photoUrl" :src="profile.photoUrl" alt="Foto de perfil">
+              <template v-else>{{ initials }}</template>
               <input type="file" accept="image/*" class="visually-hidden" @change="onPhotoChange">
+              <span class="socio-profile__camera" aria-hidden="true">
+                <Camera :size="14" />
+              </span>
             </label>
-            <button v-if="profile.photoUrl" type="button" class="socio-profile__photo-clear" @click="profile.clearPhoto()">
-              Quitar
-            </button>
+            <div class="socio-profile__photo-actions">
+              <label class="socio-profile__photo-button">
+                Cambiar foto
+                <input type="file" accept="image/*" class="visually-hidden" @change="onPhotoChange">
+              </label>
+              <button v-if="profile.photoUrl" type="button" class="socio-profile__photo-clear" @click="profile.clearPhoto()">
+                Quitar
+              </button>
+            </div>
           </div>
-        </div>
-        <div>
-          <h2>{{ saved.fullName }}</h2>
-          <p>{{ saved.email }}</p>
-          <span class="socio-profile__badge">Socio</span>
-          <small v-if="photoError" class="socio-profile__photo-error">{{ photoError }}</small>
-        </div>
-      </section>
+          <div>
+            <h2>{{ displayName }}</h2>
+            <p>{{ emailCuenta }}</p>
+            <span class="socio-profile__badge">{{ auth.isDirectivo ? 'Socio directivo' : 'Socio' }}</span>
+            <small v-if="photoError" class="socio-profile__photo-error">{{ photoError }}</small>
+          </div>
+        </section>
 
-      <form class="socio-profile__card" @submit.prevent="saveProfile">
-        <h3>Datos personales</h3>
-        <label>
-          Nombre completo *
-          <input v-model="form.fullName" required>
-        </label>
-        <label>
-          Email *
-          <input v-model="form.email" type="email" required>
-        </label>
-
-        <h4>Datos del socio</h4>
-        <label>
-          Razón social
-          <input v-model="form.razonSocial">
-        </label>
-        <div class="socio-profile__row">
+        <form class="socio-profile__card" @submit.prevent="saveProfile">
+          <h3>Datos de la firma</h3>
           <label>
-            Teléfono
-            <input v-model="form.telefono">
+            Razón social *
+            <input v-model="form.razonSocial" required>
           </label>
           <label>
-            Email de contacto
-            <input v-model="form.emailContacto" type="email">
-          </label>
-        </div>
-        <label>
-          Rubro
-          <select v-model="form.rubro">
-            <option v-for="sector in mockOfferSectors" :key="sector" :value="sector">{{ sector }}</option>
-            <option value="Construccion">Construcción</option>
-          </select>
-        </label>
-        <label>
-          BPS / Cédula
-          <input :value="form.bps" disabled>
-          <small>Identificador de acceso (no editable)</small>
-        </label>
-        <p v-if="savedHint" class="socio-profile__hint">{{ savedHint }}</p>
-        <AppButton type="submit">Guardar cambios</AppButton>
-      </form>
-
-      <form class="socio-profile__card" @submit.prevent="updatePassword">
-        <h3>Cambiar contraseña</h3>
-        <label>
-          Contraseña actual *
-          <input v-model="password.current" type="password" autocomplete="current-password">
-        </label>
-        <div class="socio-profile__row">
-          <label>
-            Nueva contraseña *
-            <input v-model="password.next" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres">
+            Email de cuenta
+            <input :value="emailCuenta" type="email" disabled>
+            <small>No editable</small>
           </label>
           <label>
-            Repetir contraseña *
-            <input v-model="password.repeat" type="password" autocomplete="new-password">
+            BPS / Cédula
+            <input :value="identificador" disabled>
+            <small>Identificador de acceso (no editable)</small>
           </label>
-        </div>
-        <p v-if="passwordHint" class="socio-profile__hint">{{ passwordHint }}</p>
-        <AppButton type="submit" :disabled="!canUpdatePassword">Actualizar contraseña</AppButton>
-      </form>
+          <label>
+            RUT
+            <input :value="socio.rut || ''" disabled>
+            <small>No editable</small>
+          </label>
 
-      <section class="socio-profile__logout">
-        <h3>Cerrar sesión</h3>
-        <p>Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
-        <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesión</button>
-      </section>
+          <h4>Contacto y ubicación</h4>
+          <div class="socio-profile__row">
+            <label>
+              Teléfono
+              <input v-model="form.telefono">
+            </label>
+            <label>
+              Email de contacto
+              <input v-model="form.emailContacto" type="email">
+            </label>
+          </div>
+          <label>
+            Rubro *
+            <select v-model="form.rubroId" required>
+              <option value="" disabled>Seleccionar rubro</option>
+              <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
+            </select>
+          </label>
+          <label>
+            Fecha de aniversario
+            <input v-model="form.fechaAniversario" type="date">
+          </label>
+          <label>
+            Calle *
+            <input v-model="form.calle" required>
+          </label>
+          <div class="socio-profile__row">
+            <label>
+              Nro puerta
+              <input v-model="form.numero">
+            </label>
+            <label>
+              Ciudad / Localidad *
+              <input v-model="form.localidad" required>
+            </label>
+          </div>
+          <p v-if="savedHint" class="socio-profile__hint">{{ savedHint }}</p>
+          <AppButton type="submit" :disabled="saving">
+            {{ saving ? 'Guardando...' : 'Guardar cambios' }}
+          </AppButton>
+        </form>
+
+        <form class="socio-profile__card" @submit.prevent="updatePassword">
+          <h3>Cambiar contraseña</h3>
+          <label>
+            Contraseña actual *
+            <input v-model="password.current" type="password" autocomplete="current-password">
+          </label>
+          <div class="socio-profile__row">
+            <label>
+              Nueva contraseña *
+              <input v-model="password.next" type="password" autocomplete="new-password" placeholder="Mínimo 12 caracteres">
+            </label>
+            <label>
+              Repetir contraseña *
+              <input v-model="password.repeat" type="password" autocomplete="new-password">
+            </label>
+          </div>
+          <AppAlert v-if="passwordError">{{ passwordError }}</AppAlert>
+          <p v-if="passwordHint" class="socio-profile__hint">{{ passwordHint }}</p>
+          <AppButton type="submit" :disabled="!canUpdatePassword || passwordBusy">
+            {{ passwordBusy ? 'Actualizando...' : 'Actualizar contraseña' }}
+          </AppButton>
+        </form>
+
+        <section class="socio-profile__logout">
+          <h3>Cerrar sesión</h3>
+          <p>Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
+          <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesión</button>
+        </section>
+      </template>
     </div>
   </SocioShell>
 </template>
