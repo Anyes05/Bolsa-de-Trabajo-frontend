@@ -37,11 +37,10 @@ const shownCompany = computed(() => {
 
 onMounted(async () => {
   if (auth.role !== 'SOCIO') return
-  if (auth.fullName) return
   try {
     const currentUser = await authService.currentUser()
-    auth.setFullName(currentUser.fullName)
-    auth.setEsDirectivo(currentUser.esDirectivo)
+    if (currentUser.fullName) auth.setFullName(currentUser.fullName)
+    auth.setEsDirectivo(currentUser.esDirectivo === true)
   } catch {}
 })
 

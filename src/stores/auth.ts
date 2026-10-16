@@ -1,6 +1,5 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { isDirectivoEmail } from '../data/mockSocioDirectorio'
 import type { AuthResponse, Role } from '../services/types'
 
 const STORAGE_KEY = 'ccisj-session'
@@ -12,12 +11,6 @@ function normalizeRole(value: unknown): Role | null {
   if (normalized === 'SOCIO') return 'SOCIO'
   if (normalized === 'POSTULANTE') return 'POSTULANTE'
   return null
-}
-
-function resolveDirectivo(role: Role, email: string | null | undefined, flag: boolean | null | undefined) {
-  if (role !== 'SOCIO') return false
-  if (typeof flag === 'boolean') return flag
-  return isDirectivoEmail(email)
 }
 
 function readStoredSession(): AuthResponse | null {
@@ -32,7 +25,7 @@ function readStoredSession(): AuthResponse | null {
       email: parsed.email,
       role,
       fullName: parsed.fullName?.trim() || null,
-      esDirectivo: resolveDirectivo(role, parsed.email, parsed.esDirectivo),
+      esDirectivo: parsed.esDirectivo === true,
       debeCambiarPassword: parsed.debeCambiarPassword === true,
     }
   } catch {
@@ -84,7 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
     email.value = session.email
     role.value = normalizedRole
     fullName.value = session.fullName?.trim() || null
-    esDirectivo.value = resolveDirectivo(normalizedRole, session.email, session.esDirectivo)
+    esDirectivo.value = normalizedRole === 'SOCIO' && session.esDirectivo === true
     debeCambiarPassword.value = session.debeCambiarPassword === true
     persist()
   }
@@ -100,9 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
       persist()
       return
     }
-    if (typeof value === 'boolean') {
-      esDirectivo.value = value
-    }
+    esDirectivo.value = value === true
     persist()
   }
 
