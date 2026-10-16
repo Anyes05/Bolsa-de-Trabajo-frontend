@@ -14,6 +14,7 @@ import { socioBolsaService } from '../../services/socioBolsaService'
 import type { ApplicantProfileCard } from '../../services/types'
 
 const rubro = ref('Todos')
+const zone = ref('Todos')
 const availability = ref('Todos')
 const vehicle = ref('Todos')
 const sortBy = ref<SortOption>('updated')
@@ -23,6 +24,12 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 
 const rubroOptions = computed(() => ['Todos', ...new Set(applicantProfiles.value.flatMap((profile) => profile.sectors))])
+const zoneOptions = computed(() => {
+  const zones = applicantProfiles.value
+    .map((profile) => (profile.location || '').trim())
+    .filter(Boolean)
+  return ['Todos', ...new Set(zones)]
+})
 
 function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
   return {
@@ -74,13 +81,14 @@ async function downloadCv(profileId: string) {
 const profiles = computed(() => {
   const filtered = applicantProfiles.value.map(toDisplayProfile).filter((profile) => {
     const matchesRubro = rubro.value === 'Todos' || profile.sectors.includes(rubro.value)
+    const matchesZone = zone.value === 'Todos' || profile.location === zone.value
     const matchesAvailability = availability.value === 'Todos'
       || (availability.value === 'Full-time' && profile.availability === 'FULL_TIME')
       || (availability.value === 'Part-time' && profile.availability === 'PART_TIME')
     const matchesVehicle = vehicle.value === 'Todos'
       || (vehicle.value === 'Con vehículo' && profile.hasVehicle)
       || (vehicle.value === 'Sin vehículo' && !profile.hasVehicle)
-    return matchesRubro && matchesAvailability && matchesVehicle
+    return matchesRubro && matchesZone && matchesAvailability && matchesVehicle
   })
 
   return [...filtered].sort((left, right) => {
@@ -104,6 +112,7 @@ onMounted(loadProfiles)
     <div class="bolsa">
       <aside class="bolsa__filters" aria-label="Filtros de perfiles">
         <FilterGroup v-model="rubro" legend="Rubro laboral" :options="rubroOptions" />
+        <FilterGroup v-model="zone" legend="Zona" :options="zoneOptions" />
         <FilterGroup v-model="availability" legend="Disponibilidad" :options="['Todos', 'Full-time', 'Part-time']" />
         <FilterGroup v-model="vehicle" legend="Vehículo" :options="['Todos', 'Con vehículo', 'Sin vehículo']" />
       </aside>

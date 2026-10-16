@@ -17,7 +17,6 @@ const form = reactive({
   password: '',
   razonSocial: '',
   rut: '',
-  giro: '',
   telefono: '',
   emailContacto: '',
   fechaAniversario: '',
@@ -68,7 +67,6 @@ async function submit() {
       password: form.password,
       razonSocial: form.razonSocial.trim(),
       rut: form.rut.trim(),
-      giro: emptyToNull(form.giro),
       telefono: emptyToNull(form.telefono),
       emailContacto: emptyToNull(form.emailContacto),
       calle: form.calle.trim(),
@@ -115,9 +113,6 @@ async function submit() {
         </label>
         <label>RUT *
           <input v-model="form.rut" required>
-        </label>
-        <label>Giro
-          <input v-model="form.giro">
         </label>
         <label>Teléfono
           <input v-model="form.telefono">

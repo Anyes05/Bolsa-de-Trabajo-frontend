@@ -17,7 +17,6 @@ const editBusy = ref(false)
 const editForm = reactive({
   razonSocial: '',
   rut: '',
-  giro: '',
   telefono: '',
   emailContacto: '',
   calle: '',
@@ -73,7 +72,6 @@ function openEdit(socio: SocioRecord) {
   editError.value = ''
   editForm.razonSocial = socio.razonSocial ?? ''
   editForm.rut = socio.rut ?? ''
-  editForm.giro = socio.giro ?? ''
   editForm.telefono = socio.telefono ?? ''
   editForm.emailContacto = socio.emailContacto ?? ''
   editForm.calle = socio.calle ?? ''
@@ -105,7 +103,6 @@ async function saveEdit() {
     const updated = await socioService.updateSocio(editing.value.id, {
       razonSocial: editForm.razonSocial.trim(),
       rut: editForm.rut.trim(),
-      giro: emptyToNull(editForm.giro),
       telefono: emptyToNull(editForm.telefono),
       emailContacto: emptyToNull(editForm.emailContacto),
       calle: editForm.calle.trim(),
@@ -182,7 +179,7 @@ async function toggleActive(socio: SocioRecord) {
                 <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
               </td>
               <td>{{ socio.rut || '—' }}</td>
-              <td>{{ socio.nombreRubro || socio.giro || '—' }}</td>
+              <td>{{ socio.nombreRubro || '—' }}</td>
               <td>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(socio.estadoMorosidad)}`">
                   <i />{{ estadoMorosidadLabel[socio.estadoMorosidad] }}
@@ -225,9 +222,6 @@ async function toggleActive(socio: SocioRecord) {
           </label>
           <label>RUT *
             <input v-model="editForm.rut" required>
-          </label>
-          <label>Giro
-            <input v-model="editForm.giro">
           </label>
           <label>Teléfono
             <input v-model="editForm.telefono">

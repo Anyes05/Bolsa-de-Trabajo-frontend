@@ -12,6 +12,7 @@ import AdminSettingsView from '../views/admin/AdminSettingsView.vue'
 import AdminCommunicationsView from '../views/admin/AdminCommunicationsView.vue'
 import AdminNewCompanyView from '../views/admin/AdminNewCompanyView.vue'
 import AdminOfferApplicationsView from '../views/admin/AdminOfferApplicationsView.vue'
+import AdminRubrosView from '../views/admin/AdminRubrosView.vue'
 
 function normalizeRole(value: string | null | undefined) {
   return (value ?? '').trim().toUpperCase()
@@ -90,6 +91,12 @@ const router = createRouter({
       path: '/admin/socios/nueva',
       name: 'admin-new-company',
       component: AdminNewCompanyView,
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
+    },
+    {
+      path: '/admin/rubros',
+      name: 'admin-rubros',
+      component: AdminRubrosView,
       meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {

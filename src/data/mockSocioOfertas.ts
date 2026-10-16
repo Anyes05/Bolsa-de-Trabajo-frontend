@@ -35,6 +35,11 @@ export const mockOfferSectors = [
   'Choferes',
   'Contabilidad',
   'Logistica',
+  'Atencion al Cliente',
+  'Comercio',
+  'Gastronomia',
+  'Construccion',
+  'Informatica',
 ]
 
 export const mockOfferZones = [
