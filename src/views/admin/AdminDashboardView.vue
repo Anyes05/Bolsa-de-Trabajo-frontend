@@ -98,7 +98,8 @@ const historyMovements = computed(() => {
 const chargeTotals = computed(() => {
   const today = new Date()
   const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-  const entries = (chargeHistory.value?.movimientos ?? [])
+  const history = chargeHistory.value?.movimientos ?? []
+  const entries = history
     .filter((entry) => entry.fecha.slice(0, 7) === currentMonth)
   const pendingCents = (type: 'CUOTA' | 'REINTEGRO') => entries
     .filter((entry) => entry.tipo === type)
@@ -107,6 +108,8 @@ const chargeTotals = computed(() => {
   const reintegroCents = pendingCents('REINTEGRO')
   return {
     cuotaEmitida: entries.some((entry) => entry.tipo === 'CUOTA'),
+    cuotaAnteriorPaga: history.some((entry) => entry.tipo === 'CUOTA'
+      && entry.fecha.slice(0, 7) < currentMonth && entry.pendiente === 0),
     tieneReintegros: entries.some((entry) => entry.tipo === 'REINTEGRO'),
     cuotas: cuotaCents / 100,
     reintegros: reintegroCents / 100,
@@ -426,7 +429,7 @@ function paymentLabel(method: MetodoPago | null) {
             </div>
             <div>
               <dt>Cuota a pagar</dt>
-              <dd>{{ !chargeTotals.cuotaEmitida ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
+              <dd>{{ !chargeTotals.cuotaEmitida && !chargeTotals.cuotaAnteriorPaga ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
             </div>
             <div><dt>Total</dt><dd>{{ formatMoney(chargeTotals.total) }}</dd></div>
           </dl>
