@@ -134,7 +134,7 @@ async function loadResumen() {
 async function openCharge(company: CuentaCaja) {
   selectedCompany.value = company
   paymentMethod.value = 'EFECTIVO'
-  receivedAmount.value = ''
+  receivedAmount.value = '0'
   chargeHistory.value = null
   externalReference.value = ''
   paymentNotes.value = ''
@@ -142,7 +142,6 @@ async function openCharge(company: CuentaCaja) {
   chargeLoading.value = true
   try {
     chargeHistory.value = await cajaService.getHistorial(company.socioId)
-    receivedAmount.value = String(Math.max(chargeHistory.value.saldo, 0))
   } catch (exception) {
     chargeError.value = exception instanceof Error ? exception.message : 'No fue posible cargar la cuenta.'
   } finally {
