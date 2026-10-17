@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { AlertTriangle, CheckCircle2, Save } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle2, FilePlus2, Save } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import { tarifaService } from '../../services/tarifaService'
 import type { Tarifa } from '../../services/types'
 
 const today = new Date()
+const billingPeriod = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`)
 const year = ref(today.getFullYear())
 const amount = ref('')
 const history = ref<Tarifa[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const generating = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 
@@ -52,6 +54,26 @@ async function saveAmount() {
   }
 }
 
+async function generateBilling() {
+  if (generating.value) return
+  errorMessage.value = ''
+  successMessage.value = ''
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(billingPeriod.value)) {
+    errorMessage.value = 'Seleccione un mes válido.'
+    return
+  }
+
+  generating.value = true
+  try {
+    const result = await tarifaService.generateBilling(`${billingPeriod.value}-01`)
+    successMessage.value = `Facturación emitida: ${result.cuotasGeneradas} cuotas nuevas y ${result.cuotasExistentes} ya existentes.`
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'No fue posible generar la facturación.'
+  } finally {
+    generating.value = false
+  }
+}
+
 onMounted(loadTariffs)
 </script>
 
@@ -67,6 +89,12 @@ onMounted(loadTariffs)
         <p class="fee-warning"><AlertTriangle :size="15" /> La tarifa no puede modificarse cuando ya generó cuotas. Las cuotas ya emitidas no se alteran.</p>
       </section>
 
+      <form class="fee-panel fee-current" @submit.prevent="generateBilling">
+        <div class="fee-current__intro"><h2>Generar cuotas por mes</h2></div>
+        <label class="billing-period">Mes a facturar<input v-model="billingPeriod" type="month" min="2000-01" max="9999-12" required></label>
+        <button class="fee-save" type="submit" :disabled="generating || loading || saving"><FilePlus2 :size="16" /> {{ generating ? 'Generando...' : 'Generar cuotas' }}</button>
+      </form>
+
       <section class="fee-panel fee-history"><h2>Historial de tarifas</h2><div v-for="entry in history" :key="entry.id" class="fee-history__entry"><span>$</span><div><strong>{{ formatMoney(entry.montoBase) }} / mes</strong><small>Año {{ entry.anio }} · Nuevas cuotas: vencimiento al final del mes siguiente</small></div><b v-if="entry.anio === year">Seleccionada</b></div></section>
     </div>
   </AdminShell>
@@ -77,6 +105,9 @@ onMounted(loadTariffs)
 .fee-config-fields label { display: grid; gap: 6px; color: #303943; font-size: 11px; font-weight: 800; }
 .fee-config-fields input { width: 100%; height: 36px; border: 1px solid #dfe5eb; border-radius: 7px; padding: 0 10px; color: #303943; font: inherit; outline: 0; }
 .fee-config-fields input:focus { border-color: #07984c; }
+.billing-period { display: grid; gap: 6px; color: #303943; font-size: 11px; font-weight: 800; }
+.billing-period input { width: 100%; height: 36px; border: 1px solid #dfe5eb; border-radius: 7px; padding: 0 10px; color: #303943; font: inherit; outline: 0; }
+.billing-period input:focus { border-color: #07984c; }
 button:disabled { cursor: not-allowed; opacity: .65; }
 @media (max-width: 650px) { .fee-config-fields { grid-template-columns: 1fr; } }
 </style>
