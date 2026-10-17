@@ -96,14 +96,21 @@ const historyMovements = computed(() => {
 })
 
 const chargeTotals = computed(() => {
-  const entries = chargeHistory.value?.movimientos ?? []
-  const total = (type: 'CUOTA' | 'REINTEGRO' | 'PAGO') => entries
+  const today = new Date()
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  const entries = (chargeHistory.value?.movimientos ?? [])
+    .filter((entry) => entry.fecha.slice(0, 7) === currentMonth)
+  const pendingCents = (type: 'CUOTA' | 'REINTEGRO') => entries
     .filter((entry) => entry.tipo === type)
-    .reduce((sum, entry) => sum + entry.monto, 0)
+    .reduce((sum, entry) => sum + Math.round(entry.pendiente * 100), 0)
+  const cuotaCents = pendingCents('CUOTA')
+  const reintegroCents = pendingCents('REINTEGRO')
   return {
-    cuotas: total('CUOTA'),
-    reintegros: total('REINTEGRO'),
-    pagos: total('PAGO'),
+    cuotaEmitida: entries.some((entry) => entry.tipo === 'CUOTA'),
+    tieneReintegros: entries.some((entry) => entry.tipo === 'REINTEGRO'),
+    cuotas: cuotaCents / 100,
+    reintegros: reintegroCents / 100,
+    total: (cuotaCents + reintegroCents) / 100,
   }
 })
 
@@ -413,11 +420,15 @@ function paymentLabel(method: MetodoPago | null) {
         <div class="cash-modal__body">
           <p v-if="chargeLoading" role="status">Cargando estado de cuenta...</p>
           <dl v-if="chargeHistory" class="account-summary">
-            <div><dt>Cuotas emitidas</dt><dd>{{ formatMoney(chargeTotals.cuotas) }}</dd></div>
-            <div><dt>Reintegros registrados</dt><dd>{{ formatMoney(chargeTotals.reintegros) }}</dd></div>
-            <div><dt>Pagos anteriores</dt><dd>{{ formatMoney(chargeTotals.pagos) }}</dd></div>
-            <div><dt>Saldo actual</dt><dd>{{ balanceLabel(chargeHistory.saldo) }}</dd></div>
-            <div><dt>Deuda vencida</dt><dd>{{ formatMoney(chargeHistory.deudaVencida) }}</dd></div>
+            <div>
+              <dt>Reintegro de este mes</dt>
+              <dd>{{ !chargeTotals.tieneReintegros ? 'Sin reintegros' : chargeTotals.reintegros === 0 ? 'Pagado' : formatMoney(chargeTotals.reintegros) }}</dd>
+            </div>
+            <div>
+              <dt>Cuota a pagar</dt>
+              <dd>{{ !chargeTotals.cuotaEmitida ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
+            </div>
+            <div><dt>Total</dt><dd>{{ formatMoney(chargeTotals.total) }}</dd></div>
           </dl>
           <fieldset class="cash-payment">
             <legend>Metodo de pago</legend>
