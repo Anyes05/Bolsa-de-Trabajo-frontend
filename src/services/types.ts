@@ -107,6 +107,7 @@ export type MovimientoCaja = {
   monto: number
   saldoAnterior: number
   saldoResultante: number
+  saldoFavorUtilizado: number
   pendiente: number
   metodoPago: MetodoPago | null
   referencia: string | null

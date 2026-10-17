@@ -500,6 +500,7 @@ function paymentLabel(method: MetodoPago | null) {
                 <time>{{ formatDate(movement.fecha) }}</time>
                 <p>Saldo anterior: {{ balanceLabel(movement.saldoAnterior) }}</p>
                 <p>Saldo resultante: {{ balanceLabel(movement.saldoResultante) }}</p>
+                <p v-if="movement.saldoFavorUtilizado > 0" class="account-credit">Saldo a favor utilizado: {{ formatMoney(movement.saldoFavorUtilizado) }}</p>
                 <p v-if="movement.tipo !== 'PAGO'">Pendiente: {{ formatMoney(movement.pendiente) }}</p>
               </div>
               <aside>
