@@ -204,9 +204,7 @@ function validAmount(value: string | number) {
 }
 
 function balanceLabel(value: number) {
-  if (value < 0) return `${formatMoney(Math.abs(value))} a favor`
-  if (value === 0) return 'Sin deuda'
-  return `${formatMoney(value)} de deuda`
+  return formatMoney(Math.abs(value))
 }
 
 async function openExpense(company: CuentaCaja) {
