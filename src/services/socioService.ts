@@ -56,8 +56,9 @@ export const estadoMorosidadLabel: Record<EstadoMorosidad, string> = {
 
 export function estadoMorosidadTone(estado: EstadoMorosidad | null | undefined) {
   if (estado === 'AL_DIA') return 'green'
-  if (estado === 'INACTIVO') return 'gray'
-  return 'red'
+  if (estado === 'MOROSO') return 'yellow'
+  if (estado === 'INACTIVO') return 'red'
+  return 'gray'
 }
 
 export function socioIdentificadorLabel(socio: { tipoIdentificador?: string | null; bps?: string | null; cedula?: string | null }) {
