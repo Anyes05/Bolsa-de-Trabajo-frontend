@@ -16,6 +16,12 @@ const filter = ref<CajaFilter>('TODOS')
 const error = ref('')
 const busy = ref(false)
 const exporting = ref(false)
+const exportOpen = ref(false)
+const exportStates = ref<EstadoMorosidad[]>(['AL_DIA', 'MOROSO', 'INACTIVO'])
+const exportMode = ref<'TODOS' | 'SELECCIONADOS'>('TODOS')
+const exportSearch = ref('')
+const exportSelectedIds = ref<number[]>([])
+const exportError = ref('')
 const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
@@ -77,6 +83,21 @@ const companies = computed(() => {
 
 const canCharge = computed(() => selectedCompany.value?.estadoMorosidad !== 'INACTIVO'
   && !!chargeHistory.value && !chargeLoading.value && validAmount(receivedAmount.value))
+const exportEligible = computed(() => (resumen.value?.cuentas ?? [])
+  .filter((company) => exportStates.value.includes(company.estadoMorosidad)))
+const exportCandidates = computed(() => {
+  const term = exportSearch.value.trim().toLowerCase()
+  return exportEligible.value.filter((company) => !term
+    || [company.razonSocial, company.bps, company.nombreRubro]
+      .some((value) => (value ?? '').toLowerCase().includes(term)))
+})
+const exportCompanies = computed(() => exportMode.value === 'TODOS'
+  ? exportEligible.value
+  : exportEligible.value.filter((company) => exportSelectedIds.value.includes(company.socioId)))
+const exportAllVisibleSelected = computed(() => exportCandidates.value.length > 0
+  && exportCandidates.value.every((company) => exportSelectedIds.value.includes(company.socioId)))
+const exportSomeVisibleSelected = computed(() => !exportAllVisibleSelected.value
+  && exportCandidates.value.some((company) => exportSelectedIds.value.includes(company.socioId)))
 const balanceAfterPayment = computed(() => {
   const currentBalance = chargeHistory.value?.saldo ?? 0
   const paymentAmount = Number(receivedAmount.value || 0)
@@ -133,14 +154,35 @@ async function loadResumen() {
   }
 }
 
+function openExcelExport() {
+  exportStates.value = ['AL_DIA', 'MOROSO', 'INACTIVO']
+  exportMode.value = 'TODOS'
+  exportSearch.value = ''
+  exportSelectedIds.value = []
+  exportError.value = ''
+  exportOpen.value = true
+}
+
+function closeExcelExport() {
+  if (!exporting.value) exportOpen.value = false
+}
+
+function toggleExportVisible() {
+  const visibleIds = new Set(exportCandidates.value.map((company) => company.socioId))
+  exportSelectedIds.value = exportAllVisibleSelected.value
+    ? exportSelectedIds.value.filter((id) => !visibleIds.has(id))
+    : [...new Set([...exportSelectedIds.value, ...visibleIds])]
+}
+
 async function downloadExcel() {
-  if (exporting.value || busy.value || !companies.value.length) return
+  if (exporting.value || busy.value || !exportCompanies.value.length) return
   exporting.value = true
-  error.value = ''
+  exportError.value = ''
   try {
-    await cajaExcelService.download([...companies.value])
+    await cajaExcelService.download([...exportCompanies.value])
+    exportOpen.value = false
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible descargar el Excel.'
+    exportError.value = exception instanceof Error ? exception.message : 'No fue posible descargar el Excel.'
   } finally {
     exporting.value = false
   }
@@ -382,7 +424,7 @@ function paymentLabel(method: MetodoPago | null) {
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
-      <button class="cash-download" type="button" :disabled="exporting || busy || !companies.length" :aria-busy="exporting" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando Excel...' : 'Descargar Excel' }}</button>
+      <button class="cash-download" type="button" :disabled="exporting || busy || !resumen?.cuentas.length" @click="openExcelExport"><Download :size="16" /> Descargar Excel</button>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -428,6 +470,56 @@ function paymentLabel(method: MetodoPago | null) {
         </table>
       </div>
     </section>
+
+    <div v-if="exportOpen" class="cash-modal-layer" @click.self="closeExcelExport" @keydown.esc.stop.prevent="closeExcelExport">
+      <section class="cash-modal excel-modal" role="dialog" aria-modal="true" aria-labelledby="excel-modal-title" :aria-busy="exporting">
+        <header class="cash-modal__header">
+          <div><h2 id="excel-modal-title">Exportar control de caja</h2></div>
+          <button type="button" aria-label="Cerrar" :disabled="exporting" @click="closeExcelExport"><X :size="18" /></button>
+        </header>
+        <div class="cash-modal__body">
+          <fieldset class="excel-options" :disabled="exporting">
+            <legend>Estado de los socios</legend>
+            <div class="excel-states">
+              <label v-for="(label, state) in estadoMorosidadLabel" :key="state">
+                <input v-model="exportStates" type="checkbox" :value="state">
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(state)}`"><i />{{ label }}</span>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset class="excel-options" :disabled="exporting">
+            <legend>Socios a incluir</legend>
+            <label><input v-model="exportMode" type="radio" name="excel-scope" value="TODOS"> Todos los socios de los estados elegidos</label>
+            <label><input v-model="exportMode" type="radio" name="excel-scope" value="SELECCIONADOS"> Elegir socios</label>
+          </fieldset>
+          <fieldset v-if="exportMode === 'SELECCIONADOS'" class="excel-options" :disabled="exporting">
+            <legend>Seleccionar socios</legend>
+            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar socio, BPS, cédula o rubro..." aria-label="Buscar socios para exportar"></label>
+            <label class="excel-select-all">
+              <input type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
+              Seleccionar todos los resultados ({{ exportCandidates.length }})
+            </label>
+            <div class="excel-company-list" aria-label="Socios disponibles">
+              <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company">
+                <input v-model="exportSelectedIds" type="checkbox" :value="company.socioId">
+                <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.bps || 'Sin identificador' }}</small></span>
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
+              </label>
+              <p v-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
+            </div>
+          </fieldset>
+          <p v-if="!exportStates.length" class="excel-empty" role="status">Selecciona al menos un estado.</p>
+          <AppAlert v-if="exportError">{{ exportError }}</AppAlert>
+        </div>
+        <footer class="cash-modal__footer excel-footer">
+          <span role="status">{{ exportCompanies.length }} socios seleccionados</span>
+          <div>
+            <button class="cash-history" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
+            <button class="cash-modal__confirm" type="button" :disabled="exporting || !exportCompanies.length" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
+          </div>
+        </footer>
+      </section>
+    </div>
 
     <div v-if="selectedCompany" class="cash-modal-layer" @click.self="closeCharge">
       <section class="cash-modal" role="dialog" aria-modal="true" aria-labelledby="cash-modal-title">
@@ -687,6 +779,27 @@ function paymentLabel(method: MetodoPago | null) {
 </template>
 
 <style scoped>
+.excel-modal { width: min(100%, 580px); }
+.excel-options { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
+.excel-options legend { margin-bottom: 8px; color: #34473b; font-size: 12px; font-weight: 700; }
+.excel-options label { display: flex; align-items: center; gap: 8px; min-height: 36px; color: #526159; font-size: 12px; cursor: pointer; }
+.excel-options input[type="checkbox"], .excel-options input[type="radio"] { flex-shrink: 0; width: 16px; height: 16px; margin: 0; accent-color: #07974e; }
+.excel-options input:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
+.excel-states { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.excel-search { box-sizing: border-box; width: 100%; margin-bottom: 8px; }
+.excel-search svg { flex-shrink: 0; }
+.excel-select-all { padding: 6px 0; }
+.excel-company-list { max-height: 250px; overflow-y: auto; border-top: 1px solid #e0e6eb; border-bottom: 1px solid #e0e6eb; }
+.excel-options .excel-company { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #edf0f3; }
+.excel-company:last-child { border-bottom: 0; }
+.excel-company__name { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.excel-company__name strong { color: #34473b; font-size: 12px; }
+.excel-company__name small { color: #68737c; font-size: 11px; }
+.excel-empty { margin: 12px 0; color: #68737c; font-size: 12px; line-height: 1.5; }
+.excel-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.excel-footer > span { color: #68737c; font-size: 12px; }
+.excel-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.excel-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 36px; }
 .cash-modal, .history-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); border-radius: 8px; }
 .cash-modal__body, .history-list { overflow-y: auto; min-height: 0; }
 .cash-modal__header, .cash-modal__footer, .history-modal__header, .history-modal__footer { flex-shrink: 0; }
