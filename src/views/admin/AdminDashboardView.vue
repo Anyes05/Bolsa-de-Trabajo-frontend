@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { cajaService } from '../../services/cajaService'
+import { cajaExcelService } from '../../services/cajaExcelService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
 
@@ -14,6 +15,7 @@ const query = ref('')
 const filter = ref<CajaFilter>('TODOS')
 const error = ref('')
 const busy = ref(false)
+const exporting = ref(false)
 const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
@@ -128,6 +130,19 @@ async function loadResumen() {
     error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el control de caja.'
   } finally {
     busy.value = false
+  }
+}
+
+async function downloadExcel() {
+  if (exporting.value || busy.value || !companies.value.length) return
+  exporting.value = true
+  error.value = ''
+  try {
+    await cajaExcelService.download([...companies.value])
+  } catch (exception) {
+    error.value = exception instanceof Error ? exception.message : 'No fue posible descargar el Excel.'
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -367,7 +382,7 @@ function paymentLabel(method: MetodoPago | null) {
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
-      <button class="cash-download" type="button"><Download :size="16" /> Descargar Excel</button>
+      <button class="cash-download" type="button" :disabled="exporting || busy || !companies.length" :aria-busy="exporting" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando Excel...' : 'Descargar Excel' }}</button>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>

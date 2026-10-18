@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-vue": "5.2.4",
+    "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "lucide-vue-next": "0.468.0",
     "pinia": "^2.3.1",
