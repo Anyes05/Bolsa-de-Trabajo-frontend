@@ -65,6 +65,14 @@ type ManualLanguage = {
   level: string
 }
 
+type ManualReference = {
+  name: string
+  role: string
+  company: string
+  phone: string
+  email: string
+}
+
 function blankExperience(): ManualExperience {
   return { company: '', role: '', startDate: '', endDate: '', current: false, description: '' }
 }
@@ -77,6 +85,10 @@ function blankLanguage(): ManualLanguage {
   return { name: '', level: '' }
 }
 
+function blankReference(): ManualReference {
+  return { name: '', role: '', company: '', phone: '', email: '' }
+}
+
 const manualCv = reactive({
   summary: '',
   experiences: [] as ManualExperience[],
@@ -85,6 +97,8 @@ const manualCv = reactive({
   languages: [] as ManualLanguage[],
   certifications: '',
   showCompetencies: false,
+  workReferences: [] as ManualReference[],
+  personalReferences: [] as ManualReference[],
 })
 
 onMounted(async () => {
@@ -102,6 +116,11 @@ function clearFeedback() {
 }
 
 function toggle(sector: string) {
+  if (!chosen.value.includes(sector) && chosen.value.length >= 4) {
+    error.value = 'Puedes seleccionar un máximo de 4 rubros para este perfil.'
+    return
+  }
+  error.value = ''
   chosen.value = chosen.value.includes(sector)
     ? chosen.value.filter((item) => item !== sector)
     : [...chosen.value, sector]
@@ -157,6 +176,8 @@ function buildManualCvFile() {
   const nonEmptyExperiences = manualCv.experiences.filter((item) => item.company.trim() || item.role.trim() || item.description.trim())
   const nonEmptyEducation = manualCv.education.filter((item) => item.institution.trim() || item.degree.trim())
   const nonEmptyLanguages = manualCv.languages.filter((item) => item.name.trim())
+  const nonEmptyWorkReferences = manualCv.workReferences.filter((item) => item.name.trim())
+  const nonEmptyPersonalReferences = manualCv.personalReferences.filter((item) => item.name.trim())
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
@@ -224,6 +245,20 @@ function buildManualCvFile() {
     addParagraph(manualCv.certifications.trim())
   }
 
+  if (nonEmptyWorkReferences.length) {
+    addHeading('Referencias laborales')
+    nonEmptyWorkReferences.forEach((reference) => addParagraph([
+      reference.name, reference.role, reference.company, reference.phone, reference.email,
+    ].filter(Boolean).join(' | ')))
+  }
+
+  if (nonEmptyPersonalReferences.length) {
+    addHeading('Referencias personales')
+    nonEmptyPersonalReferences.forEach((reference) => addParagraph([
+      reference.name, reference.role, reference.phone, reference.email,
+    ].filter(Boolean).join(' | ')))
+  }
+
   const blob = doc.output('blob')
   return new File([blob], 'cv-manual.pdf', { type: 'application/pdf' })
 }
@@ -235,7 +270,9 @@ function hasManualCvContent() {
     || manualCv.certifications.trim()
     || manualCv.experiences.some((item) => item.company.trim() || item.role.trim() || item.description.trim())
     || manualCv.education.some((item) => item.institution.trim() || item.degree.trim())
-    || manualCv.languages.some((item) => item.name.trim()),
+    || manualCv.languages.some((item) => item.name.trim())
+    || manualCv.workReferences.some((item) => item.name.trim())
+    || manualCv.personalReferences.some((item) => item.name.trim()),
   )
 }
 
@@ -266,6 +303,27 @@ function addLanguage() {
 
 function removeLanguage(index: number) {
   manualCv.languages.splice(index, 1)
+}
+
+function addWorkReference() {
+  manualCv.workReferences.push(blankReference())
+}
+
+function removeWorkReference(index: number) {
+  manualCv.workReferences.splice(index, 1)
+}
+
+function addPersonalReference() {
+  manualCv.personalReferences.push(blankReference())
+}
+
+function removePersonalReference(index: number) {
+  manualCv.personalReferences.splice(index, 1)
+}
+
+function hasManualReference() {
+  return manualCv.workReferences.some((item) => item.name.trim())
+    || manualCv.personalReferences.some((item) => item.name.trim())
 }
 
 function manualProfileSummary() {
@@ -392,6 +450,10 @@ async function complete() {
   busy.value = true
   clearFeedback()
   try {
+    if (cvMode.value === 'manual' && !hasManualReference()) {
+      error.value = 'Agrega al menos una referencia laboral o personal para crear el CV manual.'
+      return
+    }
     const manualSummary = cvMode.value === 'manual' ? manualProfileSummary() : null
     const session = await authService.registerApplicant({
       ...form,
@@ -612,8 +674,8 @@ async function complete() {
                 <label>Institución<input v-model="education.institution" placeholder="Ej: UTU"></label>
                 <label>Título o carrera<input v-model="education.degree" placeholder="Ej: Técnico en administración"></label>
                 <label>Nivel<select v-model="education.level"><option value="">Seleccionar</option><option>Secundaria</option><option>Técnico</option><option>Terciario</option><option>Universitario</option><option>Curso</option></select></label>
-                <label>Período<input v-model="education.startYear" placeholder="Desde"></label>
-                <label>Hasta<input v-model="education.endYear" placeholder="Hasta / En curso"></label>
+                <label>Desde<input v-model="education.startYear" type="month"></label>
+                <label>Hasta<input v-model="education.endYear" type="month"></label>
               </div>
               <button v-if="manualCv.education.length > 1" type="button" class="manual-cv-entry__remove" @click="removeEducation(index)"><Trash2 :size="13" /> Quitar</button>
             </article>
@@ -631,6 +693,33 @@ async function complete() {
               <select v-model="language.level"><option value="">Nivel</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select>
               <button v-if="manualCv.languages.length > 1" type="button" aria-label="Quitar idioma" @click="removeLanguage(index)"><Trash2 :size="14" /></button>
             </div>
+          </section>
+
+          <section class="manual-cv-section">
+            <div class="manual-cv-section__heading"><h4>Referencias laborales</h4><button type="button" @click="addWorkReference"><Plus :size="14" /> Agregar referencia</button></div>
+            <article v-for="(reference, index) in manualCv.workReferences" :key="index" class="manual-cv-entry">
+              <div class="manual-cv-entry__grid">
+                <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
+                <label>Cargo<input v-model="reference.role" placeholder="Ej: Supervisor"></label>
+                <label>Empresa<input v-model="reference.company" placeholder="Empresa"></label>
+                <label>Teléfono<input v-model="reference.phone" type="tel" placeholder="099 123 456"></label>
+              </div>
+              <label>Correo electrónico<input v-model="reference.email" type="email" placeholder="referencia@correo.com"></label>
+              <button type="button" class="manual-cv-entry__remove" @click="removeWorkReference(index)"><Trash2 :size="13" /> Quitar</button>
+            </article>
+          </section>
+
+          <section class="manual-cv-section">
+            <div class="manual-cv-section__heading"><h4>Referencias personales</h4><button type="button" @click="addPersonalReference"><Plus :size="14" /> Agregar referencia</button></div>
+            <article v-for="(reference, index) in manualCv.personalReferences" :key="index" class="manual-cv-entry">
+              <div class="manual-cv-entry__grid">
+                <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
+                <label>Relación o profesión<input v-model="reference.role" placeholder="Ej: Excompañero/a"></label>
+                <label>Teléfono<input v-model="reference.phone" type="tel" placeholder="099 123 456"></label>
+                <label>Correo electrónico<input v-model="reference.email" type="email" placeholder="referencia@correo.com"></label>
+              </div>
+              <button type="button" class="manual-cv-entry__remove" @click="removePersonalReference(index)"><Trash2 :size="13" /> Quitar</button>
+            </article>
           </section>
         </section>
       </section>

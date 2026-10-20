@@ -1156,6 +1156,11 @@ button:disabled {
   gap: 16px;
 }
 
+.bolsa__applicants {
+  display: grid;
+  gap: 14px;
+}
+
 .bolsa__empty {
   background: #fff;
   border-radius: 12px;
@@ -1275,6 +1280,73 @@ button:disabled {
 
 .profile-card__actions .app-button {
   width: 100%;
+}
+
+.applicant-group-card {
+  border: 1px solid #dfe8e2;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.applicant-group-card__header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.applicant-group-card__avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 8px;
+  background: #008d45;
+  color: #fff;
+  font-weight: 700;
+}
+
+.applicant-group-card__header h3 {
+  margin: 0 0 4px;
+  color: #27272a;
+  font-size: 16px;
+}
+
+.applicant-group-card__header a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #5d6879;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.applicant-group-card__header > span:last-child {
+  color: #08783d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.applicant-group-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 18px 16px;
+}
+
+.applicant-group-card__chevron--open {
+  transform: rotate(180deg);
+}
+
+.applicant-group-card__profiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 18px 18px;
+  border-top: 1px solid #e6ede8;
+  background: #f7faf8;
 }
 
 /* Block: profile-modal */
@@ -1447,6 +1519,17 @@ button:disabled {
 .profile-modal__cv-file small {
   color: #7b8493;
   font-size: 11px;
+}
+
+.profile-modal__cv-file em {
+  display: inline-block;
+  margin-left: 5px;
+  border-radius: 999px;
+  background: #e6f6ed;
+  color: #08783d;
+  font-size: 10px;
+  font-style: normal;
+  padding: 2px 6px;
 }
 
 .profile-modal__actions {
@@ -3297,4 +3380,94 @@ button:disabled {
 .communication-editor h2,
 .offers-heading h2 {
   font-size: 20px;
+}
+
+.profile-manual-cv {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #d8e7dd;
+  border-radius: 8px;
+  background: #f7fbf8;
+}
+
+.profile-manual-cv > p {
+  margin: 0;
+  color: #556070;
+  font-size: 13px;
+}
+
+.profile-manual-cv label {
+  display: grid;
+  gap: 6px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-manual-cv input,
+.profile-manual-cv textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccd5df;
+  border-radius: 6px;
+  background: #fff;
+  color: #27272a;
+  font: inherit;
+  padding: 9px 10px;
+}
+
+.profile-manual-cv textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.profile-manual-cv__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.profile-manual-cv__heading button,
+.profile-manual-cv__entry button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #08783d;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 8px;
+}
+
+.profile-manual-cv__entry {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.2fr) repeat(2, minmax(110px, 0.6fr)) minmax(160px, 1.4fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.profile-manual-cv__entry textarea {
+  min-height: 40px;
+}
+
+@media (max-width: 760px) {
+  .profile-manual-cv__entry {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .profile-manual-cv__entry textarea,
+  .profile-manual-cv__entry button {
+    grid-column: 1 / -1;
+  }
 }

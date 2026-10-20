@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import FilterGroup from '../../components/socio/FilterGroup.vue'
-import ProfileCard from '../../components/socio/ProfileCard.vue'
+import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import {
@@ -11,7 +11,7 @@ import {
   type SortOption,
 } from '../../data/mockSocioBolsa'
 import { socioBolsaService } from '../../services/socioBolsaService'
-import type { ApplicantProfileCard } from '../../services/types'
+import type { ApplicantProfileCard, SocioProfileCv } from '../../services/types'
 
 const rubro = ref('Todos')
 const zone = ref('Todos')
@@ -19,6 +19,9 @@ const availability = ref('Todos')
 const vehicle = ref('Todos')
 const sortBy = ref<SortOption>('updated')
 const selectedProfile = ref<MockApplicantProfile | null>(null)
+const selectedCvs = ref<SocioProfileCv[]>([])
+const loadingCvs = ref(false)
+const expandedApplicantId = ref<number | null>(null)
 const applicantProfiles = ref<ApplicantProfileCard[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -34,7 +37,9 @@ const zoneOptions = computed(() => {
 function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
   return {
     id: String(profile.id),
+    applicantId: profile.applicantId,
     fullName: profile.fullName,
+    email: profile.email,
     initials: profile.initials,
     profileName: profile.profileName,
     categoryLabel: profile.categoryLabel,
@@ -69,11 +74,29 @@ async function loadProfiles() {
   }
 }
 
-async function downloadCv(profileId: string) {
+async function openProfile(profile: MockApplicantProfile) {
+  selectedProfile.value = profile
+  selectedCvs.value = []
+  if (!profile.hasApplication) return
+  loadingCvs.value = true
   try {
-    const { url } = await socioBolsaService.downloadCv(Number(profileId))
-    window.open(url, '_blank', 'noopener,noreferrer')
+    selectedCvs.value = await socioBolsaService.listProfileCvs(Number(profile.id))
   } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los CVs del perfil.'
+  } finally {
+    loadingCvs.value = false
+  }
+}
+
+async function downloadCv(profileId: string, cvId?: number) {
+  if (cvId === undefined) return
+  const downloadWindow = window.open('', '_blank', 'noopener,noreferrer')
+  try {
+    const { url } = await socioBolsaService.downloadCv(Number(profileId), cvId)
+    if (downloadWindow) downloadWindow.location.href = url
+    else window.location.assign(url)
+  } catch (cause) {
+    downloadWindow?.close()
     error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
   }
 }
@@ -95,6 +118,22 @@ const profiles = computed(() => {
     if (sortBy.value === 'name') return left.fullName.localeCompare(right.fullName, 'es')
     return right.updatedAt.localeCompare(left.updatedAt)
   })
+})
+
+const applicants = computed(() => {
+  const groups = new Map<number, { id: number; fullName: string; email: string; initials: string; profiles: MockApplicantProfile[] }>()
+  profiles.value.forEach((profile) => {
+    const group = groups.get(profile.applicantId)
+    if (group) group.profiles.push(profile)
+    else groups.set(profile.applicantId, {
+      id: profile.applicantId,
+      fullName: profile.fullName,
+      email: profile.email,
+      initials: profile.initials,
+      profiles: [profile],
+    })
+  })
+  return [...groups.values()]
 })
 
 onMounted(loadProfiles)
@@ -133,12 +172,14 @@ onMounted(loadProfiles)
         </header>
 
         <p v-if="loading">Cargando perfiles...</p>
-        <div v-else-if="profiles.length" class="bolsa__grid">
-          <ProfileCard
-            v-for="profile in profiles"
-            :key="profile.id"
-            :profile="profile"
-            @view="selectedProfile = profile"
+        <div v-else-if="applicants.length" class="bolsa__applicants">
+          <ApplicantGroupCard
+            v-for="applicant in applicants"
+            :key="applicant.id"
+            :applicant="applicant"
+            :expanded="expandedApplicantId === applicant.id"
+            @toggle="expandedApplicantId = expandedApplicantId === applicant.id ? null : applicant.id"
+            @view="openProfile"
           />
         </div>
         <p v-else class="bolsa__empty">No hay perfiles que coincidan con los filtros.</p>
@@ -148,7 +189,9 @@ onMounted(loadProfiles)
       <ProfileDetailModal
         v-if="selectedProfile"
         :profile="selectedProfile"
-        @close="selectedProfile = null"
+        :cvs="selectedCvs"
+        :loading-cvs="loadingCvs"
+        @close="selectedProfile = null; selectedCvs = []"
         @download-cv="downloadCv"
       />
     </template>

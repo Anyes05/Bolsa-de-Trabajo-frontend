@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { ApplicantProfileCard, SocioCvLink } from './types'
+import type { ApplicantProfileCard, SocioCvLink, SocioProfileCv } from './types'
 
 export const socioBolsaService = {
   searchProfiles(rubro?: string) {
@@ -7,7 +7,11 @@ export const socioBolsaService = {
     return request<ApplicantProfileCard[]>(`/socio/bolsa${query}`)
   },
 
-  downloadCv(profileId: number) {
-    return request<SocioCvLink>(`/socio/bolsa/${profileId}/cv`)
+  listProfileCvs(profileId: number) {
+    return request<SocioProfileCv[]>(`/socio/bolsa/${profileId}/cvs`)
+  },
+
+  downloadCv(profileId: number, cvId: number) {
+    return request<SocioCvLink>(`/socio/bolsa/${profileId}/cvs/${cvId}`)
   },
 }

@@ -233,7 +233,9 @@ export type ProfessionalProfile = {
 
 export type ApplicantProfileCard = {
   id: number
+  applicantId: number
   fullName: string
+  email: string
   initials: string
   profileName: string
   categoryLabel: string
@@ -253,6 +255,16 @@ export type ApplicantProfileCard = {
 }
 
 export type SocioCvLink = { url: string }
+
+export type SocioProfileCv = {
+  id: number
+  fileName: string | null
+  meta: string
+  active: boolean
+  uploadedAt: string
+}
+
+export type AdminApplicantProfile = Omit<ApplicantProfileCard, 'hasApplication'>
 
 export type PersonalProfile = {
   nombreCompleto: string

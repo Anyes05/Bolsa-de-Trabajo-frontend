@@ -1,31 +1,126 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronUp, Download, Eye, MapPin, Search } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { Search } from 'lucide-vue-next'
 import AdminShell from '../../components/admin/AdminShell.vue'
+import AppAlert from '../../components/AppAlert.vue'
+import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
+import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
+import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
+import { adminApplicantService } from '../../services/adminApplicantService'
+import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types'
 
-type ApplicantCv = { id: string; title: string; tags: string[]; schedule: string; active: string; visible: boolean }
-type Applicant = { initials: string; name: string; document: string; phone: string; location: string; cvs: ApplicantCv[] }
+const applicantProfiles = ref<AdminApplicantProfile[]>([])
+const selectedProfile = ref<MockApplicantProfile | null>(null)
+const selectedCvs = ref<SocioProfileCv[]>([])
+const expandedApplicantId = ref<number | null>(null)
+const search = ref('')
+const loading = ref(false)
+const loadingCvs = ref(false)
+const error = ref<string | null>(null)
 
-const applicants: Applicant[] = [
-  { initials: 'MG', name: 'María González', document: '4.892.341-2', phone: '099 876 543', location: 'San José de Mayo', cvs: [{ id: 'cv-mg-ventas', title: 'Perfil Ventas & Atención al Cliente', tags: ['Ventas', 'Recepción'], schedule: 'Full-time', active: '15/03/2026', visible: true }, { id: 'cv-mg-admin', title: 'Perfil Administrativo', tags: ['Administración'], schedule: 'Part-time', active: '10/03/2026', visible: true }] },
-  { initials: 'CM', name: 'Carlos Méndez', document: '3.421.908-4', phone: '098 123 456', location: 'Libertad', cvs: [{ id: 'cv-cm-logistica', title: 'Perfil Transporte y Logística', tags: ['Choferes', 'Repartidores'], schedule: 'Full-time · Con vehículo propio', active: '', visible: true }] },
-  { initials: 'LS', name: 'Laura Sosa', document: '5.120.443-1', phone: '094 321 098', location: 'Ciudad del Plata', cvs: [{ id: 'cv-ls-admin', title: 'Perfil Administración', tags: ['Administración'], schedule: 'Full-time', active: '08/03/2026', visible: true }, { id: 'cv-ls-atencion', title: 'Perfil Atención al Cliente', tags: ['Atención'], schedule: 'Part-time', active: '06/03/2026', visible: true }, { id: 'cv-ls-ventas', title: 'Perfil Ventas', tags: ['Ventas'], schedule: 'Full-time', active: '01/03/2026', visible: true }] },
-  { initials: 'AF', name: 'Ana Ferraro', document: '4.567.890-9', phone: '099 222 333', location: 'Ecilda Paullier', cvs: [{ id: 'cv-af-comunicacion', title: 'Perfil Comunicación', tags: ['Comunicaciones'], schedule: 'Part-time', active: '25/02/2026', visible: true }] },
-]
-
-const expanded = ref(new Set(['MG', 'CM']))
-
-function toggleApplicant(initials: string) {
-  const next = new Set(expanded.value)
-  if (next.has(initials)) next.delete(initials)
-  else next.add(initials)
-  expanded.value = next
+function toDisplayProfile(profile: AdminApplicantProfile): MockApplicantProfile {
+  return {
+    id: String(profile.id), applicantId: profile.applicantId, fullName: profile.fullName, email: profile.email,
+    initials: profile.initials, profileName: profile.profileName, categoryLabel: profile.categoryLabel,
+    location: profile.location || 'San José', identityCard: profile.identityCard || '', age: profile.age ?? 0,
+    tags: profile.sectors, sectors: profile.sectors, interests: profile.sectors, availability: profile.availability,
+    license: profile.license || 'No informada', hasVehicle: profile.hasVehicle,
+    experienceSummary: profile.experienceSummary || '', latestJob: profile.latestJob || '',
+    cvFileName: profile.cvFileName || '', cvMeta: profile.cvMeta || '',
+    updatedAt: String(profile.id).padStart(12, '0'), hasApplication: true, hasCv: profile.hasCv,
+  }
 }
+
+async function loadProfiles() {
+  loading.value = true
+  error.value = null
+  try {
+    applicantProfiles.value = await adminApplicantService.list()
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los postulantes.'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function openProfile(profile: MockApplicantProfile) {
+  selectedProfile.value = profile
+  selectedCvs.value = []
+  loadingCvs.value = true
+  try {
+    selectedCvs.value = await adminApplicantService.listProfileCvs(Number(profile.id))
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los CVs del perfil.'
+  } finally {
+    loadingCvs.value = false
+  }
+}
+
+async function downloadCv(profileId: string, cvId?: number) {
+  if (cvId === undefined) return
+  const downloadWindow = window.open('', '_blank', 'noopener,noreferrer')
+  try {
+    const { url } = await adminApplicantService.downloadCv(Number(profileId), cvId)
+    if (downloadWindow) downloadWindow.location.href = url
+    else window.location.assign(url)
+  } catch (cause) {
+    downloadWindow?.close()
+    error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
+  }
+}
+
+const applicants = computed(() => {
+  const term = search.value.trim().toLocaleLowerCase('es')
+  const groups = new Map<number, { id: number; fullName: string; email: string; initials: string; profiles: MockApplicantProfile[] }>()
+  applicantProfiles.value.map(toDisplayProfile).forEach((profile) => {
+    const matches = !term || [profile.fullName, profile.email, profile.identityCard, profile.profileName]
+      .some((value) => value.toLocaleLowerCase('es').includes(term))
+    if (!matches) return
+    const group = groups.get(profile.applicantId)
+    if (group) group.profiles.push(profile)
+    else groups.set(profile.applicantId, {
+      id: profile.applicantId, fullName: profile.fullName, email: profile.email,
+      initials: profile.initials, profiles: [profile],
+    })
+  })
+  return [...groups.values()]
+})
+
+onMounted(loadProfiles)
 </script>
 
 <template>
-  <AdminShell active="postulantes" title="Postulantes Registrados" subtitle="6 postulantes · 10 perfiles totales">
-    <div class="applicant-toolbar"><label class="applicant-search"><Search :size="17" /><input placeholder="Buscar por nombre o cédula..."></label><button class="applicant-download" type="button"><Download :size="16" /> Descargar Excel</button></div>
-    <section class="applicant-list"><article v-for="applicant in applicants" :key="applicant.initials" class="applicant-card"><button class="applicant-card__header" type="button" @click="toggleApplicant(applicant.initials)"><span class="applicant-avatar">{{ applicant.initials }}</span><span class="applicant-identity"><strong>{{ applicant.name }}</strong><small>CI: {{ applicant.document }} · Tel: {{ applicant.phone }} · <MapPin :size="11" /> {{ applicant.location }}</small></span><span class="applicant-count">{{ applicant.cvs.length }} {{ applicant.cvs.length === 1 ? 'CV' : 'CVs' }}</span><component :is="expanded.has(applicant.initials) ? ChevronUp : ChevronDown" :size="17" /></button><div v-if="expanded.has(applicant.initials)" class="applicant-profiles"><div v-for="cv in applicant.cvs" :key="cv.id" class="applicant-profile"><div class="applicant-profile__top"><strong>{{ cv.title }}</strong><button v-if="cv.visible" class="applicant-cv-link" type="button"><Eye :size="11" /> Ver CV</button><span v-else class="applicant-cv-hidden">No visible</span></div><div class="applicant-tags"><span v-for="tag in cv.tags" :key="tag">{{ tag }}</span></div><small>Jornada: {{ cv.schedule }}<template v-if="cv.active"> · 📅 Activo: {{ cv.active }}</template></small></div></div></article></section>
+  <AdminShell
+    active="postulantes"
+    title="Postulantes Registrados"
+    :subtitle="`${applicants.length} postulantes · ${applicantProfiles.length} perfiles totales`"
+  >
+    <div class="applicant-toolbar">
+      <label class="applicant-search">
+        <Search :size="17" />
+        <input v-model="search" placeholder="Buscar por nombre, correo, cédula o perfil...">
+      </label>
+    </div>
+    <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
+    <p v-if="loading">Cargando postulantes...</p>
+    <section v-else-if="applicants.length" class="bolsa__applicants">
+      <ApplicantGroupCard
+        v-for="applicant in applicants"
+        :key="applicant.id"
+        :applicant="applicant"
+        :expanded="expandedApplicantId === applicant.id"
+        @toggle="expandedApplicantId = expandedApplicantId === applicant.id ? null : applicant.id"
+        @view="openProfile"
+      />
+    </section>
+    <p v-else class="bolsa__empty">No hay postulantes que coincidan con la búsqueda.</p>
+    <ProfileDetailModal
+      v-if="selectedProfile"
+      :profile="selectedProfile"
+      :cvs="selectedCvs"
+      :loading-cvs="loadingCvs"
+      @close="selectedProfile = null; selectedCvs = []"
+      @download-cv="downloadCv"
+    />
   </AdminShell>
 </template>
