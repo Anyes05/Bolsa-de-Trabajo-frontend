@@ -18,6 +18,7 @@ defineProps<{
 const emit = defineEmits<{
   toggle: []
   view: [profile: MockApplicantProfile]
+  contact: []
 }>()
 </script>
 
@@ -35,7 +36,7 @@ const emit = defineEmits<{
       <AppButton variant="secondary" type="button" @click="emit('toggle')">
         Ver sus perfiles <ChevronDown :size="15" :class="{ 'applicant-group-card__chevron--open': expanded }" />
       </AppButton>
-      <AppButton variant="primary" type="button"><Mail :size="14" aria-hidden="true" /> Contactar</AppButton>
+      <AppButton variant="primary" type="button" @click="emit('contact')"><Mail :size="14" aria-hidden="true" /> Contactar</AppButton>
     </footer>
     <div v-if="expanded" class="applicant-group-card__profiles">
       <ProfileCard v-for="profile in applicant.profiles" :key="profile.id" :profile="profile" @view="emit('view', profile)" />

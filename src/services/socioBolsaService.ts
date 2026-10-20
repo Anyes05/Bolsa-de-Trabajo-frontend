@@ -14,4 +14,11 @@ export const socioBolsaService = {
   downloadCv(profileId: number, cvId: number) {
     return request<SocioCvLink>(`/socio/bolsa/${profileId}/cvs/${cvId}`)
   },
+
+  notifyApplicant(profileId: number, selected: boolean) {
+    return request<{ message: string }>(`/socio/bolsa/${profileId}/notificacion`, {
+      method: 'POST',
+      body: JSON.stringify({ selected }),
+    })
+  },
 }
