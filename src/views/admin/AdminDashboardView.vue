@@ -75,7 +75,7 @@ const companies = computed(() => {
     const matchesFilter = filter.value === 'TODOS'
       || (filter.value === 'DEUDA' && company.saldo > 0)
       || company.estadoMorosidad === filter.value
-    const matchesQuery = !term || [company.razonSocial, company.bps, company.nombreRubro, company.telefono]
+    const matchesQuery = !term || [company.razonSocial, company.rut, company.cedula, company.nombreRubro, company.telefono]
       .some((value) => (value ?? '').toLowerCase().includes(term))
     return matchesFilter && matchesQuery
   })
@@ -88,7 +88,7 @@ const exportEligible = computed(() => (resumen.value?.cuentas ?? [])
 const exportCandidates = computed(() => {
   const term = exportSearch.value.trim().toLowerCase()
   return exportEligible.value.filter((company) => !term
-    || [company.razonSocial, company.bps, company.nombreRubro]
+    || [company.razonSocial, company.rut, company.cedula, company.nombreRubro]
       .some((value) => (value ?? '').toLowerCase().includes(term)))
 })
 const exportCompanies = computed(() => exportMode.value === 'TODOS'
@@ -420,7 +420,7 @@ function paymentLabel(method: MetodoPago | null) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, BPS, cédula o rubro..."></label>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, RUT, cédula o rubro..."></label>
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
@@ -437,7 +437,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr>
               <th>N°</th>
               <th>Razón social</th>
-              <th>BPS / Cédula</th>
+              <th>RUT / Cédula</th>
               <th>Rubro</th>
               <th>Saldo</th>
               <th>Estado</th>
@@ -448,7 +448,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr v-for="company in companies" :key="company.socioId">
               <td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td>
               <td class="cash-table__company">{{ company.razonSocial }}</td>
-              <td>{{ company.bps || '-' }}</td>
+              <td>{{ company.cedula || company.rut || '-' }}</td>
               <td>{{ company.nombreRubro || '-' }}</td>
               <td :class="{ 'account-credit': company.saldo < 0 }">{{ balanceLabel(company.saldo) }}</td>
               <td>
@@ -494,7 +494,7 @@ function paymentLabel(method: MetodoPago | null) {
           </fieldset>
           <fieldset v-if="exportMode === 'SELECCIONADOS'" class="excel-options" :disabled="exporting">
             <legend>Seleccionar socios</legend>
-            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar socio, BPS, cédula o rubro..." aria-label="Buscar socios para exportar"></label>
+            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar socio, RUT, cédula o rubro..." aria-label="Buscar socios para exportar"></label>
             <label class="excel-select-all">
               <input type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
               Seleccionar todos los resultados ({{ exportCandidates.length }})
@@ -502,7 +502,7 @@ function paymentLabel(method: MetodoPago | null) {
             <div class="excel-company-list" aria-label="Socios disponibles">
               <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company">
                 <input v-model="exportSelectedIds" type="checkbox" :value="company.socioId">
-                <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.bps || 'Sin identificador' }}</small></span>
+                <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.cedula || company.rut || 'Sin identificador' }}</small></span>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
               </label>
               <p v-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
@@ -555,7 +555,7 @@ function paymentLabel(method: MetodoPago | null) {
           <p v-if="validAmount(receivedAmount)" class="account-result" role="status">Saldo después del pago: <strong>{{ balanceLabel(balanceAfterPayment) }}</strong></p>
           <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" maxlength="80" placeholder="Opcional"></label>
           <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" maxlength="2000" placeholder="Opcional"></textarea></label>
-          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS / Cédula</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div></dl>
+          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>RUT / Cédula</dt><dd>{{ selectedCompany.cedula || selectedCompany.rut || '-' }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
         <footer class="cash-modal__footer"><button class="cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
@@ -564,7 +564,7 @@ function paymentLabel(method: MetodoPago | null) {
 
     <div v-if="historyBusy || selectedHistory || historyError" class="cash-modal-layer" @click.self="closeHistory">
       <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
+        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.cedula || selectedHistory?.rut || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
         <AppAlert v-if="historyError">{{ historyError }}</AppAlert>
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">

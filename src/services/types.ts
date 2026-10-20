@@ -88,6 +88,8 @@ export type CuentaCaja = {
   fechaVencimiento: string | null
   saldo: number
   deudaVencida: number
+  rut: string | null
+  cedula: string | null
 }
 
 export type CajaResumen = {
@@ -137,6 +139,8 @@ export type HistorialCaja = {
   deudaVencida: number
   movimientos: MovimientoCaja[]
   reintegrosProgramados: ReintegroProgramado[]
+  rut: string | null
+  cedula: string | null
 }
 
 export type RegistrarCobroPayload = {
