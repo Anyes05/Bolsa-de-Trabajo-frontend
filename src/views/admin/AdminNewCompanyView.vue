@@ -31,7 +31,7 @@ const form = reactive({
 })
 
 const identificadorLabel = computed(() => (
-  form.tipoIdentificador === 'CEDULA' ? 'Número de cédula' : 'Número de BPS'
+  form.tipoIdentificador === 'CEDULA' ? 'Número de cédula' : 'Número de RUT'
 ))
 
 onMounted(async () => {
@@ -65,7 +65,7 @@ async function submit() {
   if (!identificador) {
     error.value = form.tipoIdentificador === 'CEDULA'
       ? 'Ingresa el número de cédula.'
-      : 'Ingresa el número de BPS.'
+      : 'Ingresa el número de RUT.'
     return
   }
   if (!form.rubroId) {
@@ -119,12 +119,12 @@ async function submit() {
     <section class="new-company-card">
       <header class="new-company-card__header">
         <h2>Ficha del Socio</h2>
-        <p>Registra al socio con BPS o cédula (una sola opción). Elige también la fecha de alta en el CCISJ.</p>
+        <p>Registra al socio con RUT o cédula (una sola opción). Elige también la fecha de alta en el CCISJ.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
         <label>Registrar con *
           <select v-model="form.tipoIdentificador" class="new-company-select" required @change="onTipoChange">
-            <option value="BPS">Número de BPS</option>
+            <option value="BPS">Número de RUT</option>
             <option value="CEDULA">Número de cédula</option>
           </select>
         </label>
@@ -135,7 +135,7 @@ async function submit() {
             required
             :placeholder="form.tipoIdentificador === 'CEDULA' ? '12345678' : '123456789'"
           >
-          <small>El socio ingresará al sistema con este mismo número. No puede tener BPS y cédula a la vez.</small>
+          <small>El socio ingresará al sistema con este mismo número. No puede tener RUT y cédula a la vez.</small>
         </label>
         <label>Fecha de alta en el CCISJ *
           <input v-model="form.fechaAlta" type="date" required>

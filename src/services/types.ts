@@ -88,6 +88,8 @@ export type CuentaCaja = {
   fechaVencimiento: string | null
   saldo: number
   deudaVencida: number
+  rut: string | null
+  cedula: string | null
 }
 
 export type CajaResumen = {
@@ -107,6 +109,7 @@ export type MovimientoCaja = {
   monto: number
   saldoAnterior: number
   saldoResultante: number
+  saldoFavorUtilizado: number
   pendiente: number
   metodoPago: MetodoPago | null
   referencia: string | null
@@ -136,6 +139,8 @@ export type HistorialCaja = {
   deudaVencida: number
   movimientos: MovimientoCaja[]
   reintegrosProgramados: ReintegroProgramado[]
+  rut: string | null
+  cedula: string | null
 }
 
 export type RegistrarCobroPayload = {
@@ -232,7 +237,9 @@ export type ProfessionalProfile = {
 
 export type ApplicantProfileCard = {
   id: number
+  applicantId: number
   fullName: string
+  email: string
   initials: string
   profileName: string
   categoryLabel: string
@@ -252,6 +259,16 @@ export type ApplicantProfileCard = {
 }
 
 export type SocioCvLink = { url: string }
+
+export type SocioProfileCv = {
+  id: number
+  fileName: string | null
+  meta: string
+  active: boolean
+  uploadedAt: string
+}
+
+export type AdminApplicantProfile = Omit<ApplicantProfileCard, 'hasApplication'>
 
 export type PersonalProfile = {
   nombreCompleto: string

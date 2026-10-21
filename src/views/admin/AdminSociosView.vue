@@ -6,7 +6,6 @@ import AppAlert from '../../components/AppAlert.vue'
 import {
   estadoMorosidadLabel,
   estadoMorosidadTone,
-  socioIdentificadorLabel,
   socioService,
 } from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
@@ -42,7 +41,6 @@ const filtered = computed(() => {
   if (!term) return socios.value
   return socios.value.filter((socio) => [
     socio.razonSocial,
-    socio.bps,
     socio.cedula,
     socio.rut,
     socio.nombreRubro,
@@ -70,6 +68,12 @@ function formatDate(value: string | null) {
   const date = new Date(`${value.slice(0, 10)}T00:00:00`)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function adminIdentificadorLabel(socio: SocioRecord) {
+  if (socio.cedula) return `Cédula ${socio.cedula}`
+  if (socio.rut) return `RUT ${socio.rut}`
+  return 'Sin identificador'
 }
 
 function emptyToNull(value: string) {
@@ -184,7 +188,7 @@ async function resetClave() {
     <section class="company-search-card">
       <label class="company-search">
         <Search :size="17" />
-        <input v-model="query" placeholder="Buscar por razón social, RUT, BPS, cédula o rubro...">
+        <input v-model="query" placeholder="Buscar por razón social, RUT, cédula o rubro...">
       </label>
       <span>{{ filtered.length }} de {{ socios.length }} socios listados</span>
     </section>
@@ -198,8 +202,8 @@ async function resetClave() {
         <table class="company-table">
           <thead>
             <tr>
-              <th>Socio<br><small>BPS / Cédula</small></th>
-              <th>RUT</th>
+              <th>Socio<br><small>RUT / Cédula</small></th>
+              <th>BPS</th>
               <th>Rubro</th>
               <th>Estado</th>
               <th>Directivo</th>
@@ -212,11 +216,11 @@ async function resetClave() {
             <tr v-for="socio in filtered" :key="socio.id">
               <td class="company-table__name">
                 <strong>{{ socio.razonSocial }}</strong>
-                <small>{{ socioIdentificadorLabel(socio) }}</small>
+                <small>{{ adminIdentificadorLabel(socio) }}</small>
                 <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
                 <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
               </td>
-              <td>{{ socio.rut || '—' }}</td>
+              <td>{{ socio.bps || '—' }}</td>
               <td>{{ socio.nombreRubro || '—' }}</td>
               <td>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(socio.estadoMorosidad)}`">
@@ -252,15 +256,15 @@ async function resetClave() {
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
           <h2 id="edit-socio-title">Editar socio</h2>
-          <p>El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
+          <p>El identificador de acceso (RUT o cédula) y el email de cuenta no se cambian aquí.</p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
           <label class="new-company-form__wide">Razón social *
             <input v-model="editForm.razonSocial" required>
           </label>
           <label>Identificador de acceso
-            <input :value="socioIdentificadorLabel(editing)" readonly>
-            <small>Se define solo en el alta: BPS o cédula, no ambos.</small>
+            <input :value="adminIdentificadorLabel(editing)" readonly>
+            <small>Se define solo en el alta: RUT o cédula, no ambos.</small>
           </label>
           <label>RUT *
             <input v-model="editForm.rut" required>

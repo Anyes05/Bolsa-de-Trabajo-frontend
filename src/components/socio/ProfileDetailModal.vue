@@ -3,14 +3,20 @@ import { onMounted, onUnmounted } from 'vue'
 import { Car, Download, FileText, Mail, MapPin } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
 import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
+import type { SocioProfileCv } from '../../services/types'
 
-defineProps<{
+withDefaults(defineProps<{
   profile: MockApplicantProfile
-}>()
+  cvs?: SocioProfileCv[]
+  loadingCvs?: boolean
+}>(), {
+  cvs: () => [],
+  loadingCvs: false,
+})
 
 const emit = defineEmits<{
   close: []
-  downloadCv: [profileId: string]
+  downloadCv: [profileId: string, cvId?: number]
 }>()
 
 function onKeydown(event: KeyboardEvent) {
@@ -69,20 +75,37 @@ onUnmounted(() => {
         </section>
 
         <section class="profile-modal__block">
-          <h3>Currículum vitae adjunto</h3>
-          <div class="profile-modal__cv">
+          <h3>Currículums vitae adjuntos</h3>
+          <p v-if="loadingCvs">Cargando CVs...</p>
+          <p v-else-if="profile.hasApplication && !cvs.length">No se adjuntaron CVs a este perfil.</p>
+          <div v-for="cv in cvs" :key="cv.id" class="profile-modal__cv">
             <div class="profile-modal__cv-file">
               <span class="profile-modal__cv-icon" aria-hidden="true">
                 <FileText :size="18" />
               </span>
               <div>
-                <strong>{{ profile.cvFileName || 'CV asociado al perfil' }}</strong>
-                <small>{{ !profile.hasApplication ? 'Disponible después de una postulación a una oferta propia' : profile.hasCv ? profile.cvMeta || 'CV asociado' : 'No se adjuntó un CV' }}</small>
+                <strong>{{ cv.fileName || 'CV asociado al perfil' }} <em v-if="cv.active">Activo</em></strong>
+                <small>{{ cv.meta }}</small>
               </div>
             </div>
-            <AppButton variant="secondary" type="button" :disabled="!profile.hasCv" @click="emit('downloadCv', profile.id)">
+            <AppButton variant="secondary" type="button" @click="emit('downloadCv', profile.id, cv.id)">
               <Download :size="14" aria-hidden="true" />
               Descargar CV
+            </AppButton>
+          </div>
+          <div v-if="!profile.hasApplication" class="profile-modal__cv">
+            <div class="profile-modal__cv-file">
+              <span class="profile-modal__cv-icon" aria-hidden="true"><FileText :size="18" /></span>
+              <div><strong>CV asociado al perfil</strong><small>Disponible después de una postulación a una oferta propia</small></div>
+            </div>
+          </div>
+          <div v-if="profile.hasApplication && !cvs.length && !loadingCvs" class="profile-modal__cv">
+            <div class="profile-modal__cv-file">
+              <span class="profile-modal__cv-icon" aria-hidden="true"><FileText :size="18" /></span>
+              <div><strong>{{ profile.cvFileName || 'CV asociado al perfil' }}</strong><small>{{ profile.cvMeta || 'No se adjuntó un CV' }}</small></div>
+            </div>
+            <AppButton variant="secondary" type="button" :disabled="!profile.hasCv" @click="emit('downloadCv', profile.id)">
+              <Download :size="14" aria-hidden="true" /> Descargar CV
             </AppButton>
           </div>
         </section>

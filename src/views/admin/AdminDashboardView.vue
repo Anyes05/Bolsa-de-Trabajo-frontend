@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { cajaService } from '../../services/cajaService'
+import { cajaExcelService } from '../../services/cajaExcelService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
 
@@ -14,6 +15,13 @@ const query = ref('')
 const filter = ref<CajaFilter>('TODOS')
 const error = ref('')
 const busy = ref(false)
+const exporting = ref(false)
+const exportOpen = ref(false)
+const exportStates = ref<EstadoMorosidad[]>(['AL_DIA', 'MOROSO', 'INACTIVO'])
+const exportMode = ref<'TODOS' | 'SELECCIONADOS'>('TODOS')
+const exportSearch = ref('')
+const exportSelectedIds = ref<number[]>([])
+const exportError = ref('')
 const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
@@ -67,7 +75,7 @@ const companies = computed(() => {
     const matchesFilter = filter.value === 'TODOS'
       || (filter.value === 'DEUDA' && company.saldo > 0)
       || company.estadoMorosidad === filter.value
-    const matchesQuery = !term || [company.razonSocial, company.bps, company.nombreRubro, company.telefono]
+    const matchesQuery = !term || [company.razonSocial, company.rut, company.cedula, company.nombreRubro, company.telefono]
       .some((value) => (value ?? '').toLowerCase().includes(term))
     return matchesFilter && matchesQuery
   })
@@ -75,6 +83,21 @@ const companies = computed(() => {
 
 const canCharge = computed(() => selectedCompany.value?.estadoMorosidad !== 'INACTIVO'
   && !!chargeHistory.value && !chargeLoading.value && validAmount(receivedAmount.value))
+const exportEligible = computed(() => (resumen.value?.cuentas ?? [])
+  .filter((company) => exportStates.value.includes(company.estadoMorosidad)))
+const exportCandidates = computed(() => {
+  const term = exportSearch.value.trim().toLowerCase()
+  return exportEligible.value.filter((company) => !term
+    || [company.razonSocial, company.rut, company.cedula, company.nombreRubro]
+      .some((value) => (value ?? '').toLowerCase().includes(term)))
+})
+const exportCompanies = computed(() => exportMode.value === 'TODOS'
+  ? exportEligible.value
+  : exportEligible.value.filter((company) => exportSelectedIds.value.includes(company.socioId)))
+const exportAllVisibleSelected = computed(() => exportCandidates.value.length > 0
+  && exportCandidates.value.every((company) => exportSelectedIds.value.includes(company.socioId)))
+const exportSomeVisibleSelected = computed(() => !exportAllVisibleSelected.value
+  && exportCandidates.value.some((company) => exportSelectedIds.value.includes(company.socioId)))
 const balanceAfterPayment = computed(() => {
   const currentBalance = chargeHistory.value?.saldo ?? 0
   const paymentAmount = Number(receivedAmount.value || 0)
@@ -96,14 +119,24 @@ const historyMovements = computed(() => {
 })
 
 const chargeTotals = computed(() => {
-  const entries = chargeHistory.value?.movimientos ?? []
-  const total = (type: 'CUOTA' | 'REINTEGRO' | 'PAGO') => entries
+  const today = new Date()
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  const history = chargeHistory.value?.movimientos ?? []
+  const entries = history
+    .filter((entry) => entry.fecha.slice(0, 7) === currentMonth)
+  const pendingCents = (type: 'CUOTA' | 'REINTEGRO') => entries
     .filter((entry) => entry.tipo === type)
-    .reduce((sum, entry) => sum + entry.monto, 0)
+    .reduce((sum, entry) => sum + Math.round(entry.pendiente * 100), 0)
+  const cuotaCents = pendingCents('CUOTA')
+  const reintegroCents = pendingCents('REINTEGRO')
   return {
-    cuotas: total('CUOTA'),
-    reintegros: total('REINTEGRO'),
-    pagos: total('PAGO'),
+    cuotaEmitida: entries.some((entry) => entry.tipo === 'CUOTA'),
+    cuotaAnteriorPaga: history.some((entry) => entry.tipo === 'CUOTA'
+      && entry.fecha.slice(0, 7) < currentMonth && entry.pendiente === 0),
+    tieneReintegros: entries.some((entry) => entry.tipo === 'REINTEGRO'),
+    cuotas: cuotaCents / 100,
+    reintegros: reintegroCents / 100,
+    total: (cuotaCents + reintegroCents) / 100,
   }
 })
 
@@ -121,10 +154,44 @@ async function loadResumen() {
   }
 }
 
+function openExcelExport() {
+  exportStates.value = ['AL_DIA', 'MOROSO', 'INACTIVO']
+  exportMode.value = 'TODOS'
+  exportSearch.value = ''
+  exportSelectedIds.value = []
+  exportError.value = ''
+  exportOpen.value = true
+}
+
+function closeExcelExport() {
+  if (!exporting.value) exportOpen.value = false
+}
+
+function toggleExportVisible() {
+  const visibleIds = new Set(exportCandidates.value.map((company) => company.socioId))
+  exportSelectedIds.value = exportAllVisibleSelected.value
+    ? exportSelectedIds.value.filter((id) => !visibleIds.has(id))
+    : [...new Set([...exportSelectedIds.value, ...visibleIds])]
+}
+
+async function downloadExcel() {
+  if (exporting.value || busy.value || !exportCompanies.value.length) return
+  exporting.value = true
+  exportError.value = ''
+  try {
+    await cajaExcelService.download([...exportCompanies.value])
+    exportOpen.value = false
+  } catch (exception) {
+    exportError.value = exception instanceof Error ? exception.message : 'No fue posible descargar el Excel.'
+  } finally {
+    exporting.value = false
+  }
+}
+
 async function openCharge(company: CuentaCaja) {
   selectedCompany.value = company
   paymentMethod.value = 'EFECTIVO'
-  receivedAmount.value = ''
+  receivedAmount.value = '0'
   chargeHistory.value = null
   externalReference.value = ''
   paymentNotes.value = ''
@@ -132,7 +199,6 @@ async function openCharge(company: CuentaCaja) {
   chargeLoading.value = true
   try {
     chargeHistory.value = await cajaService.getHistorial(company.socioId)
-    receivedAmount.value = String(Math.max(chargeHistory.value.saldo, 0))
   } catch (exception) {
     chargeError.value = exception instanceof Error ? exception.message : 'No fue posible cargar la cuenta.'
   } finally {
@@ -194,9 +260,7 @@ function validAmount(value: string | number) {
 }
 
 function balanceLabel(value: number) {
-  if (value < 0) return `${formatMoney(Math.abs(value))} a favor`
-  if (value === 0) return 'Sin deuda'
-  return `${formatMoney(value)} de deuda`
+  return formatMoney(Math.abs(value))
 }
 
 async function openExpense(company: CuentaCaja) {
@@ -356,11 +420,11 @@ function paymentLabel(method: MetodoPago | null) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, BPS, cédula o rubro..."></label>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, RUT, cédula o rubro..."></label>
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
-      <button class="cash-download" type="button"><Download :size="16" /> Descargar Excel</button>
+      <button class="cash-download" type="button" :disabled="exporting || busy || !resumen?.cuentas.length" @click="openExcelExport"><Download :size="16" /> Descargar Excel</button>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -373,7 +437,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr>
               <th>N°</th>
               <th>Razón social</th>
-              <th>BPS / Cédula</th>
+              <th>RUT / Cédula</th>
               <th>Rubro</th>
               <th>Saldo</th>
               <th>Estado</th>
@@ -384,7 +448,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr v-for="company in companies" :key="company.socioId">
               <td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td>
               <td class="cash-table__company">{{ company.razonSocial }}</td>
-              <td>{{ company.bps || '-' }}</td>
+              <td>{{ company.cedula || company.rut || '-' }}</td>
               <td>{{ company.nombreRubro || '-' }}</td>
               <td :class="{ 'account-credit': company.saldo < 0 }">{{ balanceLabel(company.saldo) }}</td>
               <td>
@@ -407,17 +471,71 @@ function paymentLabel(method: MetodoPago | null) {
       </div>
     </section>
 
+    <div v-if="exportOpen" class="cash-modal-layer" @click.self="closeExcelExport" @keydown.esc.stop.prevent="closeExcelExport">
+      <section class="cash-modal excel-modal" role="dialog" aria-modal="true" aria-labelledby="excel-modal-title" :aria-busy="exporting">
+        <header class="cash-modal__header">
+          <div><h2 id="excel-modal-title">Exportar control de caja</h2></div>
+          <button type="button" aria-label="Cerrar" :disabled="exporting" @click="closeExcelExport"><X :size="18" /></button>
+        </header>
+        <div class="cash-modal__body">
+          <fieldset class="excel-options" :disabled="exporting">
+            <legend>Estado de los socios</legend>
+            <div class="excel-states">
+              <label v-for="(label, state) in estadoMorosidadLabel" :key="state">
+                <input v-model="exportStates" type="checkbox" :value="state">
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(state)}`"><i />{{ label }}</span>
+              </label>
+            </div>
+          </fieldset>
+          <fieldset class="excel-options" :disabled="exporting">
+            <legend>Socios a incluir</legend>
+            <label><input v-model="exportMode" type="radio" name="excel-scope" value="TODOS"> Todos los socios de los estados elegidos</label>
+            <label><input v-model="exportMode" type="radio" name="excel-scope" value="SELECCIONADOS"> Elegir socios</label>
+          </fieldset>
+          <fieldset v-if="exportMode === 'SELECCIONADOS'" class="excel-options" :disabled="exporting">
+            <legend>Seleccionar socios</legend>
+            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar socio, RUT, cédula o rubro..." aria-label="Buscar socios para exportar"></label>
+            <label class="excel-select-all">
+              <input type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
+              Seleccionar todos los resultados ({{ exportCandidates.length }})
+            </label>
+            <div class="excel-company-list" aria-label="Socios disponibles">
+              <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company">
+                <input v-model="exportSelectedIds" type="checkbox" :value="company.socioId">
+                <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.cedula || company.rut || 'Sin identificador' }}</small></span>
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
+              </label>
+              <p v-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
+            </div>
+          </fieldset>
+          <p v-if="!exportStates.length" class="excel-empty" role="status">Selecciona al menos un estado.</p>
+          <AppAlert v-if="exportError">{{ exportError }}</AppAlert>
+        </div>
+        <footer class="cash-modal__footer excel-footer">
+          <span role="status">{{ exportCompanies.length }} socios seleccionados</span>
+          <div>
+            <button class="cash-history" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
+            <button class="cash-modal__confirm" type="button" :disabled="exporting || !exportCompanies.length" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
     <div v-if="selectedCompany" class="cash-modal-layer" @click.self="closeCharge">
       <section class="cash-modal" role="dialog" aria-modal="true" aria-labelledby="cash-modal-title">
         <header class="cash-modal__header"><div><h2 id="cash-modal-title">Registrar Cobro</h2><p>{{ selectedCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="chargeBusy || chargeLoading" @click="closeCharge"><X :size="18" /></button></header>
         <div class="cash-modal__body">
           <p v-if="chargeLoading" role="status">Cargando estado de cuenta...</p>
           <dl v-if="chargeHistory" class="account-summary">
-            <div><dt>Cuotas emitidas</dt><dd>{{ formatMoney(chargeTotals.cuotas) }}</dd></div>
-            <div><dt>Reintegros registrados</dt><dd>{{ formatMoney(chargeTotals.reintegros) }}</dd></div>
-            <div><dt>Pagos anteriores</dt><dd>{{ formatMoney(chargeTotals.pagos) }}</dd></div>
-            <div><dt>Saldo actual</dt><dd>{{ balanceLabel(chargeHistory.saldo) }}</dd></div>
-            <div><dt>Deuda vencida</dt><dd>{{ formatMoney(chargeHistory.deudaVencida) }}</dd></div>
+            <div>
+              <dt>Reintegro de este mes</dt>
+              <dd>{{ !chargeTotals.tieneReintegros ? 'Sin reintegros' : chargeTotals.reintegros === 0 ? 'Pagado' : formatMoney(chargeTotals.reintegros) }}</dd>
+            </div>
+            <div>
+              <dt>Cuota a pagar</dt>
+              <dd>{{ !chargeTotals.cuotaEmitida && !chargeTotals.cuotaAnteriorPaga ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
+            </div>
+            <div><dt>Total</dt><dd>{{ formatMoney(chargeTotals.total) }}</dd></div>
           </dl>
           <fieldset class="cash-payment">
             <legend>Metodo de pago</legend>
@@ -437,7 +555,7 @@ function paymentLabel(method: MetodoPago | null) {
           <p v-if="validAmount(receivedAmount)" class="account-result" role="status">Saldo después del pago: <strong>{{ balanceLabel(balanceAfterPayment) }}</strong></p>
           <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" maxlength="80" placeholder="Opcional"></label>
           <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" maxlength="2000" placeholder="Opcional"></textarea></label>
-          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS / Cédula</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div></dl>
+          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>RUT / Cédula</dt><dd>{{ selectedCompany.cedula || selectedCompany.rut || '-' }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
         <footer class="cash-modal__footer"><button class="cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
@@ -446,7 +564,7 @@ function paymentLabel(method: MetodoPago | null) {
 
     <div v-if="historyBusy || selectedHistory || historyError" class="cash-modal-layer" @click.self="closeHistory">
       <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
+        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.cedula || selectedHistory?.rut || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
         <AppAlert v-if="historyError">{{ historyError }}</AppAlert>
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
@@ -489,6 +607,7 @@ function paymentLabel(method: MetodoPago | null) {
                 <time>{{ formatDate(movement.fecha) }}</time>
                 <p>Saldo anterior: {{ balanceLabel(movement.saldoAnterior) }}</p>
                 <p>Saldo resultante: {{ balanceLabel(movement.saldoResultante) }}</p>
+                <p v-if="movement.saldoFavorUtilizado > 0" class="account-credit">Saldo a favor utilizado: {{ formatMoney(movement.saldoFavorUtilizado) }}</p>
                 <p v-if="movement.tipo !== 'PAGO'">Pendiente: {{ formatMoney(movement.pendiente) }}</p>
               </div>
               <aside>
@@ -660,6 +779,27 @@ function paymentLabel(method: MetodoPago | null) {
 </template>
 
 <style scoped>
+.excel-modal { width: min(100%, 580px); }
+.excel-options { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
+.excel-options legend { margin-bottom: 8px; color: #34473b; font-size: 12px; font-weight: 700; }
+.excel-options label { display: flex; align-items: center; gap: 8px; min-height: 36px; color: #526159; font-size: 12px; cursor: pointer; }
+.excel-options input[type="checkbox"], .excel-options input[type="radio"] { flex-shrink: 0; width: 16px; height: 16px; margin: 0; accent-color: #07974e; }
+.excel-options input:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
+.excel-states { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.excel-search { box-sizing: border-box; width: 100%; margin-bottom: 8px; }
+.excel-search svg { flex-shrink: 0; }
+.excel-select-all { padding: 6px 0; }
+.excel-company-list { max-height: 250px; overflow-y: auto; border-top: 1px solid #e0e6eb; border-bottom: 1px solid #e0e6eb; }
+.excel-options .excel-company { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #edf0f3; }
+.excel-company:last-child { border-bottom: 0; }
+.excel-company__name { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.excel-company__name strong { color: #34473b; font-size: 12px; }
+.excel-company__name small { color: #68737c; font-size: 11px; }
+.excel-empty { margin: 12px 0; color: #68737c; font-size: 12px; line-height: 1.5; }
+.excel-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.excel-footer > span { color: #68737c; font-size: 12px; }
+.excel-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.excel-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 36px; }
 .cash-modal, .history-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); border-radius: 8px; }
 .cash-modal__body, .history-list { overflow-y: auto; min-height: 0; }
 .cash-modal__header, .cash-modal__footer, .history-modal__header, .history-modal__footer { flex-shrink: 0; }

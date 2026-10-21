@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MapPin, Mail } from 'lucide-vue-next'
+import { MapPin } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
 import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
 
@@ -34,9 +34,6 @@ defineEmits<{
     </p>
     <footer class="profile-card__actions">
       <AppButton variant="secondary" type="button" @click="$emit('view')">Ver perfil completo</AppButton>
-      <AppButton variant="primary" type="button">
-        <Mail :size="14" aria-hidden="true" /> Contactar
-      </AppButton>
     </footer>
   </article>
 </template>

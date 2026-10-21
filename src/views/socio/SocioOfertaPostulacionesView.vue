@@ -45,7 +45,9 @@ function allowedNextStatuses(status: ApplicantApplication['estado']) {
 function profileFor(application: ReceivedApplication): MockApplicantProfile {
   return {
     id: String(application.id),
+    applicantId: application.id,
     fullName: application.fullName,
+    email: '',
     initials: application.initials,
     profileName: application.profileName,
     categoryLabel: application.tags[0]?.toUpperCase() || 'PERFIL LABORAL',

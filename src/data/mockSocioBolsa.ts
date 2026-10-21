@@ -3,7 +3,9 @@ export type SortOption = 'updated' | 'name'
 
 export type MockApplicantProfile = {
   id: string
+  applicantId: number
   fullName: string
+  email: string
   initials: string
   profileName: string
   categoryLabel: string
@@ -50,7 +52,9 @@ export const mockRubros = [
 export const mockApplicantProfiles: MockApplicantProfile[] = [
   {
     id: '1',
+    applicantId: 1,
     fullName: 'Maria Gonzalez',
+    email: 'maria.gonzalez@example.com',
     initials: 'MG',
     profileName: 'Perfil Ventas y Atencion al Cliente',
     categoryLabel: 'VENTAS Y ATENCION',
@@ -71,7 +75,9 @@ export const mockApplicantProfiles: MockApplicantProfile[] = [
   },
   {
     id: '2',
+    applicantId: 2,
     fullName: 'Carlos Mendez',
+    email: 'carlos.mendez@example.com',
     initials: 'CM',
     profileName: 'Perfil Transporte y Logistica',
     categoryLabel: 'TRANSPORTE Y LOGISTICA',
@@ -92,7 +98,9 @@ export const mockApplicantProfiles: MockApplicantProfile[] = [
   },
   {
     id: '3',
+    applicantId: 3,
     fullName: 'Laura Sosa',
+    email: 'laura.sosa@example.com',
     initials: 'LS',
     profileName: 'Perfil Administracion y Secretaria',
     categoryLabel: 'ADMINISTRACION',
@@ -113,7 +121,9 @@ export const mockApplicantProfiles: MockApplicantProfile[] = [
   },
   {
     id: '4',
+    applicantId: 4,
     fullName: 'Roberto Perez',
+    email: 'roberto.perez@example.com',
     initials: 'RP',
     profileName: 'Perfil Ventas y Promocion',
     categoryLabel: 'VENTAS',
@@ -134,7 +144,9 @@ export const mockApplicantProfiles: MockApplicantProfile[] = [
   },
   {
     id: '5',
+    applicantId: 5,
     fullName: 'Ana Silva',
+    email: 'ana.silva@example.com',
     initials: 'AS',
     profileName: 'Perfil Contabilidad',
     categoryLabel: 'CONTABILIDAD',
@@ -155,7 +167,9 @@ export const mockApplicantProfiles: MockApplicantProfile[] = [
   },
   {
     id: '6',
+    applicantId: 6,
     fullName: 'Diego Ramirez',
+    email: 'diego.ramirez@example.com',
     initials: 'DR',
     profileName: 'Perfil Reparto',
     categoryLabel: 'TRANSPORTE Y LOGISTICA',
