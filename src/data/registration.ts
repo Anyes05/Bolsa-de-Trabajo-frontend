@@ -1,9 +1,6 @@
-export const residenceAreas = [
-  'San José de Mayo (Centro)',
-  'Ciudad del Plata',
-  'Libertad',
-  'Otra localidad',
-] as const
+import { LOCALIDADES_SAN_JOSE } from './localidades'
+
+export const residenceAreas = LOCALIDADES_SAN_JOSE
 
 export const fallbackSectors = [
   'Ventas',

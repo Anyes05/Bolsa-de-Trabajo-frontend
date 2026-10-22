@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
+import { localidadesConActual } from '../../data/localidades'
 import { postulanteService } from '../../services/postulanteService'
 import type { PersonalProfile } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
@@ -84,7 +85,12 @@ onMounted(load)
         <label>Correo electrónico<input :value="profile.email" disabled></label>
         <label>Cédula de identidad<input v-model="profile.cedulaIdentidad"></label>
         <label>Teléfono<input v-model="profile.telefono"></label>
-        <label>Zona de residencia<input v-model="profile.zonaResidencia"></label>
+        <label>Zona de residencia
+          <select v-model="profile.zonaResidencia">
+            <option value="" disabled>Seleccionar localidad</option>
+            <option v-for="localidad in localidadesConActual(profile.zonaResidencia)" :key="localidad" :value="localidad">{{ localidad }}</option>
+          </select>
+        </label>
         <footer><AppButton :loading="saving" type="submit">Guardar datos personales</AppButton></footer>
       </form>
     </section>

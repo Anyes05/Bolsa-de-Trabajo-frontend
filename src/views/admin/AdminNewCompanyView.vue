@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
+import { LOCALIDADES_SAN_JOSE } from '../../data/localidades'
 import { socioService } from '../../services/socioService'
 import type { RubroOption, SocioRecord, TipoIdentificadorSocio } from '../../services/types'
 
@@ -35,7 +36,7 @@ const form = reactive({
 })
 
 const identificadorLabel = computed(() => (
-  form.tipoIdentificador === 'CEDULA' ? 'Número de cédula' : 'Número de RUT'
+  form.tipoIdentificador === 'CEDULA' ? 'Número de cédula' : 'Número de BPS'
 ))
 
 onMounted(async () => {
@@ -69,7 +70,28 @@ async function submit() {
   if (!identificador) {
     error.value = form.tipoIdentificador === 'CEDULA'
       ? 'Ingresa el número de cédula.'
-      : 'Ingresa el número de RUT.'
+      : 'Ingresa el número de BPS.'
+    return
+  }
+  if (form.tipoIdentificador === 'BPS' && identificador.length < 9) {
+    error.value = 'El número de BPS debe tener al menos 9 dígitos.'
+    return
+  }
+  const rutOCedula = form.rut.replace(/\D/g, '')
+  if (rutOCedula.length !== 12 && rutOCedula.length !== 8) {
+    error.value = 'Ingresa un RUT (12 dígitos) o una cédula (8 dígitos).'
+    return
+  }
+  if (!form.telefono.trim()) {
+    error.value = 'Ingresa el teléfono del socio.'
+    return
+  }
+  if (!form.fechaAniversario) {
+    error.value = 'Indica la fecha de aniversario.'
+    return
+  }
+  if (!form.localidad) {
+    error.value = 'Selecciona la localidad.'
     return
   }
   if (!form.rubroId) {
@@ -88,7 +110,7 @@ async function submit() {
       identificador,
       email: form.email.trim(),
       razonSocial: form.razonSocial.trim(),
-      rut: form.rut.trim(),
+      rut: form.rut.replace(/\D/g, ''),
       telefono: emptyToNull(form.telefono),
       emailContacto: emptyToNull(form.emailContacto),
       calle: form.calle.trim(),
@@ -157,12 +179,12 @@ async function sendCredentialsMail() {
     <section v-else class="new-company-card">
       <header class="new-company-card__header">
         <h2>Ficha del Socio</h2>
-        <p>Registra al socio con RUT o cédula (una sola opción). Elige también la fecha de alta en el CCISJ. La clave provisional se genera automáticamente.</p>
+        <p>Registra al socio con BPS o cédula (una sola opción, es su usuario de ingreso). El RUT o la cédula fiscal se carga aparte. Elige también la fecha de alta en el CCISJ. La clave provisional se genera automáticamente.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
         <label>Registrar con *
           <select v-model="form.tipoIdentificador" class="new-company-select" required @change="onTipoChange">
-            <option value="BPS">Número de RUT</option>
+            <option value="BPS">Número de BPS</option>
             <option value="CEDULA">Número de cédula</option>
           </select>
         </label>
@@ -173,7 +195,8 @@ async function sendCredentialsMail() {
             required
             :placeholder="form.tipoIdentificador === 'CEDULA' ? '12345678' : '123456789'"
           >
-          <small>El socio ingresará al sistema con este mismo número. No puede tener RUT y cédula a la vez.</small>
+          <small v-if="form.tipoIdentificador === 'BPS'">El socio ingresará al sistema con este número (mínimo 9 dígitos). No puede tener BPS y cédula a la vez.</small>
+          <small v-else>El socio ingresará al sistema con este mismo número. No puede tener BPS y cédula a la vez.</small>
         </label>
         <label>Fecha de alta en el CCISJ *
           <input v-model="form.fechaAlta" type="date" required>
@@ -185,18 +208,19 @@ async function sendCredentialsMail() {
         <label class="new-company-form__wide">Razón social *
           <input v-model="form.razonSocial" required>
         </label>
-        <label>RUT *
-          <input v-model="form.rut" required>
+        <label>RUT o cédula *
+          <input v-model="form.rut" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
+          <small>Si no tiene RUT, ingresa la cédula. Distinto del BPS/cédula de ingreso al sistema.</small>
         </label>
-        <label>Teléfono
-          <input v-model="form.telefono">
+        <label>Teléfono *
+          <input v-model="form.telefono" required>
         </label>
         <label>Email de contacto
           <input v-model="form.emailContacto" type="email" placeholder="contacto@empresa.com">
           <small>Con este correo se contacta a la firma. Puede coincidir con el de cuenta.</small>
         </label>
-        <label>Fecha de aniversario
-          <input v-model="form.fechaAniversario" type="date">
+        <label>Fecha de aniversario *
+          <input v-model="form.fechaAniversario" type="date" required>
         </label>
         <label>Rubro *
           <select v-model="form.rubroId" class="new-company-select" required>
@@ -210,8 +234,11 @@ async function sendCredentialsMail() {
         <label>Nro puerta
           <input v-model="form.numero">
         </label>
-        <label class="new-company-form__wide">Ciudad / Localidad *
-          <input v-model="form.localidad" required>
+        <label class="new-company-form__wide">Localidad / Zona *
+          <select v-model="form.localidad" class="new-company-select" required>
+            <option value="" disabled>Seleccionar localidad</option>
+            <option v-for="localidad in LOCALIDADES_SAN_JOSE" :key="localidad" :value="localidad">{{ localidad }}</option>
+          </select>
         </label>
         <label class="new-company-check">
           <input v-model="form.esDirectivo" type="checkbox">

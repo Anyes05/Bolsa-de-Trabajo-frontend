@@ -8,6 +8,7 @@ import PasswordInput from '../../components/PasswordInput.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import { authService } from '../../services/authService'
 import { socioIdentificadorLabel } from '../../services/socioService'
+import { localidadesConActual } from '../../data/localidades'
 import { socioPerfilService } from '../../services/socioPerfilService'
 import type { RubroOption, SocioRecord } from '../../services/types'
 import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
@@ -50,6 +51,7 @@ const displayName = computed(() => socio.value?.razonSocial || auth.fullName || 
 const initials = computed(() => (
   displayName.value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S'
 ))
+const localidadOptions = computed(() => localidadesConActual(form.localidad))
 const emailCuenta = computed(() => socio.value?.emailUsuario || auth.email || '')
 const identificador = computed(() => (socio.value ? socioIdentificadorLabel(socio.value) : '—'))
 
@@ -233,7 +235,7 @@ function logout() {
             <small>Identificador de acceso (no editable)</small>
           </label>
           <label>
-            RUT
+            RUT / Cédula
             <input :value="socio.rut || ''" disabled>
             <small>No editable</small>
           </label>
@@ -241,8 +243,8 @@ function logout() {
           <h4>Contacto y ubicación</h4>
           <div class="socio-profile__row">
             <label>
-              Teléfono
-              <input v-model="form.telefono">
+              Teléfono *
+              <input v-model="form.telefono" required>
             </label>
             <label>
               Email de contacto
@@ -257,8 +259,8 @@ function logout() {
             </select>
           </label>
           <label>
-            Fecha de aniversario
-            <input v-model="form.fechaAniversario" type="date">
+            Fecha de aniversario *
+            <input v-model="form.fechaAniversario" type="date" required>
           </label>
           <label>
             Calle *
@@ -270,8 +272,11 @@ function logout() {
               <input v-model="form.numero">
             </label>
             <label>
-              Ciudad / Localidad *
-              <input v-model="form.localidad" required>
+              Localidad / Zona *
+              <select v-model="form.localidad" required>
+                <option value="" disabled>Seleccionar localidad</option>
+                <option v-for="localidad in localidadOptions" :key="localidad" :value="localidad">{{ localidad }}</option>
+              </select>
             </label>
           </div>
           <p v-if="savedHint" class="socio-profile__hint">{{ savedHint }}</p>

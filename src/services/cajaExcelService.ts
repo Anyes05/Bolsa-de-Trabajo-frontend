@@ -36,7 +36,7 @@ export const cajaExcelService = {
     const resumen = workbook.addWorksheet('Resumen')
     resumen.columns = [
       { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'RUT / Cédula', key: 'identificador', width: 22 },
+      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
       { header: 'Rubro', key: 'rubro', width: 26 },
       { header: 'Teléfono', key: 'telefono', width: 20 },
       { header: 'Estado', key: 'estado', width: 16 },
@@ -54,7 +54,7 @@ export const cajaExcelService = {
     const mensual = workbook.addWorksheet('Por mes')
     mensual.columns = [
       { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'RUT / Cédula', key: 'identificador', width: 22 },
+      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
       { header: 'Mes del cargo / cobro', key: 'mes', width: 24 },
       { header: 'Cuotas (UYU)', key: 'cuotas', width: 20 },
       { header: 'Reintegros (UYU)', key: 'reintegros', width: 22 },
@@ -69,7 +69,7 @@ export const cajaExcelService = {
     const deudas = workbook.addWorksheet('Deudas')
     deudas.columns = [
       { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'RUT / Cédula', key: 'identificador', width: 22 },
+      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
       { header: 'Mes correspondiente', key: 'mes', width: 24 },
       { header: 'Tipo', key: 'tipo', width: 18 },
       { header: 'Concepto', key: 'concepto', width: 40 },
@@ -83,7 +83,7 @@ export const cajaExcelService = {
       const historial = await cajaService.getHistorial(cuenta.socioId)
       const socio = {
         socio: historial.razonSocial,
-        identificador: historial.cedula || historial.rut || '',
+        identificador: historial.bps || '',
         rubro: historial.nombreRubro ?? '',
         telefono: cuenta.telefono ?? '',
         estado: estadoMorosidadLabel[historial.estadoMorosidad],

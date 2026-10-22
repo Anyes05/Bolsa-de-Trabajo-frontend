@@ -4,9 +4,11 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
+import { localidadesConActual } from '../../data/localidades'
 import {
   estadoMorosidadLabel,
   estadoMorosidadTone,
+  socioIdentificadorLabel as adminIdentificadorLabel,
   socioService,
 } from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
@@ -42,6 +44,7 @@ const filtered = computed(() => {
   if (!term) return socios.value
   return socios.value.filter((socio) => [
     socio.razonSocial,
+    socio.bps,
     socio.cedula,
     socio.rut,
     socio.nombreRubro,
@@ -71,11 +74,7 @@ function formatDate(value: string | null) {
   return date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function adminIdentificadorLabel(socio: SocioRecord) {
-  if (socio.cedula) return `Cédula ${socio.cedula}`
-  if (socio.rut) return `RUT ${socio.rut}`
-  return 'Sin identificador'
-}
+const localidadOptions = computed(() => localidadesConActual(editForm.localidad))
 
 function emptyToNull(value: string) {
   const trimmed = value.trim()
@@ -113,6 +112,11 @@ function replaceSocio(updated: SocioRecord) {
 
 async function saveEdit() {
   if (!editing.value) return
+  const rutOCedula = editForm.rut.replace(/\D/g, '')
+  if (rutOCedula.length !== 12 && rutOCedula.length !== 8) {
+    editError.value = 'Ingresa un RUT (12 dígitos) o una cédula (8 dígitos).'
+    return
+  }
   if (!editForm.rubroId) {
     editError.value = 'Selecciona un rubro.'
     return
@@ -122,7 +126,7 @@ async function saveEdit() {
   try {
     const updated = await socioService.updateSocio(editing.value.id, {
       razonSocial: editForm.razonSocial.trim(),
-      rut: editForm.rut.trim(),
+      rut: editForm.rut.replace(/\D/g, ''),
       telefono: emptyToNull(editForm.telefono),
       emailContacto: emptyToNull(editForm.emailContacto),
       calle: editForm.calle.trim(),
@@ -200,8 +204,8 @@ async function resetClave() {
         <table class="company-table">
           <thead>
             <tr>
-              <th>Socio<br><small>RUT / Cédula</small></th>
-              <th>BPS</th>
+              <th>Socio<br><small>BPS / Cédula</small></th>
+              <th>RUT / Cédula</th>
               <th>Rubro</th>
               <th>Estado</th>
               <th>Directivo</th>
@@ -218,7 +222,7 @@ async function resetClave() {
                 <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
                 <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
               </td>
-              <td>{{ socio.bps || '—' }}</td>
+              <td>{{ socio.rut || '—' }}</td>
               <td>{{ socio.nombreRubro || '—' }}</td>
               <td>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(socio.estadoMorosidad)}`">
@@ -254,7 +258,7 @@ async function resetClave() {
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
           <h2 id="edit-socio-title">Editar socio</h2>
-          <p>El identificador de acceso (RUT o cédula) y el email de cuenta no se cambian aquí.</p>
+          <p>El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
           <label class="new-company-form__wide">Razón social *
@@ -262,13 +266,14 @@ async function resetClave() {
           </label>
           <label>Identificador de acceso
             <input :value="adminIdentificadorLabel(editing)" readonly>
-            <small>Se define solo en el alta: RUT o cédula, no ambos.</small>
+            <small>Se define solo en el alta: BPS o cédula, no ambos.</small>
           </label>
-          <label>RUT *
-            <input v-model="editForm.rut" required>
+          <label>RUT o cédula *
+            <input v-model="editForm.rut" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
+            <small>Si no tiene RUT, va la cédula.</small>
           </label>
-          <label>Teléfono
-            <input v-model="editForm.telefono">
+          <label>Teléfono *
+            <input v-model="editForm.telefono" required>
           </label>
           <label>Email de cuenta
             <input :value="editing.emailUsuario || ''" type="email" readonly>
@@ -281,8 +286,8 @@ async function resetClave() {
           <label>Fecha de alta en el CCISJ
             <input v-model="editForm.fechaAlta" type="date">
           </label>
-          <label>Fecha de aniversario
-            <input v-model="editForm.fechaAniversario" type="date">
+          <label>Fecha de aniversario *
+            <input v-model="editForm.fechaAniversario" type="date" required>
           </label>
           <label>Rubro *
             <select v-model="editForm.rubroId" class="new-company-select" required>
@@ -303,8 +308,11 @@ async function resetClave() {
           <label>Nro puerta
             <input v-model="editForm.numero">
           </label>
-          <label class="new-company-form__wide">Ciudad / Localidad *
-            <input v-model="editForm.localidad" required>
+          <label class="new-company-form__wide">Localidad / Zona *
+            <select v-model="editForm.localidad" class="new-company-select" required>
+              <option value="" disabled>Seleccionar localidad</option>
+              <option v-for="localidad in localidadOptions" :key="localidad" :value="localidad">{{ localidad }}</option>
+            </select>
           </label>
           <label class="new-company-check">
             <input v-model="editForm.esDirectivo" type="checkbox">
