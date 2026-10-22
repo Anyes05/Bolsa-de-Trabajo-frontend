@@ -56,6 +56,12 @@ export type SocioCreatePayload = {
   fechaAniversario?: string | null
 }
 
+export type CredencialesEnviadas = {
+  destinatario: string
+  passwordProvisional: string
+  mensaje: string
+}
+
 export type SocioUpdatePayload = {
   razonSocial: string
   rut: string

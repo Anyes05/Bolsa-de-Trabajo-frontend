@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { EstadoMorosidad, RubroOption, SocioCreatePayload, SocioRecord, SocioUpdatePayload } from './types'
+import type { CredencialesEnviadas, EstadoMorosidad, RubroOption, SocioCreatePayload, SocioRecord, SocioUpdatePayload } from './types'
 
 export const socioService = {
   getSocios() {
@@ -42,6 +42,12 @@ export const socioService = {
 
   resetClaveProvisional(id: number) {
     return request<SocioRecord>(`/admin/socios/${id}/clave-provisional`, {
+      method: 'POST',
+    })
+  },
+
+  enviarCredenciales(id: number) {
+    return request<CredencialesEnviadas>(`/admin/socios/${id}/enviar-credenciales`, {
       method: 'POST',
     })
   },

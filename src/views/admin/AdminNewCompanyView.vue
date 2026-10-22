@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft, Mail } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminShell from '../../components/admin/AdminShell.vue'
@@ -13,6 +13,9 @@ const rubros = ref<RubroOption[]>([])
 const error = ref('')
 const busy = ref(false)
 const createdSocio = ref<SocioRecord | null>(null)
+const mailBusy = ref(false)
+const mailSent = ref('')
+const mailError = ref('')
 const today = new Date().toISOString().slice(0, 10)
 const form = reactive({
   tipoIdentificador: 'BPS' as TipoIdentificadorSocio,
@@ -102,6 +105,21 @@ async function submit() {
     busy.value = false
   }
 }
+
+async function sendCredentialsMail() {
+  if (!createdSocio.value) return
+  mailBusy.value = true
+  mailError.value = ''
+  try {
+    const result = await socioService.enviarCredenciales(createdSocio.value.id)
+    createdSocio.value = { ...createdSocio.value, passwordProvisional: result.passwordProvisional }
+    mailSent.value = `Mail enviado a ${result.destinatario} con las credenciales y el aviso de 24 horas.`
+  } catch (exception) {
+    mailError.value = exception instanceof Error ? exception.message : 'No fue posible enviar el mail al socio.'
+  } finally {
+    mailBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -121,8 +139,18 @@ async function submit() {
           <PasswordInput :model-value="createdSocio.passwordProvisional ?? ''" readonly autocomplete="off" />
           <small>Se generó automáticamente a partir de la razón social.</small>
         </label>
+        <p class="new-company-form__wide">
+          Podés enviarle las credenciales por mail a <strong>{{ createdSocio.emailUsuario || createdSocio.emailContacto || 'su correo registrado' }}</strong>
+          (usuario de acceso y clave provisional, con el aviso de las 24 horas). Al enviarlo se genera una clave nueva y el plazo de 24 horas corre desde ese momento.
+        </p>
+        <AppAlert v-if="mailError">{{ mailError }}</AppAlert>
+        <p v-if="mailSent" class="socio-profile__hint">{{ mailSent }}</p>
         <footer class="new-company-form__footer">
-          <button class="new-company-submit" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado de socios</button>
+          <button class="new-company-cancel" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado sin enviar</button>
+          <button class="new-company-submit" type="button" :disabled="mailBusy" @click="sendCredentialsMail">
+            <Mail :size="15" aria-hidden="true" />
+            {{ mailBusy ? 'Enviando...' : (mailSent ? 'Reenviar mail al socio' : 'Mandar mail al socio') }}
+          </button>
         </footer>
       </div>
     </section>
@@ -200,3 +228,9 @@ async function submit() {
     </section>
   </AdminShell>
 </template>
+
+<style scoped>
+.new-company-submit {
+  gap: 7px;
+}
+</style>
