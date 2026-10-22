@@ -40,10 +40,9 @@ export const socioService = {
     })
   },
 
-  resetClaveProvisional(id: number, password: string) {
+  resetClaveProvisional(id: number) {
     return request<SocioRecord>(`/admin/socios/${id}/clave-provisional`, {
       method: 'POST',
-      body: JSON.stringify({ password }),
     })
   },
 }

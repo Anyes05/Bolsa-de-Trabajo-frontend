@@ -3,6 +3,7 @@ import { Pencil, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import {
   estadoMorosidadLabel,
   estadoMorosidadTone,
@@ -20,7 +21,7 @@ const editError = ref('')
 const editBusy = ref(false)
 const resetBusy = ref(false)
 const resetHint = ref('')
-const resetPassword = ref('')
+const generatedPassword = ref('')
 const editForm = reactive({
   razonSocial: '',
   rut: '',
@@ -85,7 +86,7 @@ function openEdit(socio: SocioRecord) {
   editing.value = socio
   editError.value = ''
   resetHint.value = ''
-  resetPassword.value = ''
+  generatedPassword.value = ''
   editForm.razonSocial = socio.razonSocial ?? ''
   editForm.rut = socio.rut ?? ''
   editForm.telefono = socio.telefono ?? ''
@@ -103,7 +104,7 @@ function openEdit(socio: SocioRecord) {
 function closeEdit() {
   editing.value = null
   resetHint.value = ''
-  resetPassword.value = ''
+  generatedPassword.value = ''
 }
 
 function replaceSocio(updated: SocioRecord) {
@@ -156,19 +157,16 @@ async function toggleActive(socio: SocioRecord) {
 
 async function resetClave() {
   if (!editing.value) return
-  if (resetPassword.value.length < 12) {
-    editError.value = 'La clave provisional debe tener al menos 12 caracteres.'
-    return
-  }
   resetBusy.value = true
   editError.value = ''
   resetHint.value = ''
+  generatedPassword.value = ''
   try {
-    const updated = await socioService.resetClaveProvisional(editing.value.id, resetPassword.value)
+    const updated = await socioService.resetClaveProvisional(editing.value.id)
     replaceSocio(updated)
     editing.value = updated
-    resetPassword.value = ''
-    resetHint.value = 'Clave provisional restablecida. El socio tiene 24 horas para cambiarla.'
+    generatedPassword.value = updated.passwordProvisional ?? ''
+    resetHint.value = 'Clave provisional generada. Comunícasela al socio: tiene 24 horas para cambiarla.'
   } catch (exception) {
     editError.value = exception instanceof Error ? exception.message : 'No fue posible restablecer la clave.'
   } finally {
@@ -314,13 +312,13 @@ async function resetClave() {
           </label>
           <fieldset class="new-company-form__wide socio-reset-clave">
             <legend>Restablecer clave provisional</legend>
-            <p>Genera una nueva clave temporal. El socio deberá cambiarla en las siguientes 24 horas.</p>
-            <label>Nueva clave provisional
-              <input v-model="resetPassword" type="password" minlength="12" placeholder="Mínimo 12 caracteres" autocomplete="new-password">
-            </label>
+            <p>El sistema genera una nueva clave temporal a partir de la razón social. El socio deberá cambiarla en las siguientes 24 horas.</p>
             <button class="company-edit" type="button" :disabled="resetBusy" @click="resetClave">
-              {{ resetBusy ? 'Restableciendo...' : 'Restablecer clave' }}
+              {{ resetBusy ? 'Generando...' : 'Generar nueva clave' }}
             </button>
+            <label v-if="generatedPassword">Clave provisional generada
+              <PasswordInput :model-value="generatedPassword" readonly autocomplete="off" />
+            </label>
             <small v-if="resetHint">{{ resetHint }}</small>
           </fieldset>
           <AppAlert v-if="editError">{{ editError }}</AppAlert>

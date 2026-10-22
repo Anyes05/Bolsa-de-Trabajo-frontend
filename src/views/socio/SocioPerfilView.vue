@@ -4,11 +4,13 @@ import { Camera } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import { authService } from '../../services/authService'
 import { socioIdentificadorLabel } from '../../services/socioService'
 import { socioPerfilService } from '../../services/socioPerfilService'
 import type { RubroOption, SocioRecord } from '../../services/types'
+import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioProfileStore } from '../../stores/socioProfile'
 
@@ -53,7 +55,7 @@ const identificador = computed(() => (socio.value ? socioIdentificadorLabel(soci
 
 const canUpdatePassword = computed(() => (
   password.current.length > 0
-  && password.next.length >= 12
+  && isValidPassword(password.next)
   && password.next === password.repeat
 ))
 
@@ -125,7 +127,7 @@ async function saveProfile() {
 
 async function updatePassword() {
   if (!canUpdatePassword.value) {
-    passwordError.value = 'Completa la clave actual y una nueva de al menos 12 caracteres.'
+    passwordError.value = `Completa la clave actual y una nueva válida. ${PASSWORD_HINT}`
     return
   }
   passwordBusy.value = true
@@ -282,16 +284,17 @@ function logout() {
           <h3>Cambiar contraseña</h3>
           <label>
             Contraseña actual *
-            <input v-model="password.current" type="password" autocomplete="current-password">
+            <PasswordInput v-model="password.current" autocomplete="current-password" />
           </label>
           <div class="socio-profile__row">
             <label>
               Nueva contraseña *
-              <input v-model="password.next" type="password" autocomplete="new-password" placeholder="Mínimo 12 caracteres">
+              <PasswordInput v-model="password.next" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+              <small>{{ PASSWORD_HINT }}</small>
             </label>
             <label>
               Repetir contraseña *
-              <input v-model="password.repeat" type="password" autocomplete="new-password">
+              <PasswordInput v-model="password.repeat" autocomplete="new-password" />
             </label>
           </div>
           <AppAlert v-if="passwordError">{{ passwordError }}</AppAlert>

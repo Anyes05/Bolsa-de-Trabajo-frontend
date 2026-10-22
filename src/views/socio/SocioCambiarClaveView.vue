@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import BrandPanel from '../../components/BrandPanel.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import { authService } from '../../services/authService'
+import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 import { useAuthStore } from '../../stores/auth'
 
 const auth = useAuthStore()
@@ -19,13 +21,13 @@ const form = reactive({
 
 const canSubmit = computed(() => (
   form.currentPassword.length > 0
-  && form.newPassword.length >= 12
+  && isValidPassword(form.newPassword)
   && form.newPassword === form.confirmPassword
 ))
 
 async function submit() {
   if (!canSubmit.value) {
-    error.value = 'Completa la clave actual y una nueva de al menos 12 caracteres.'
+    error.value = `Completa la clave actual y una nueva válida. ${PASSWORD_HINT}`
     return
   }
   busy.value = true
@@ -62,15 +64,16 @@ function logout() {
         <form class="access-form" @submit.prevent="submit">
           <label>
             Contraseña provisional *
-            <input v-model="form.currentPassword" type="password" required autocomplete="current-password">
+            <PasswordInput v-model="form.currentPassword" required autocomplete="current-password" />
           </label>
           <label>
             Nueva contraseña *
-            <input v-model="form.newPassword" type="password" required minlength="12" autocomplete="new-password" placeholder="Mínimo 12 caracteres">
+            <PasswordInput v-model="form.newPassword" required :minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+            <small>{{ PASSWORD_HINT }}</small>
           </label>
           <label>
             Confirmar nueva contraseña *
-            <input v-model="form.confirmPassword" type="password" required minlength="12" autocomplete="new-password">
+            <PasswordInput v-model="form.confirmPassword" required :minlength="8" autocomplete="new-password" />
           </label>
           <AppAlert v-if="error">{{ error }}</AppAlert>
           <AppButton type="submit" :disabled="busy || !canSubmit">

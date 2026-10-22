@@ -35,13 +35,13 @@ export type SocioRecord = {
   fechaBaja: string | null
   fechaAniversario: string | null
   activo: boolean
+  passwordProvisional?: string | null
 }
 
 export type SocioCreatePayload = {
   tipoIdentificador: TipoIdentificadorSocio
   identificador: string
   email: string
-  password: string
   razonSocial: string
   rut: string
   giro?: string | null

@@ -4,19 +4,20 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
 import { socioService } from '../../services/socioService'
-import type { RubroOption, TipoIdentificadorSocio } from '../../services/types'
+import type { RubroOption, SocioRecord, TipoIdentificadorSocio } from '../../services/types'
 
 const router = useRouter()
 const rubros = ref<RubroOption[]>([])
 const error = ref('')
 const busy = ref(false)
+const createdSocio = ref<SocioRecord | null>(null)
 const today = new Date().toISOString().slice(0, 10)
 const form = reactive({
   tipoIdentificador: 'BPS' as TipoIdentificadorSocio,
   identificador: '',
   email: '',
-  password: '',
   razonSocial: '',
   rut: '',
   telefono: '',
@@ -76,18 +77,13 @@ async function submit() {
     error.value = 'Indica la fecha de alta en el CCISJ.'
     return
   }
-  if (form.password.length < 12) {
-    error.value = 'La contraseña debe tener al menos 12 caracteres.'
-    return
-  }
   busy.value = true
   error.value = ''
   try {
-    await socioService.createSocio({
+    createdSocio.value = await socioService.createSocio({
       tipoIdentificador: form.tipoIdentificador,
       identificador,
       email: form.email.trim(),
-      password: form.password,
       razonSocial: form.razonSocial.trim(),
       rut: form.rut.trim(),
       telefono: emptyToNull(form.telefono),
@@ -100,7 +96,6 @@ async function submit() {
       fechaAlta: toIsoDate(form.fechaAlta),
       fechaAniversario: toIsoDate(form.fechaAniversario),
     })
-    await router.push({ name: 'admin-socios' })
   } catch (exception) {
     error.value = exception instanceof Error ? exception.message : 'No fue posible crear el socio.'
   } finally {
@@ -116,10 +111,25 @@ async function submit() {
         <ArrowLeft :size="15" /> Volver
       </RouterLink>
     </template>
-    <section class="new-company-card">
+    <section v-if="createdSocio" class="new-company-card">
+      <header class="new-company-card__header">
+        <h2>Socio creado correctamente</h2>
+        <p>Comunícale esta clave provisional a <strong>{{ createdSocio.razonSocial }}</strong>. Deberá cambiarla en las primeras 24 horas al ingresar. No se podrá volver a ver.</p>
+      </header>
+      <div class="new-company-form">
+        <label class="new-company-form__wide">Clave provisional generada
+          <PasswordInput :model-value="createdSocio.passwordProvisional ?? ''" readonly autocomplete="off" />
+          <small>Se generó automáticamente a partir de la razón social.</small>
+        </label>
+        <footer class="new-company-form__footer">
+          <button class="new-company-submit" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado de socios</button>
+        </footer>
+      </div>
+    </section>
+    <section v-else class="new-company-card">
       <header class="new-company-card__header">
         <h2>Ficha del Socio</h2>
-        <p>Registra al socio con RUT o cédula (una sola opción). Elige también la fecha de alta en el CCISJ.</p>
+        <p>Registra al socio con RUT o cédula (una sola opción). Elige también la fecha de alta en el CCISJ. La clave provisional se genera automáticamente.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
         <label>Registrar con *
@@ -143,10 +153,6 @@ async function submit() {
         <label>Email de cuenta *
           <input v-model="form.email" type="email" required placeholder="cuenta@empresa.com">
           <small>Con este correo se registra el usuario en el sistema.</small>
-        </label>
-        <label class="new-company-form__wide">Contraseña provisional *
-          <input v-model="form.password" type="password" required minlength="12" placeholder="Mínimo 12 caracteres">
-          <small>El socio deberá cambiarla en las primeras 24 horas al ingresar.</small>
         </label>
         <label class="new-company-form__wide">Razón social *
           <input v-model="form.razonSocial" required>

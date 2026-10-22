@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Eye, EyeOff, GraduationCap, Lightbulb, Paperclip, Plus, Trash2, Wrench } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, GraduationCap, Lightbulb, Paperclip, Plus, Trash2, Wrench } from 'lucide-vue-next'
 import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
 import AppButton from '../components/AppButton.vue'
 import AppField from '../components/AppField.vue'
+import PasswordInput from '../components/PasswordInput.vue'
 import WizardStepper from '../components/WizardStepper.vue'
+import { validatePassword } from '../utils/password'
 import { fallbackSectors, residenceAreas, wizardSteps } from '../data/registration'
 import { authService } from '../services/authService'
 import { catalogService } from '../services/catalogService'
@@ -21,8 +23,6 @@ const step = ref(1)
 const busy = ref(false)
 const error = ref('')
 const success = ref('')
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
 const cvFiles = ref<File[]>([])
@@ -342,7 +342,8 @@ function validateStep(current: number) {
     if (!form.phone) fieldErrors.phone = 'Ingresa un teléfono.'
     if (!form.email) fieldErrors.email = 'Ingresa un correo.'
     else if (!isEmail(form.email)) fieldErrors.email = 'El correo no es válido.'
-    if (form.password.length < 12) fieldErrors.password = 'La contraseña debe tener al menos 12 caracteres.'
+    const passwordError = validatePassword(form.password)
+    if (passwordError) fieldErrors.password = passwordError
     if (!form.confirmPassword) fieldErrors.confirmPassword = 'Confirma tu contraseña.'
     else if (form.confirmPassword !== form.password) fieldErrors.confirmPassword = 'Las contraseñas no coinciden.'
     if (!form.residenceArea) fieldErrors.residenceArea = 'Selecciona una zona.'
@@ -532,22 +533,10 @@ async function complete() {
             <input id="email" v-model="form.email" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
           </AppField>
           <AppField id="password" label="Escribe una contraseña" required :error="fieldErrors.password">
-            <div class="password-field">
-              <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="Mínimo 12 caracteres" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.password)">
-              <button type="button" class="password-field__toggle" :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" @click="showPassword = !showPassword">
-                <EyeOff v-if="showPassword" :size="14" aria-hidden="true" />
-                <Eye v-else :size="14" aria-hidden="true" />
-              </button>
-            </div>
+            <PasswordInput id="password" v-model="form.password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
           </AppField>
           <AppField id="confirmPassword" label="Confirmar contraseña" required :error="fieldErrors.confirmPassword">
-            <div class="password-field">
-              <input id="confirmPassword" v-model="form.confirmPassword" :type="showConfirmPassword ? 'text' : 'password'" placeholder="Repite tu contraseña" autocomplete="new-password" :aria-invalid="Boolean(fieldErrors.confirmPassword)">
-              <button type="button" class="password-field__toggle" :aria-label="showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'" @click="showConfirmPassword = !showConfirmPassword">
-                <EyeOff v-if="showConfirmPassword" :size="14" aria-hidden="true" />
-                <Eye v-else :size="14" aria-hidden="true" />
-              </button>
-            </div>
+            <PasswordInput id="confirmPassword" v-model="form.confirmPassword" placeholder="Repite tu contraseña" autocomplete="new-password" />
           </AppField>
           <AppField id="residenceArea" label="Zona de residencia" required wide :error="fieldErrors.residenceArea">
             <select id="residenceArea" v-model="form.residenceArea">

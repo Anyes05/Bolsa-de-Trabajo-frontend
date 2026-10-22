@@ -7,6 +7,7 @@ import RoleOption from '../components/RoleOption.vue'
 import AppField from '../components/AppField.vue'
 import AppButton from '../components/AppButton.vue'
 import AppAlert from '../components/AppAlert.vue'
+import PasswordInput from '../components/PasswordInput.vue'
 import { getRoleOption, roleOptions } from '../data/roles'
 import { authService } from '../services/authService'
 import { useAuthStore } from '../stores/auth'
@@ -120,14 +121,13 @@ async function submitLogin() {
           >
         </AppField>
         <AppField id="login-password" label="Contraseña" required>
-          <input
+          <PasswordInput
             id="login-password"
             v-model="password"
-            type="password"
             placeholder="Ingresa tu contraseña"
             autocomplete="current-password"
             required
-          >
+          />
         </AppField>
         <AppAlert v-if="error">{{ error }}</AppAlert>
         <p class="login-form__hint">Acceso seguro al sistema CCISJ.</p>
