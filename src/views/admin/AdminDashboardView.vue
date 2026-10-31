@@ -780,27 +780,27 @@ function paymentLabel(method: MetodoPago | null) {
 </template>
 
 <style scoped>
-.excel-modal { width: min(100%, 580px); }
+.excel-modal { width: min(100%, 640px); }
 .excel-options { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
-.excel-options legend { margin-bottom: 8px; color: #34473b; font-size: 12px; font-weight: 700; }
-.excel-options label { display: flex; align-items: center; gap: 8px; min-height: 36px; color: #526159; font-size: 12px; cursor: pointer; }
-.excel-options input[type="checkbox"], .excel-options input[type="radio"] { flex-shrink: 0; width: 16px; height: 16px; margin: 0; accent-color: #07974e; }
+.excel-options legend { margin-bottom: 10px; color: #34473b; font-size: 0.95rem; font-weight: 700; }
+.excel-options label { display: flex; align-items: center; gap: 10px; min-height: 42px; color: #445249; font-size: 0.95rem; cursor: pointer; }
+.excel-options input[type="checkbox"], .excel-options input[type="radio"] { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: #07974e; }
 .excel-options input:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
-.excel-states { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.excel-states { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .excel-search { box-sizing: border-box; width: 100%; margin-bottom: 8px; }
 .excel-search svg { flex-shrink: 0; }
-.excel-select-all { padding: 6px 0; }
+.excel-select-all { padding: 6px 0; font-size: 0.95rem; }
 .excel-company-list { max-height: 250px; overflow-y: auto; border-top: 1px solid #e0e6eb; border-bottom: 1px solid #e0e6eb; }
-.excel-options .excel-company { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; padding: 10px 4px; border-bottom: 1px solid #edf0f3; }
+.excel-options .excel-company { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; padding: 12px 4px; border-bottom: 1px solid #edf0f3; }
 .excel-company:last-child { border-bottom: 0; }
 .excel-company__name { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
-.excel-company__name strong { color: #34473b; font-size: 12px; }
-.excel-company__name small { color: #68737c; font-size: 11px; }
-.excel-empty { margin: 12px 0; color: #68737c; font-size: 12px; line-height: 1.5; }
+.excel-company__name strong { color: #34473b; font-size: 0.95rem; font-weight: 600; }
+.excel-company__name small { color: #526159; font-size: 0.875rem; }
+.excel-empty { margin: 12px 0; color: #526159; font-size: 0.95rem; line-height: 1.5; }
 .excel-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.excel-footer > span { color: #68737c; font-size: 12px; }
+.excel-footer > span { color: #526159; font-size: 0.95rem; }
 .excel-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.excel-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 36px; }
+.excel-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 44px; font-size: 0.95rem; }
 .cash-modal, .history-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); border-radius: 8px; }
 .cash-modal__body, .history-list { overflow-y: auto; min-height: 0; }
 .cash-modal__header, .cash-modal__footer, .history-modal__header, .history-modal__footer { flex-shrink: 0; }
@@ -814,15 +814,18 @@ function paymentLabel(method: MetodoPago | null) {
 .account-credit { color: #08775f !important; }
 .account-debt { color: #a52c32 !important; }
 .history-summary { grid-template-columns: 1fr 1fr; }
-.history-summary strong { font-size: 14px; }
-.history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 36px; align-items: end; gap: 14px; width: calc(100% - 48px); max-width: 480px; margin: 8px auto 24px; flex-shrink: 0; }
-.history-date-filters label { display: grid; gap: 6px; min-width: 0; color: #526159; font-size: 12px; }
-.history-date-filters input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 36px; padding: 6px 8px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; }
-.history-date-filters button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
+.history-summary span { font-size: 0.875rem; }
+.history-summary strong { font-size: 1.25rem; }
+.history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 40px; align-items: end; gap: 14px; width: calc(100% - 48px); max-width: 520px; margin: 8px auto 24px; flex-shrink: 0; }
+.history-date-filters label { display: grid; gap: 6px; min-width: 0; color: #445249; font-size: 0.95rem; font-weight: 600; }
+.history-date-filters input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; font-size: 0.95rem; }
+.history-date-filters button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 42px; border: 1px solid #e0e6eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
 .history-date-filters input:focus-visible, .history-date-filters button:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
-.history-date-error { width: calc(100% - 48px); max-width: 480px; margin: 0 auto 16px; color: #a52c32; font-size: 12px; }
-.history-entry { padding-bottom: 16px; grid-template-columns: 14px minmax(0, 1fr) auto; }
-.history-entry p, .history-entry strong { overflow-wrap: anywhere; }
+.history-date-error { width: calc(100% - 48px); max-width: 520px; margin: 0 auto 16px; color: #a52c32; font-size: 0.95rem; }
+.history-entry { padding-bottom: 18px; grid-template-columns: 16px minmax(0, 1fr) auto; }
+.history-entry p, .history-entry strong, .history-entry time, .history-entry aside span { overflow-wrap: anywhere; font-size: 0.95rem; }
+.history-entry strong { font-size: 1rem; font-weight: 600; }
+.history-entry aside b { font-size: 1.05rem; }
 .expense-modal { width: min(100%, 480px); }
 .expense-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; border-bottom: 1px solid #e0e6eb; }
 .expense-tabs button { min-height: 48px; padding: 12px 8px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #526159; font: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
@@ -854,11 +857,19 @@ function paymentLabel(method: MetodoPago | null) {
 .expense-programmed__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .expense-success { color: #08775f; font-size: 12px; }
 button:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 980px) {
+  .cash-table__actions { min-width: 0; display: grid; gap: 8px; }
+  .cash-table__actions button { width: 100%; min-height: 40px; }
+  .excel-footer { flex-direction: column; align-items: stretch; }
+  .excel-footer > div { width: 100%; }
+  .excel-footer button { flex: 1; }
+}
+
 @media (max-width: 450px) {
   .cash-modal-layer { padding: 10px; }
-  .cash-modal, .history-modal { max-height: calc(100dvh - 20px); }
-  .history-date-filters, .history-date-error { width: calc(100% - 32px); }
-  .history-date-filters { gap: 10px; }
+  .cash-modal, .history-modal { max-height: calc(100dvh - 20px); width: 100%; }
+  .history-date-filters, .history-date-error { width: 100%; max-width: none; }
+  .history-date-filters { gap: 10px; grid-template-columns: 1fr; }
   .history-entry { grid-template-columns: 12px minmax(0, 1fr); }
   .history-entry aside { grid-column: 2; justify-items: start; padding-top: 0; }
 }

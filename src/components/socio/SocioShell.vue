@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Bell, Briefcase, Building2, ClipboardList, LogOut, Megaphone, UserRound, X } from 'lucide-vue-next'
-import { computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { Bell, Briefcase, Building2, ClipboardList, LogOut, Megaphone, Menu, UserRound, X } from 'lucide-vue-next'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
 import { authService } from '../../services/authService'
@@ -22,6 +22,13 @@ const auth = useAuthStore()
 const notifications = useSocioNotificationsStore()
 const profile = useSocioProfileStore()
 const router = useRouter()
+const route = useRoute()
+const open = ref(false)
+
+watch(() => route.fullPath, () => { open.value = false })
+watch(open, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
+})
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S'
@@ -54,15 +61,20 @@ function logout() {
 
 <template>
   <div class="socio-shell">
-    <aside class="socio-sidebar">
+    <div v-if="open" class="shell-backdrop" @click="open = false" />
+    <aside class="socio-sidebar" :class="{ 'socio-sidebar--open': open }">
       <div class="socio-sidebar__brand">
         <BrandLogo variant="white" />
+        <button class="shell-sidebar-close" type="button" aria-label="Cerrar menú" @click="open = false">
+          <X :size="18" />
+        </button>
       </div>
       <nav class="socio-nav" aria-label="Módulo socio">
         <RouterLink
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'bolsa' }"
           :to="{ name: 'socio-bolsa-empleo' }"
+          @click="open = false"
         >
           <Briefcase :size="17" aria-hidden="true" />
           Bolsa de Empleo
@@ -71,6 +83,7 @@ function logout() {
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'ofertas' }"
           :to="{ name: 'socio-mis-ofertas' }"
+          @click="open = false"
         >
           <ClipboardList :size="17" aria-hidden="true" />
           Mis Ofertas
@@ -79,6 +92,7 @@ function logout() {
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'notificaciones' }"
           :to="{ name: 'socio-notificaciones' }"
+          @click="open = false"
         >
           <Bell :size="17" aria-hidden="true" />
           Notificaciones
@@ -89,6 +103,7 @@ function logout() {
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'directorio' }"
           :to="{ name: 'socio-directorio' }"
+          @click="open = false"
         >
           <Building2 :size="17" aria-hidden="true" />
           Directorio de Socios
@@ -97,6 +112,7 @@ function logout() {
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'perfil' }"
           :to="{ name: 'socio-perfil' }"
+          @click="open = false"
         >
           <UserRound :size="17" aria-hidden="true" />
           Mi Perfil
@@ -107,7 +123,10 @@ function logout() {
 
     <div class="socio-shell__content">
       <header class="socio-header">
-        <div>
+        <button class="shell-menu-button" type="button" aria-label="Abrir menú" @click="open = true">
+          <Menu :size="20" />
+        </button>
+        <div class="socio-header__titles">
           <h1 class="socio-header__title">{{ title }}</h1>
           <p class="socio-header__subtitle">{{ subtitle }}</p>
         </div>
@@ -128,7 +147,7 @@ function logout() {
               <template v-else>{{ shownCompany.initials }}</template>
             </span>
             <button type="button" class="shell-exit" @click="logout">
-              Cerrar sesión
+              <span class="shell-exit__label">Cerrar sesión</span>
               <LogOut :size="17" aria-hidden="true" />
             </button>
           </div>

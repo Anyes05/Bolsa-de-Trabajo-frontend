@@ -1,0 +1,504 @@
+/* =========================================================
+   RESPONSIVE SYSTEM — móvil primero (gana sobre reglas previas)
+   ========================================================= */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body,
+#app {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.shell-menu-button,
+.shell-sidebar-close {
+  display: none;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.shell-backdrop {
+  display: none;
+}
+
+.admin-sidebar__brand,
+.socio-sidebar__brand,
+.postulante-sidebar__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.socio-header__titles,
+.postulante-header__titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.socio-header__title,
+.postulante-header__title,
+.admin-breadcrumb b {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .admin-shell,
+  .socio-shell,
+  .postulante-shell,
+  .access {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-sidebar,
+  .socio-sidebar,
+  .postulante-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(88vw, 300px) !important;
+    max-width: 300px;
+    height: 100dvh;
+    overflow-y: auto;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 24px !important;
+    padding: 20px 16px !important;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow-md);
+  }
+
+  .admin-sidebar--open,
+  .socio-sidebar--open,
+  .postulante-sidebar--open {
+    transform: translateX(0);
+  }
+
+  .admin-nav,
+  .socio-nav,
+  .postulante-nav {
+    display: grid !important;
+    grid-auto-flow: row !important;
+    width: 100% !important;
+    margin: 0 !important;
+    gap: 8px;
+  }
+
+  .shell-menu-button,
+  .admin-menu-button {
+    display: inline-grid !important;
+    color: #24352c;
+    background: #eef5f0;
+  }
+
+  .shell-sidebar-close,
+  .admin-sidebar__close {
+    display: inline-grid !important;
+    color: #fff;
+    background: rgb(255 255 255 / 14%);
+  }
+
+  .shell-backdrop,
+  .admin-shell__backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+    background: rgb(17 39 27 / 48%);
+  }
+
+  .admin-sidebar__footer,
+  .socio-sidebar__footer,
+  .postulante-sidebar__footer {
+    display: block;
+    margin-top: auto;
+  }
+
+  .brand-panel {
+    min-height: auto;
+    padding: 20px 18px 16px;
+  }
+
+  .brand-panel__copy {
+    margin-top: 16px;
+  }
+
+  .brand-panel__copy h1 {
+    font-size: clamp(1.35rem, 5vw, 1.75rem);
+  }
+
+  .brand-panel__copy p {
+    max-width: none;
+  }
+
+  .brand-panel__benefits,
+  .brand-panel__footer {
+    display: none;
+  }
+
+  .access__content {
+    padding: 18px 14px 28px;
+    align-content: start;
+  }
+
+  .access-card,
+  .login-form,
+  .registration-card,
+  .session__card {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px 16px;
+  }
+
+  .admin-topbar,
+  .socio-header,
+  .postulante-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 64px;
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .admin-page,
+  .socio-shell__body,
+  .postulante-shell__body {
+    padding: 16px 12px 28px !important;
+  }
+
+  .admin-page__heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .admin-page__heading h1,
+  .socio-header__title,
+  .postulante-header__title {
+    font-size: clamp(1.25rem, 5.5vw, 1.6rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .admin-page__heading p,
+  .socio-header__subtitle,
+  .postulante-header__subtitle {
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .admin-topbar__identity,
+  .socio-header__identity,
+  .postulante-header__identity {
+    display: none !important;
+  }
+
+  .shell-exit {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+  }
+
+  .shell-exit__label {
+    display: none;
+  }
+
+  .admin-breadcrumb span:first-child,
+  .admin-breadcrumb strong {
+    display: none;
+  }
+
+  .admin-metrics,
+  .cash-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .cash-toolbar,
+  .company-search-card,
+  .admin-toolbar,
+  .bolsa__toolbar,
+  .offers-heading {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px;
+  }
+
+  .cash-search,
+  .company-search,
+  .admin-search {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 44px;
+  }
+
+  .cash-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cash-download,
+  .company-button,
+  .offers-publish {
+    width: 100%;
+    margin-left: 0 !important;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .company-actions {
+    margin: 0 0 16px;
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .company-actions .company-button {
+    flex: 1 1 140px;
+  }
+
+  .cash-table-card,
+  .company-table-card,
+  .admin-table-panel {
+    overflow: visible;
+  }
+
+  .table-wrap,
+  .cash-table-wrap,
+  .company-table-wrap {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cash-table,
+  .company-table,
+  .admin-table {
+    min-width: 720px;
+  }
+
+  .cash-table__actions {
+    min-width: 0 !important;
+    display: grid;
+    gap: 8px;
+    white-space: normal;
+  }
+
+  .company-table td:last-child {
+    white-space: normal;
+  }
+
+  .cash-charge,
+  .cash-history {
+    width: 100%;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  .cash-modal-layer,
+  .admin-modal,
+  .profile-modal {
+    padding: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .cash-modal,
+  .history-modal,
+  .excel-modal,
+  .expense-modal,
+  .admin-modal__card,
+  .profile-modal__dialog,
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 20px);
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .new-company-card,
+  .fee-settings,
+  .fee-panel,
+  .new-company-form {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .new-company-form,
+  .admin-form-grid,
+  .fee-config-fields,
+  .fee-current__control,
+  .form-grid,
+  .availability,
+  .socio-profile__row,
+  .bolsa__filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fee-current__control {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .fee-input,
+  .fee-save,
+  .billing-period {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .bolsa,
+  .bolsa__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .offer-card,
+  .socio-offer-card,
+  .application-card,
+  .socio-application-card,
+  .profile-card-postulante__header,
+  .offer-card__header,
+  .offer-card__footer,
+  .application-card__header,
+  .application-card__footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .profile-card-postulante__actions,
+  .socio-offer-card__actions,
+  .profile-modal__actions,
+  .registration-card__actions,
+  .registration-success__actions,
+  .new-company-form__footer,
+  .modal__actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .profile-card-postulante__actions .app-button,
+  .socio-offer-card__actions .app-button,
+  .profile-modal__actions .app-button,
+  .registration-card__actions .app-button,
+  .registration-success__actions .app-button,
+  .new-company-form__footer .app-button,
+  .new-company-form__footer a,
+  .new-company-form__footer button,
+  .modal__actions .app-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .registration__header {
+    gap: 10px;
+  }
+
+  .registration__header h1 {
+    font-size: 1.15rem;
+  }
+
+  .stepper__list {
+    font-size: 0.75rem !important;
+  }
+
+  .history-summary {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .history-date-filters {
+    width: 100% !important;
+    max-width: none !important;
+    grid-template-columns: 1fr 1fr 44px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .history-date-error {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .socio-toast {
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-metrics,
+  .cash-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cash-filter {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+  }
+
+  .admin-topbar__avatar,
+  .socio-header__avatar,
+  .postulante-header__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.75rem;
+  }
+
+  .access-card__title,
+  .login-form__heading h2 {
+    font-size: 1.45rem;
+  }
+
+  .role-option {
+    padding: 14px;
+  }
+
+  .role-option__text small {
+    font-size: 0.875rem;
+  }
+
+  .manual-cv-entry__grid,
+  .profile-manual-cv__entry {
+    grid-template-columns: 1fr !important;
+  }
+
+  .history-date-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .history-date-filters button {
+    width: 100%;
+  }
+
+  .history-entry {
+    grid-template-columns: 14px minmax(0, 1fr) !important;
+  }
+
+  .history-entry aside {
+    grid-column: 2;
+    justify-items: start;
+  }
+}

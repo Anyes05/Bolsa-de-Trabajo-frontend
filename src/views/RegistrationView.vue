@@ -24,6 +24,7 @@ const step = ref(1)
 const busy = ref(false)
 const error = ref('')
 const success = ref('')
+const registered = ref(false)
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
 const cvFiles = ref<File[]>([])
@@ -136,13 +137,6 @@ function onSectorSelect(select: HTMLSelectElement) {
 
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
-
-function routeByRole(role: string) {
-  const normalized = role.trim().toUpperCase()
-  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const, path: '/postulante/ofertas-empleo' }
-  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const, path: '/socio/bolsa-empleo' }
-  return { name: 'session' as const, path: '/sesion' }
 }
 
 function buildManualCvFile() {
@@ -491,12 +485,8 @@ async function complete() {
       }
     }
 
-    success.value = 'Registro completado. Ingresando...'
-    const target = routeByRole(session.role)
-    await router.replace({ name: target.name })
-    if (window.location.pathname !== target.path) {
-      window.location.assign(target.path)
-    }
+    success.value = 'Tu cuenta de postulante se creó correctamente.'
+    registered.value = true
   } catch (exception) {
     logApiFailure('register-submit', exception, {
       email: form.email,
@@ -519,11 +509,29 @@ async function complete() {
         <BrandLogo variant="white" />
       </RouterLink>
       <span class="registration__divider" aria-hidden="true"></span>
-      <h1>Registro de Postulante</h1>
-      <WizardStepper :steps="wizardSteps" :current="step" />
+      <h1>{{ registered ? 'Registro completado' : 'Registro de Postulante' }}</h1>
+      <WizardStepper v-if="!registered" :steps="wizardSteps" :current="step" />
     </header>
 
-    <form class="registration-card" @submit.prevent="step < 3 ? next() : complete()">
+    <section v-if="registered" class="registration-card registration-success" aria-labelledby="register-done-title">
+      <h2 id="register-done-title">Registro completado</h2>
+      <p>Tu ficha de postulante ya está lista. Podés entrar a la plataforma o volver al inicio de sesión.</p>
+      <AppAlert tone="success">{{ success || 'Cuenta creada correctamente.' }}</AppAlert>
+      <div class="registration-success__actions">
+        <AppButton type="button" @click="router.push({ name: 'postulante-bolsa-empleo' })">
+          Ir a ofertas de empleo
+          <ArrowRight :size="16" aria-hidden="true" />
+        </AppButton>
+        <AppButton variant="secondary" type="button" @click="router.push({ name: 'postulante-mi-perfil' })">
+          Configurar mi perfil
+        </AppButton>
+        <AppButton variant="ghost" type="button" @click="auth.logout(); router.push({ name: 'access' })">
+          Volver al inicio de sesión
+        </AppButton>
+      </div>
+    </section>
+
+    <form v-else class="registration-card" @submit.prevent="step < 3 ? next() : complete()">
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
         <h2 id="step-personal">Datos Personales</h2>
         <p>Completa la información básica para dar de alta tu ficha de postulante.</p>

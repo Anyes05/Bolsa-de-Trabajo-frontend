@@ -102,7 +102,31 @@ onMounted(loadTariffs)
 </template>
 
 <style scoped>
-.fee-config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fee-settings {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.fee-current__intro p,
+.fee-warning,
+.fee-success,
+.fee-history__entry small {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.fee-history__entry strong {
+  font-size: 1.0625rem;
+}
+
+.fee-config-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
 .fee-config-fields label,
 .billing-period {
   display: grid;
@@ -111,6 +135,7 @@ onMounted(loadTariffs)
   font-size: 0.95rem;
   font-weight: 600;
 }
+
 .fee-config-fields input,
 .billing-period input {
   width: 100%;
@@ -124,8 +149,28 @@ onMounted(loadTariffs)
   font-size: 1.0625rem;
   outline: 0;
 }
+
 .fee-config-fields input:focus,
-.billing-period input:focus { border-color: #07984c; }
-button:disabled { cursor: not-allowed; opacity: .65; }
-@media (max-width: 650px) { .fee-config-fields { grid-template-columns: 1fr; } }
+.billing-period input:focus {
+  border-color: #07984c;
+}
+
+.billing-period {
+  max-width: 420px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 650px) {
+  .fee-config-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-period {
+    max-width: none;
+  }
+}
 </style>

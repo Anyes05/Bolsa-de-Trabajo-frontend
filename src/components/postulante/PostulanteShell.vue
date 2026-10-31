@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Briefcase, ClipboardList, LogOut, UserRound } from 'lucide-vue-next'
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { Briefcase, ClipboardList, LogOut, Menu, UserRound, X } from 'lucide-vue-next'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -15,6 +15,13 @@ defineProps<{
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+const open = ref(false)
+
+watch(() => route.fullPath, () => { open.value = false })
+watch(open, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
+})
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'P'
@@ -36,15 +43,20 @@ function logout() {
 
 <template>
   <div class="postulante-shell">
-    <aside class="postulante-sidebar">
+    <div v-if="open" class="shell-backdrop" @click="open = false" />
+    <aside class="postulante-sidebar" :class="{ 'postulante-sidebar--open': open }">
       <div class="postulante-sidebar__brand">
         <BrandLogo variant="white" />
+        <button class="shell-sidebar-close" type="button" aria-label="Cerrar menú" @click="open = false">
+          <X :size="18" />
+        </button>
       </div>
       <nav class="postulante-nav" aria-label="Módulo postulante">
         <RouterLink
           class="postulante-nav__item"
           :class="{ 'postulante-nav__item--active': activeSection === 'ofertas' }"
           to="/postulante/ofertas-empleo"
+          @click="open = false"
         >
           <Briefcase :size="17" aria-hidden="true" />
           Ofertas de Empleo
@@ -53,6 +65,7 @@ function logout() {
           class="postulante-nav__item"
           :class="{ 'postulante-nav__item--active': activeSection === 'perfiles' }"
           to="/postulante/mis-perfiles"
+          @click="open = false"
         >
           <ClipboardList :size="17" aria-hidden="true" />
           Mis Perfiles Profesionales
@@ -61,6 +74,7 @@ function logout() {
           class="postulante-nav__item"
           :class="{ 'postulante-nav__item--active': activeSection === 'mi-perfil' }"
           to="/postulante/mi-perfil"
+          @click="open = false"
         >
           <UserRound :size="17" aria-hidden="true" />
           Mi perfil
@@ -71,7 +85,10 @@ function logout() {
 
     <div class="postulante-shell__content">
       <header class="postulante-header">
-        <div>
+        <button class="shell-menu-button" type="button" aria-label="Abrir menú" @click="open = true">
+          <Menu :size="20" />
+        </button>
+        <div class="postulante-header__titles">
           <h1 class="postulante-header__title">{{ title }}</h1>
           <p class="postulante-header__subtitle">{{ subtitle }}</p>
         </div>
@@ -83,7 +100,7 @@ function logout() {
           </div>
           <span class="postulante-header__avatar" aria-hidden="true">{{ initials(auth.fullName || auth.email || 'Postulante') }}</span>
           <button type="button" class="shell-exit" @click="logout">
-            Cerrar sesión
+            <span class="shell-exit__label">Cerrar sesión</span>
             <LogOut :size="17" aria-hidden="true" />
           </button>
         </div>

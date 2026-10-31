@@ -11,8 +11,8 @@ import {
   Tags,
   X,
 } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -30,7 +30,13 @@ withDefaults(defineProps<{
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const open = ref(false)
+
+watch(() => route.fullPath, () => { open.value = false })
+watch(open, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
+})
 
 const displayName = computed(() => auth.fullName || auth.email || 'Administrador')
 const avatarInitials = computed(() => initials(displayName.value))
@@ -65,11 +71,11 @@ function logout() {
 
 <template>
   <div class="admin-shell">
-    <div v-if="open" class="admin-shell__backdrop" @click="open = false" />
+    <div v-if="open" class="shell-backdrop admin-shell__backdrop" @click="open = false" />
     <aside class="admin-sidebar" :class="{ 'admin-sidebar--open': open }">
       <div class="admin-sidebar__brand">
         <BrandLogo variant="white" />
-        <button class="admin-sidebar__close" type="button" aria-label="Cerrar menú" @click="open = false">
+        <button class="shell-sidebar-close admin-sidebar__close" type="button" aria-label="Cerrar menú" @click="open = false">
           <X :size="18" />
         </button>
       </div>
@@ -95,7 +101,7 @@ function logout() {
 
     <div class="admin-shell__content">
       <header class="admin-topbar">
-        <button class="admin-menu-button" type="button" aria-label="Abrir menú" @click="open = true">
+        <button class="shell-menu-button admin-menu-button" type="button" aria-label="Abrir menú" @click="open = true">
           <Menu :size="20" />
         </button>
         <div class="admin-breadcrumb">
@@ -111,7 +117,7 @@ function logout() {
           </div>
           <span class="admin-topbar__avatar">{{ avatarInitials }}</span>
           <button class="shell-exit" type="button" @click="logout">
-            Cerrar sesión
+            <span class="shell-exit__label">Cerrar sesión</span>
             <LogOut :size="17" aria-hidden="true" />
           </button>
         </div>
