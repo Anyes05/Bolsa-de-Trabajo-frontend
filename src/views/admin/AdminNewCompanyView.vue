@@ -8,6 +8,7 @@ import PasswordInput from '../../components/PasswordInput.vue'
 import { LOCALIDADES_SAN_JOSE } from '../../data/localidades'
 import { socioService } from '../../services/socioService'
 import type { RubroOption, SocioRecord, TipoIdentificadorSocio } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const router = useRouter()
 const rubros = ref<RubroOption[]>([])
@@ -43,7 +44,7 @@ onMounted(async () => {
   try {
     rubros.value = await socioService.getRubros()
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar los rubros.'
+    error.value = userFacingError(exception, 'cargar los rubros')
   }
 })
 
@@ -122,7 +123,7 @@ async function submit() {
       fechaAniversario: toIsoDate(form.fechaAniversario),
     })
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible crear el socio.'
+    error.value = userFacingError(exception, 'crear el socio')
   } finally {
     busy.value = false
   }
@@ -137,7 +138,7 @@ async function sendCredentialsMail() {
     createdSocio.value = { ...createdSocio.value, passwordProvisional: result.passwordProvisional }
     mailSent.value = `Mail enviado a ${result.destinatario} con las credenciales y el aviso de 24 horas.`
   } catch (exception) {
-    mailError.value = exception instanceof Error ? exception.message : 'No fue posible enviar el mail al socio.'
+    mailError.value = userFacingError(exception, 'enviar el mail con las credenciales')
   } finally {
     mailBusy.value = false
   }

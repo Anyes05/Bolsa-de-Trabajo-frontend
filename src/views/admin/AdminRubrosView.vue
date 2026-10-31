@@ -4,6 +4,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { rubroService, type RubroAdmin } from '../../services/rubroService'
+import { userFacingError } from '../../utils/userMessage'
 
 const rubros = ref<RubroAdmin[]>([])
 const query = ref('')
@@ -31,7 +32,7 @@ async function load() {
   try {
     rubros.value = await rubroService.list(true)
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar los rubros.'
+    error.value = userFacingError(exception, 'cargar los rubros')
   } finally {
     busy.value = false
   }
@@ -76,7 +77,7 @@ async function save() {
     }
     closeForm()
   } catch (exception) {
-    formError.value = exception instanceof Error ? exception.message : 'No fue posible guardar el rubro.'
+    formError.value = userFacingError(exception, 'guardar el rubro')
   } finally {
     formBusy.value = false
   }
@@ -88,7 +89,7 @@ async function toggleActivo(rubro: RubroAdmin) {
     const updated = await rubroService.setActivo(rubro.id, !rubro.activo)
     rubros.value = rubros.value.map((item) => (item.id === updated.id ? updated : item))
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible actualizar el rubro.'
+    error.value = userFacingError(exception, 'actualizar el rubro')
   }
 }
 </script>

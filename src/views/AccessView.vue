@@ -12,6 +12,7 @@ import { getRoleOption, roleOptions } from '../data/roles'
 import { authService } from '../services/authService'
 import { useAuthStore } from '../stores/auth'
 import type { Role } from '../services/types'
+import { userFacingError } from '../utils/userMessage'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -51,7 +52,11 @@ async function submitLogin() {
   if (!role.value) return
   const identifierValue = loginIdentifier()
   if (role.value === 'SOCIO' && !identifierValue) {
-    error.value = 'Ingresa tu número de BPS o cédula.'
+    error.value = 'Ingresá tu número de BPS o cédula para continuar.'
+    return
+  }
+  if (!password.value.trim()) {
+    error.value = 'Ingresá tu contraseña para continuar.'
     return
   }
   busy.value = true
@@ -69,7 +74,7 @@ async function submitLogin() {
       window.location.assign(target.path)
     }
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible ingresar.'
+    error.value = userFacingError(exception, 'iniciar sesión')
   } finally {
     busy.value = false
   }
@@ -99,7 +104,7 @@ async function submitLogin() {
 
       <form v-else class="login-form" @submit.prevent="submitLogin">
         <button type="button" class="login-form__back" @click="returnToRoles">
-          <ArrowLeft :size="14" aria-hidden="true" /> Volver
+          <ArrowLeft :size="16" aria-hidden="true" /> Volver a roles
         </button>
         <header class="login-form__heading">
           <span class="login-form__icon" aria-hidden="true">
@@ -129,7 +134,7 @@ async function submitLogin() {
             required
           />
         </AppField>
-        <AppAlert v-if="error">{{ error }}</AppAlert>
+        <AppAlert v-if="error" title="No pudimos ingresar">{{ error }}</AppAlert>
         <p class="login-form__hint">Acceso seguro al sistema CCISJ.</p>
         <RouterLink
           v-if="role === 'POSTULANTE'"

@@ -7,6 +7,7 @@ import { estadoMorosidadLabel } from '../../services/socioService'
 import { socioDirectorioService, type DirectorioSocio } from '../../services/socioDirectorioService'
 import type { EstadoMorosidad } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
+import { userFacingError } from '../../utils/userMessage'
 
 const auth = useAuthStore()
 const query = ref('')
@@ -43,7 +44,7 @@ async function load() {
   try {
     members.value = await socioDirectorioService.list()
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el directorio.'
+    error.value = userFacingError(exception, 'cargar el directorio de socios')
   } finally {
     busy.value = false
   }

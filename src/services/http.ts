@@ -16,13 +16,14 @@ export class ApiRequestError extends Error {
 
 function readErrorDetail(payload: unknown) {
   if (!payload || typeof payload !== 'object') {
-    return 'No fue posible completar la solicitud.'
+    return 'No fue posible completar la solicitud. Intentá nuevamente en unos momentos.'
   }
-  const body = payload as { detail?: unknown; message?: unknown; error?: unknown }
+  const body = payload as { detail?: unknown; message?: unknown; error?: unknown; title?: unknown }
   if (typeof body.detail === 'string' && body.detail.trim()) return body.detail
   if (typeof body.message === 'string' && body.message.trim()) return body.message
   if (typeof body.error === 'string' && body.error.trim()) return body.error
-  return 'No fue posible completar la solicitud.'
+  if (typeof body.title === 'string' && body.title.trim()) return body.title
+  return 'No fue posible completar la solicitud. Intentá nuevamente en unos momentos.'
 }
 
 function readSessionToken(): string | null {

@@ -7,6 +7,7 @@ import SocioShell from '../../components/socio/SocioShell.vue'
 import { mockCompany } from '../../data/mockSocioBolsa'
 import { offerService } from '../../services/offerService'
 import type { JobOffer, JobOfferPayload, RubroOption } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const offers = ref<JobOffer[]>([])
 const sectors = ref<RubroOption[]>([])
@@ -30,7 +31,7 @@ async function load() {
     offers.value = loadedOffers
     sectors.value = loadedSectors
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar las ofertas.'
+    error.value = userFacingError(exception, 'cargar tus ofertas')
   } finally {
     busy.value = false
   }
@@ -61,7 +62,7 @@ async function saveForm(offer: JobOfferPayload) {
     closeForm()
     await load()
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible guardar la oferta.'
+    error.value = userFacingError(exception, 'guardar la oferta')
   }
 }
 
@@ -74,7 +75,7 @@ async function setStatus(offer: JobOffer, status: JobOffer['estado']) {
     const updated = await offerService.setStatus(offer.id, status)
     offers.value = offers.value.map((current) => current.id === updated.id ? updated : current)
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cambiar el estado.'
+    error.value = userFacingError(exception, 'cambiar el estado de la oferta')
   }
 }
 

@@ -7,6 +7,7 @@ import { cajaService } from '../../services/cajaService'
 import { cajaExcelService } from '../../services/cajaExcelService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
@@ -148,7 +149,7 @@ async function loadResumen() {
   try {
     resumen.value = await cajaService.getResumen()
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el control de caja.'
+    error.value = userFacingError(exception, 'cargar el control de caja')
   } finally {
     busy.value = false
   }
@@ -182,7 +183,7 @@ async function downloadExcel() {
     await cajaExcelService.download([...exportCompanies.value])
     exportOpen.value = false
   } catch (exception) {
-    exportError.value = exception instanceof Error ? exception.message : 'No fue posible descargar el Excel.'
+    exportError.value = userFacingError(exception, 'descargar el Excel')
   } finally {
     exporting.value = false
   }
@@ -200,7 +201,7 @@ async function openCharge(company: CuentaCaja) {
   try {
     chargeHistory.value = await cajaService.getHistorial(company.socioId)
   } catch (exception) {
-    chargeError.value = exception instanceof Error ? exception.message : 'No fue posible cargar la cuenta.'
+    chargeError.value = userFacingError(exception, 'cargar la cuenta del socio')
   } finally {
     chargeLoading.value = false
   }
@@ -214,7 +215,7 @@ async function openHistory(company: CuentaCaja) {
   try {
     selectedHistory.value = await cajaService.getHistorial(company.socioId)
   } catch (exception) {
-    historyError.value = exception instanceof Error ? exception.message : 'No fue posible cargar el historial.'
+    historyError.value = userFacingError(exception, 'cargar el historial')
   } finally {
     historyBusy.value = false
   }
@@ -249,7 +250,7 @@ async function confirmCharge() {
     selectedCompany.value = null
     await loadResumen()
   } catch (exception) {
-    chargeError.value = exception instanceof Error ? exception.message : 'No fue posible registrar el cobro.'
+    chargeError.value = userFacingError(exception, 'registrar el cobro')
   } finally {
     chargeBusy.value = false
   }
@@ -279,7 +280,7 @@ async function openExpense(company: CuentaCaja) {
     const history = await cajaService.getHistorial(company.socioId)
     programmed.value = history.reintegrosProgramados.map(entry => ({ ...entry }))
   } catch (exception) {
-    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible cargar los reintegros.'
+    expenseError.value = userFacingError(exception, 'cargar los reintegros')
   } finally {
     expenseLoading.value = false
   }
@@ -304,7 +305,7 @@ async function saveExpense() {
     await openExpense(account)
     expenseSuccess.value = 'Reintegro registrado en la cuenta.'
   } catch (exception) {
-    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible registrar el reintegro.'
+    expenseError.value = userFacingError(exception, 'registrar el reintegro')
   } finally {
     expenseBusy.value = false
   }
@@ -325,7 +326,7 @@ async function saveProgrammed(entry: ReintegroProgramado) {
     programmedEditing.value = null
     expenseSuccess.value = 'Configuración guardada. Los cambios se aplicarán desde el próximo mes; el cargo de este mes y los anteriores se conservan.'
   } catch (exception) {
-    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible guardar la configuración.'
+    expenseError.value = userFacingError(exception, 'guardar la configuración')
   } finally {
     expenseBusy.value = false
   }
@@ -365,7 +366,7 @@ async function deleteProgrammed(entry: ReintegroProgramado) {
     programmedToDelete.value = null
     expenseSuccess.value = 'Reintegro recurrente eliminado. No se generarán nuevos cargos; el cargo de este mes y los anteriores se conservan.'
   } catch (exception) {
-    expenseError.value = exception instanceof Error ? exception.message : 'No fue posible eliminar el reintegro recurrente.'
+    expenseError.value = userFacingError(exception, 'eliminar el reintegro recurrente')
   } finally {
     expenseBusy.value = false
   }

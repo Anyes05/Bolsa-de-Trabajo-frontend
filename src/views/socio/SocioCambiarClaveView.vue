@@ -8,6 +8,7 @@ import PasswordInput from '../../components/PasswordInput.vue'
 import { authService } from '../../services/authService'
 import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 import { useAuthStore } from '../../stores/auth'
+import { userFacingError } from '../../utils/userMessage'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -40,7 +41,7 @@ async function submit() {
     auth.setSession(session)
     await router.replace({ name: 'socio-bolsa-empleo' })
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cambiar la contraseña.'
+    error.value = userFacingError(exception, 'cambiar la contraseña')
   } finally {
     busy.value = false
   }

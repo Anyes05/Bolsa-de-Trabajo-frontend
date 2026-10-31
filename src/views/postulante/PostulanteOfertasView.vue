@@ -7,6 +7,7 @@ import { applicantOfferService } from '../../services/applicantOfferService'
 import { postulanteService } from '../../services/postulanteService'
 import type { ApplicantApplication, CvResponse, JobOffer, ProfessionalProfile, RubroOption } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
+import { userFacingError } from '../../utils/userMessage'
 
 const auth = useAuthStore()
 const activeTab = ref<'activas' | 'postulaciones'>('activas')
@@ -51,7 +52,7 @@ async function load() {
     sectors.value = loadedSectors
   } catch (error) {
     messageTone.value = 'error'
-    message.value = error instanceof Error ? error.message : 'No se pudieron cargar las ofertas.'
+    message.value = userFacingError(error, 'cargar las ofertas de empleo')
   } finally {
     loading.value = false
   }
@@ -59,8 +60,8 @@ async function load() {
 
 function openApplyModal(offer: JobOffer) {
   if (!eligibleProfiles.value.length) {
-    messageTone.value = 'error'
-    message.value = 'Necesitas un perfil visible con un CV activo asociado para postularte.'
+    messageTone.value = 'warning'
+    message.value = 'Para postularte necesitás al menos un perfil profesional visible con un CV activo. Crealo o activalo en «Mis Perfiles Profesionales».'
     return
   }
   selectedOffer.value = offer
@@ -79,11 +80,11 @@ async function confirmApply() {
     await applicantOfferService.apply(selectedOffer.value.id, selectedProfileId.value)
     applications.value = await applicantOfferService.listApplications()
     messageTone.value = 'success'
-    message.value = 'Tu postulación fue enviada.'
+    message.value = 'Tu postulación se envió correctamente. Podés seguir su estado en «Mis postulaciones».'
     showModal.value = false
   } catch (error) {
     messageTone.value = 'error'
-    message.value = error instanceof Error ? error.message : 'No se pudo enviar la postulación.'
+    message.value = userFacingError(error, 'enviar la postulación')
   } finally {
     submitting.value = false
   }

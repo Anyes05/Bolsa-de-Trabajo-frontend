@@ -3,6 +3,7 @@ import { Bell, Briefcase, Building2, ClipboardList, LogOut, Megaphone, UserRound
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
+import NotificationBell from '../NotificationBell.vue'
 import { authService } from '../../services/authService'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioNotificationsStore } from '../../stores/socioNotifications'
@@ -57,13 +58,13 @@ function logout() {
       <div class="socio-sidebar__brand">
         <BrandLogo variant="white" />
       </div>
-      <nav class="socio-nav" aria-label="Modulo socio">
+      <nav class="socio-nav" aria-label="Módulo socio">
         <RouterLink
           class="socio-nav__item"
           :class="{ 'socio-nav__item--active': activeNav === 'bolsa' }"
           :to="{ name: 'socio-bolsa-empleo' }"
         >
-          <Briefcase :size="15" aria-hidden="true" />
+          <Briefcase :size="17" aria-hidden="true" />
           Bolsa de Empleo
         </RouterLink>
         <RouterLink
@@ -71,7 +72,7 @@ function logout() {
           :class="{ 'socio-nav__item--active': activeNav === 'ofertas' }"
           :to="{ name: 'socio-mis-ofertas' }"
         >
-          <ClipboardList :size="15" aria-hidden="true" />
+          <ClipboardList :size="17" aria-hidden="true" />
           Mis Ofertas
         </RouterLink>
         <RouterLink
@@ -79,7 +80,7 @@ function logout() {
           :class="{ 'socio-nav__item--active': activeNav === 'notificaciones' }"
           :to="{ name: 'socio-notificaciones' }"
         >
-          <Bell :size="15" aria-hidden="true" />
+          <Bell :size="17" aria-hidden="true" />
           Notificaciones
           <span v-if="notifications.unreadCount" class="socio-nav__count">{{ notifications.unreadCount }}</span>
         </RouterLink>
@@ -89,7 +90,7 @@ function logout() {
           :class="{ 'socio-nav__item--active': activeNav === 'directorio' }"
           :to="{ name: 'socio-directorio' }"
         >
-          <Building2 :size="15" aria-hidden="true" />
+          <Building2 :size="17" aria-hidden="true" />
           Directorio de Socios
         </RouterLink>
         <RouterLink
@@ -97,7 +98,7 @@ function logout() {
           :class="{ 'socio-nav__item--active': activeNav === 'perfil' }"
           :to="{ name: 'socio-perfil' }"
         >
-          <UserRound :size="15" aria-hidden="true" />
+          <UserRound :size="17" aria-hidden="true" />
           Mi Perfil
         </RouterLink>
       </nav>
@@ -112,6 +113,11 @@ function logout() {
         </div>
         <div class="socio-header__tools">
           <slot name="header-actions" />
+          <NotificationBell
+            :count="notifications.unreadCount"
+            :to="{ name: 'socio-notificaciones' }"
+            label="Notificaciones"
+          />
           <div class="socio-header__user">
             <div class="socio-header__identity">
               <strong>{{ shownCompany.name }}</strong>
@@ -121,8 +127,9 @@ function logout() {
               <img v-if="profile.photoUrl" :src="profile.photoUrl" alt="">
               <template v-else>{{ shownCompany.initials }}</template>
             </span>
-            <button type="button" class="socio-header__exit" @click="logout">
-              Salir <LogOut :size="16" aria-hidden="true" />
+            <button type="button" class="shell-exit" @click="logout">
+              Cerrar sesión
+              <LogOut :size="17" aria-hidden="true" />
             </button>
           </div>
         </div>

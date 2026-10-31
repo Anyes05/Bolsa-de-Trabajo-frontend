@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import { tarifaService } from '../../services/tarifaService'
 import type { Tarifa } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const today = new Date()
 const billingPeriod = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`)
@@ -27,7 +28,7 @@ async function loadTariffs() {
     const selectedTariff = history.value.find((tariff) => tariff.anio === year.value)
     amount.value = selectedTariff ? String(selectedTariff.montoBase) : ''
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'No fue posible cargar las tarifas.'
+    errorMessage.value = userFacingError(error, 'cargar las tarifas')
   } finally {
     loading.value = false
   }
@@ -48,7 +49,7 @@ async function saveAmount() {
     successMessage.value = 'Tarifa anual guardada. Se aplicará a cada cuota mensual de este año.'
     await loadTariffs()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'No fue posible guardar la tarifa.'
+    errorMessage.value = userFacingError(error, 'guardar la tarifa')
   } finally {
     saving.value = false
   }
@@ -68,7 +69,7 @@ async function generateBilling() {
     const result = await tarifaService.generateBilling(`${billingPeriod.value}-01`)
     successMessage.value = `Facturación emitida: ${result.cuotasGeneradas} cuotas nuevas y ${result.cuotasExistentes} ya existentes.`
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'No fue posible generar la facturación.'
+    errorMessage.value = userFacingError(error, 'generar la facturación')
   } finally {
     generating.value = false
   }

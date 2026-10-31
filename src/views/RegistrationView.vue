@@ -16,6 +16,7 @@ import { catalogService } from '../services/catalogService'
 import { ApiRequestError } from '../services/http'
 import { postulanteService } from '../services/postulanteService'
 import { useAuthStore } from '../stores/auth'
+import { userFacingError } from '../utils/userMessage'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -497,7 +498,7 @@ async function complete() {
       hasStoreToken: Boolean(auth.token),
       storeTokenLength: auth.token?.length ?? 0,
     })
-    error.value = exception instanceof Error ? exception.message : 'No fue posible completar el registro.'
+    error.value = userFacingError(exception, 'completar el registro')
   } finally {
     busy.value = false
   }

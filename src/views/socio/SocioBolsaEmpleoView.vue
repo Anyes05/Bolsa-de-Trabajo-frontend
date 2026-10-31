@@ -13,6 +13,7 @@ import {
 } from '../../data/mockSocioBolsa'
 import { socioBolsaService } from '../../services/socioBolsaService'
 import type { ApplicantProfileCard, SocioProfileCv } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const rubro = ref('Todos')
 const zone = ref('Todos')
@@ -80,7 +81,7 @@ async function loadProfiles() {
   try {
     applicantProfiles.value = await socioBolsaService.searchProfiles()
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los perfiles.'
+    error.value = userFacingError(cause, 'cargar los perfiles')
   } finally {
     loading.value = false
   }
@@ -94,7 +95,7 @@ async function openProfile(profile: MockApplicantProfile) {
   try {
     selectedCvs.value = await socioBolsaService.listProfileCvs(Number(profile.id))
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los CVs del perfil.'
+    error.value = userFacingError(cause, 'cargar los CVs del perfil')
   } finally {
     loadingCvs.value = false
   }
@@ -109,7 +110,7 @@ async function downloadCv(profileId: string, cvId?: number) {
     else window.location.assign(url)
   } catch (cause) {
     downloadWindow?.close()
-    error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
+    error.value = userFacingError(cause, 'descargar el CV')
   }
 }
 
@@ -163,7 +164,7 @@ async function notifyApplicant(selected: boolean) {
     contactSuccess.value = result.message
     selectedApplicant.value = null
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudo enviar la notificación.'
+    error.value = userFacingError(cause, 'enviar la notificación')
   } finally {
     notifying.value = false
   }

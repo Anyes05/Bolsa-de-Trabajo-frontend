@@ -14,6 +14,7 @@ import type { RubroOption, SocioRecord } from '../../services/types'
 import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioProfileStore } from '../../stores/socioProfile'
+import { userFacingError } from '../../utils/userMessage'
 
 const auth = useAuthStore()
 const profile = useSocioProfileStore()
@@ -75,7 +76,7 @@ async function load() {
     rubros.value = catalog
     auth.setFullName(perfil.razonSocial)
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar el perfil.'
+    error.value = userFacingError(exception, 'cargar el perfil')
   } finally {
     busy.value = false
   }
@@ -121,7 +122,7 @@ async function saveProfile() {
     auth.setFullName(updated.razonSocial)
     savedHint.value = 'Los cambios se guardaron correctamente.'
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible guardar el perfil.'
+    error.value = userFacingError(exception, 'guardar el perfil')
   } finally {
     saving.value = false
   }
@@ -146,7 +147,7 @@ async function updatePassword() {
     password.repeat = ''
     passwordHint.value = 'La contraseña se actualizó correctamente.'
   } catch (exception) {
-    passwordError.value = exception instanceof Error ? exception.message : 'No fue posible actualizar la contraseña.'
+    passwordError.value = userFacingError(exception, 'actualizar la contraseña')
   } finally {
     passwordBusy.value = false
   }

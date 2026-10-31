@@ -12,6 +12,7 @@ import {
   socioService,
 } from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const socios = ref<SocioRecord[]>([])
 const rubros = ref<RubroOption[]>([])
@@ -61,7 +62,7 @@ onMounted(async () => {
     socios.value = items
     rubros.value = catalog
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible cargar los socios.'
+    error.value = userFacingError(exception, 'cargar el listado de socios')
   } finally {
     busy.value = false
   }
@@ -141,7 +142,7 @@ async function saveEdit() {
     replaceSocio(updated)
     closeEdit()
   } catch (exception) {
-    editError.value = exception instanceof Error ? exception.message : 'No fue posible guardar el socio.'
+    editError.value = userFacingError(exception, 'guardar los datos del socio')
   } finally {
     editBusy.value = false
   }
@@ -155,7 +156,7 @@ async function toggleActive(socio: SocioRecord) {
       : await socioService.activateSocio(socio.id)
     replaceSocio(updated)
   } catch (exception) {
-    error.value = exception instanceof Error ? exception.message : 'No fue posible actualizar el estado.'
+    error.value = userFacingError(exception, 'actualizar el estado del socio')
   }
 }
 
@@ -172,7 +173,7 @@ async function resetClave() {
     generatedPassword.value = updated.passwordProvisional ?? ''
     resetHint.value = 'Clave provisional generada. Comunícasela al socio: tiene 24 horas para cambiarla.'
   } catch (exception) {
-    editError.value = exception instanceof Error ? exception.message : 'No fue posible restablecer la clave.'
+    editError.value = userFacingError(exception, 'restablecer la clave provisional')
   } finally {
     resetBusy.value = false
   }

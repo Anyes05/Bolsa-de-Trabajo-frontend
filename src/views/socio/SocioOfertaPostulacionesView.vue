@@ -10,6 +10,7 @@ import { mockCompany, type MockApplicantProfile } from '../../data/mockSocioBols
 import { offerService } from '../../services/offerService'
 import { socioApplicationsService } from '../../services/socioApplicationsService'
 import type { ApplicantApplication, JobOffer, ReceivedApplication } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const route = useRoute()
 const router = useRouter()
@@ -86,7 +87,7 @@ async function load() {
     offer.value = offers.find((candidate) => candidate.id === id) ?? null
     applications.value = received
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar las postulaciones.'
+    error.value = userFacingError(cause, 'cargar las postulaciones')
   } finally {
     loading.value = false
   }
@@ -101,7 +102,7 @@ async function updateStatus(application: ReceivedApplication, event: Event) {
     const updated = await socioApplicationsService.updateStatus(application.id, status)
     application.status = updated.status
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudo actualizar el estado.'
+    error.value = userFacingError(cause, 'actualizar el estado de la postulación')
   } finally {
     savingId.value = null
   }
@@ -115,7 +116,7 @@ async function downloadCv(applicationId: string) {
     downloadWindow.location.href = url
   } catch (cause) {
     downloadWindow?.close()
-    error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
+    error.value = userFacingError(cause, 'descargar el CV')
   }
 }
 

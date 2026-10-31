@@ -8,6 +8,7 @@ import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
 import { adminApplicantService } from '../../services/adminApplicantService'
 import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const applicantProfiles = ref<AdminApplicantProfile[]>([])
 const selectedProfile = ref<MockApplicantProfile | null>(null)
@@ -37,7 +38,7 @@ async function loadProfiles() {
   try {
     applicantProfiles.value = await adminApplicantService.list()
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los postulantes.'
+    error.value = userFacingError(cause, 'cargar los postulantes')
   } finally {
     loading.value = false
   }
@@ -50,7 +51,7 @@ async function openProfile(profile: MockApplicantProfile) {
   try {
     selectedCvs.value = await adminApplicantService.listProfileCvs(Number(profile.id))
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar los CVs del perfil.'
+    error.value = userFacingError(cause, 'cargar los CVs del perfil')
   } finally {
     loadingCvs.value = false
   }
@@ -65,7 +66,7 @@ async function downloadCv(profileId: string, cvId?: number) {
     else window.location.assign(url)
   } catch (cause) {
     downloadWindow?.close()
-    error.value = cause instanceof Error ? cause.message : 'No se pudo descargar el CV.'
+    error.value = userFacingError(cause, 'descargar el CV')
   }
 }
 

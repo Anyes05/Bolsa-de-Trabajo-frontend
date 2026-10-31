@@ -14,6 +14,7 @@ import {
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
+import NotificationBell from '../NotificationBell.vue'
 import { useAuthStore } from '../../stores/auth'
 import { authService } from '../../services/authService'
 
@@ -82,7 +83,7 @@ function logout() {
           :to="link.to"
           @click="open = false"
         >
-          <component :is="link.icon" :size="17" aria-hidden="true" />
+          <component :is="link.icon" :size="18" aria-hidden="true" />
           <span>{{ link.label }}</span>
         </RouterLink>
       </nav>
@@ -103,13 +104,15 @@ function logout() {
           <b>{{ title }}</b>
         </div>
         <div class="admin-topbar__user">
+          <NotificationBell :count="0" label="Notificaciones" />
           <div class="admin-topbar__identity">
             <strong>{{ displayName }}</strong>
             <span>{{ auth.role || 'ADMIN' }}</span>
           </div>
           <span class="admin-topbar__avatar">{{ avatarInitials }}</span>
-          <button class="admin-topbar__exit" type="button" aria-label="Cerrar sesión" @click="logout">
-            <LogOut :size="17" />
+          <button class="shell-exit" type="button" @click="logout">
+            Cerrar sesión
+            <LogOut :size="17" aria-hidden="true" />
           </button>
         </div>
       </header>

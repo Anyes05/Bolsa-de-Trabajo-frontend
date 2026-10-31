@@ -6,6 +6,7 @@ import AppAlert from '../../components/AppAlert.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import { offerService } from '../../services/offerService'
 import type { ActiveSocioOption, JobOffer, JobOfferPayload } from '../../services/types'
+import { userFacingError } from '../../utils/userMessage'
 
 const offers = ref<JobOffer[]>([])
 const sectors = ref<{ id: number; nombreRubro: string }[]>([])
@@ -35,7 +36,7 @@ async function loadData() {
     sectors.value = sectorList
     socios.value = partnerList
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudieron cargar las ofertas.'
+    error.value = userFacingError(cause, 'cargar las ofertas')
   } finally {
     loading.value = false
   }
@@ -59,7 +60,7 @@ async function saveOffer(payload: JobOfferPayload) {
     modalOpen.value = false
     await loadData()
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudo guardar la oferta.'
+    error.value = userFacingError(cause, 'guardar la oferta')
   }
 }
 
@@ -69,7 +70,7 @@ async function changeStatus(offer: JobOffer, status: JobOffer['estado']) {
     await offerService.setStatus(offer.id, status)
     await loadData()
   } catch (cause) {
-    error.value = cause instanceof Error ? cause.message : 'No se pudo actualizar el estado.'
+    error.value = userFacingError(cause, 'actualizar el estado de la oferta')
   }
 }
 
