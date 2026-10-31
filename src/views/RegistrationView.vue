@@ -368,8 +368,35 @@ function validateStep(current: number) {
   return true
 }
 
-function next() {
+const checkingAvailability = ref(false)
+
+async function next() {
+  if (checkingAvailability.value) return
   if (!validateStep(step.value)) return
+  if (step.value === 1) {
+    checkingAvailability.value = true
+    const email = form.email
+    const identityCard = form.identityCard
+    try {
+      const availability = await authService.registrationAvailability(email.trim(), identityCard)
+      if (email !== form.email || identityCard !== form.identityCard) return
+      if (availability.emailExists) {
+        fieldErrors.email = 'Ya existe una cuenta con este correo. Inicia sesión o utiliza otro.'
+      }
+      if (availability.identityCardExists) {
+        fieldErrors.identityCard = 'Esta cédula ya está registrada.'
+      }
+      if (availability.emailExists || availability.identityCardExists) {
+        error.value = 'Revisa los datos señalados antes de continuar.'
+        return
+      }
+    } catch {
+      error.value = 'No pudimos verificar tus datos. Intenta continuar nuevamente.'
+      return
+    } finally {
+      checkingAvailability.value = false
+    }
+  }
   step.value += 1
 }
 
@@ -755,8 +782,8 @@ async function complete() {
           <ArrowLeft :size="14" aria-hidden="true" /> Anterior
         </AppButton>
         <span v-else></span>
-        <AppButton v-if="step < 3" type="submit">
-          Continuar <ArrowRight :size="15" aria-hidden="true" />
+        <AppButton v-if="step < 3" type="submit" :loading="checkingAvailability">
+          {{ checkingAvailability ? 'Verificando...' : 'Continuar' }} <ArrowRight :size="15" aria-hidden="true" />
         </AppButton>
         <AppButton v-else type="submit" :loading="busy">
           {{ busy ? 'Registrando...' : 'Completar Registro' }}

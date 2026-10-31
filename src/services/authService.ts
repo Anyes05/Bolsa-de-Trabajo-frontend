@@ -26,4 +26,11 @@ export const authService = {
       body: JSON.stringify(payload),
     })
   },
+
+  registrationAvailability(email: string, identityCard: string) {
+    return request<{ emailExists: boolean; identityCardExists: boolean }>('/auth/register/availability', {
+      method: 'POST',
+      body: JSON.stringify({ email, identityCard }),
+    })
+  },
 }
