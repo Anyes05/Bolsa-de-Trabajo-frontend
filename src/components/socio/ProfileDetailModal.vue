@@ -66,12 +66,16 @@ onUnmounted(() => {
 
         <section class="profile-modal__block">
           <h3>Resumen de experiencia</h3>
-          <p>{{ profile.hasApplication ? profile.experienceSummary || 'No informado' : 'Disponible después de una postulación a una oferta propia' }}</p>
+          <p :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.experienceSummary) }">
+            {{ profile.hasApplication ? (profile.experienceSummary || 'Todavía no informó un resumen de experiencia.') : 'Disponible después de una postulación a una oferta propia.' }}
+          </p>
         </section>
 
         <section class="profile-modal__block">
           <h3>Último empleo</h3>
-          <p><b>{{ profile.hasApplication ? profile.latestJob || 'No informado' : 'Disponible después de una postulación a una oferta propia' }}</b></p>
+          <p :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.latestJob) }">
+            {{ profile.hasApplication ? (profile.latestJob || 'Todavía no informó su último empleo.') : 'Disponible después de una postulación a una oferta propia.' }}
+          </p>
         </section>
 
         <section class="profile-modal__block">

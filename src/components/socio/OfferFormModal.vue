@@ -98,9 +98,24 @@ function submit() {
         <label>Rango salarial<input v-model="form.salario" maxlength="120" placeholder="Ej. $28.000 – $32.000"></label>
         <fieldset class="offer-form__wide offer-form__closing">
           <legend>Vigencia de la oferta *</legend>
-          <label><input v-model="form.fechaModo" type="radio" value="INDEFINIDA"> Abierta indefinidamente</label>
-          <label><input v-model="form.fechaModo" type="radio" value="FECHA"> Cierra en una fecha exacta</label>
-          <input v-if="form.fechaModo === 'FECHA'" v-model="form.fechaCierre" type="date" :min="new Date().toISOString().slice(0, 10)" required>
+          <div class="offer-form__radios">
+            <label class="offer-form__radio">
+              <input v-model="form.fechaModo" type="radio" value="INDEFINIDA">
+              <span>Abierta indefinidamente</span>
+            </label>
+            <label class="offer-form__radio">
+              <input v-model="form.fechaModo" type="radio" value="FECHA">
+              <span>Cierra en una fecha exacta</span>
+            </label>
+          </div>
+          <input
+            v-if="form.fechaModo === 'FECHA'"
+            v-model="form.fechaCierre"
+            class="offer-form__date"
+            type="date"
+            :min="new Date().toISOString().slice(0, 10)"
+            required
+          >
         </fieldset>
         <label class="offer-form__wide">Descripción *<textarea v-model="form.descripcion" rows="4" required></textarea></label>
         <label class="offer-form__wide">Requisitos<textarea v-model="form.requisitos" rows="3"></textarea></label>

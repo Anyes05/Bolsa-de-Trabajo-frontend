@@ -134,7 +134,7 @@ async function submitLogin() {
             required
           />
         </AppField>
-        <AppAlert v-if="error" title="No pudimos ingresar">{{ error }}</AppAlert>
+        <AppAlert v-if="error">{{ error }}</AppAlert>
         <p class="login-form__hint">Acceso seguro al sistema CCISJ.</p>
         <RouterLink
           v-if="role === 'POSTULANTE'"

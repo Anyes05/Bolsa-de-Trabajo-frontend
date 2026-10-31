@@ -4040,3 +4040,535 @@ button:disabled {
     width: 100%;
   }
 }
+
+/* =========================================================
+   UI polish — modales, caja, selects y tipografía
+   ========================================================= */
+
+.app-alert,
+.app-alert__body,
+.app-alert__text,
+.app-alert__title {
+  text-align: left;
+}
+
+.app-alert {
+  margin-top: 14px;
+}
+
+.app-alert__text {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: inherit;
+}
+
+/* Modal de perfil: centrado en viewport y legible */
+.profile-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  overflow: auto;
+  background: transparent;
+}
+
+.profile-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(17 33 27 / 55%);
+}
+
+.profile-modal__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 640px);
+  max-height: min(90vh, 820px);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.profile-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px;
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.profile-modal__name {
+  font-size: var(--text-xl);
+}
+
+.profile-modal__meta {
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+  color: #e7f7ee;
+}
+
+.profile-modal__pills li,
+.profile-modal__category {
+  font-size: var(--text-xs);
+  padding: 6px 12px;
+}
+
+.profile-modal__category {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-modal__body {
+  flex: 1;
+  overflow: auto;
+  display: grid;
+  gap: 20px;
+  padding: 22px 24px;
+}
+
+.profile-modal__block h3 {
+  margin: 0 0 10px;
+  color: #556070;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-modal__block p {
+  color: #2b3640;
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.profile-modal__block p:empty::after,
+.profile-modal__muted {
+  color: #66736c;
+  font-style: italic;
+}
+
+.profile-modal__tags li {
+  font-size: var(--text-sm);
+  padding: 7px 12px;
+}
+
+.profile-modal__cv {
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #d8e8de;
+  border-style: solid;
+  background: #f7fbf8;
+  padding: 14px 16px;
+}
+
+.profile-modal__cv-file strong {
+  font-size: var(--text-sm);
+}
+
+.profile-modal__cv-file small {
+  font-size: var(--text-xs);
+  color: #66736c;
+}
+
+.profile-modal__actions {
+  flex-shrink: 0;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--color-border);
+  background: #fafbfa;
+}
+
+/* Modal publicar oferta */
+.offer-form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  padding: 24px;
+}
+
+.offer-form-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(17 33 27 / 55%);
+}
+
+.offer-form-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 720px);
+  max-height: min(92vh, 900px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.offer-form-modal__header {
+  flex-shrink: 0;
+  padding: 18px 22px;
+}
+
+.offer-form-modal__header h2 {
+  font-size: var(--text-lg);
+}
+
+.offer-form {
+  flex: 1;
+  overflow: auto;
+  gap: 16px 18px;
+  padding: 22px 24px 12px;
+}
+
+.offer-form label {
+  font-size: var(--text-sm);
+  gap: 8px;
+}
+
+.offer-form input,
+.offer-form select,
+.offer-form textarea,
+.offer-form__date {
+  min-height: var(--control-height);
+  border: 1px solid #d5dde5;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  background: #fff;
+}
+
+.offer-form select,
+.publish-select,
+.admin-form-grid select,
+.new-company-form select,
+.socio-profile__card select,
+.personal-profile__form select,
+.profile-editor select,
+.postulante-offers__filter select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #66736c 50%),
+    linear-gradient(135deg, #66736c 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+}
+
+.offer-form textarea {
+  min-height: 110px;
+  padding: 12px 14px;
+}
+
+.offer-form__closing {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #f8faf9;
+}
+
+.offer-form__closing legend {
+  padding: 0 6px;
+  color: #344054;
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+.offer-form__radios {
+  display: grid;
+  gap: 10px;
+}
+
+.offer-form__radio {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  grid-template-columns: none !important;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d9e3dc;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: #2b3640;
+  cursor: pointer;
+}
+
+.offer-form__radio input {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  accent-color: var(--color-brand);
+  flex-shrink: 0;
+}
+
+.offer-form__date {
+  margin-top: 12px;
+  width: 100%;
+  padding: 0 14px;
+}
+
+.offer-form__actions {
+  position: sticky;
+  bottom: 0;
+  margin: 8px -24px -12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--color-border);
+  background: #fafbfa;
+}
+
+/* Botones de acciones en Control de Caja */
+.cash-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cash-charge,
+.cash-history,
+.cash-modal__footer .cash-history,
+.excel-footer .cash-history {
+  height: auto !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+}
+
+.cash-charge {
+  border: 0 !important;
+  color: #fff !important;
+  background: var(--color-brand) !important;
+}
+
+.cash-history {
+  border: 1px solid var(--color-brand) !important;
+  background: #fff !important;
+  color: var(--color-brand) !important;
+}
+
+.cash-modal,
+.history-modal,
+.excel-modal,
+.publish-modal {
+  width: min(100%, 520px);
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.cash-modal__header,
+.publish-modal__header {
+  padding: 18px 22px !important;
+  background: var(--color-brand) !important;
+}
+
+.cash-modal__header h2,
+.publish-modal__header h2 {
+  font-size: var(--text-lg) !important;
+}
+
+.cash-modal__header p {
+  font-size: var(--text-sm) !important;
+}
+
+.cash-modal__body,
+.publish-form {
+  font-size: var(--text-sm);
+}
+
+.cash-modal__footer button,
+.publish-form__footer button,
+.excel-footer button {
+  min-height: 44px;
+  font-size: var(--text-sm) !important;
+}
+
+.publish-form label,
+.publish-form input,
+.publish-form textarea,
+.publish-select {
+  font-size: var(--text-sm) !important;
+}
+
+.publish-form input,
+.publish-select {
+  min-height: var(--control-height);
+}
+
+.publish-closing,
+.publish-form fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: #f8faf9;
+}
+
+.publish-form fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+/* Cards expandidas de postulantes / bolsa */
+.applicant-group-card__profiles,
+.applicant-profiles {
+  gap: 14px;
+}
+
+.applicant-profile-card,
+.profile-card,
+.applicant-profiles > article {
+  border: 1px solid #dfe8e2;
+  border-radius: var(--radius-md);
+  background: #f8fbf9;
+  padding: 16px;
+}
+
+.applicant-group-card__actions .app-button,
+.applicant-group-card__header .app-button,
+.applicant-card__actions .app-button {
+  min-height: 42px;
+}
+
+/* Perfil socio y alta: tipografía y fieldsets */
+.socio-profile__card label,
+.socio-profile__card small,
+.admin-form-grid label,
+.admin-form-grid small,
+.new-company-form label,
+.new-company-form small,
+.app-field,
+.app-field__error {
+  font-size: var(--text-sm) !important;
+}
+
+.socio-profile__card input,
+.socio-profile__card select,
+.admin-form-grid input,
+.admin-form-grid select,
+.admin-form-grid textarea,
+.new-company-form input,
+.new-company-form select {
+  min-height: var(--control-height);
+  font-size: var(--text-md) !important;
+}
+
+.admin-modal__card fieldset,
+.socio-reset-clave,
+.new-company-check,
+.admin-form-grid fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  background: #f7faf8;
+}
+
+.admin-modal__card fieldset legend,
+.socio-reset-clave legend,
+.new-company-form fieldset legend {
+  padding: 0 6px;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: #344054;
+}
+
+.admin-modal__card fieldset p,
+.admin-modal__card fieldset small,
+.socio-reset-clave p,
+.socio-reset-clave small {
+  font-size: var(--text-sm) !important;
+  color: #556070 !important;
+  line-height: 1.45;
+}
+
+.admin-modal__card fieldset .app-button,
+.admin-modal__card fieldset button,
+.socio-reset-clave .company-edit,
+.socio-reset-clave button {
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 0 16px;
+  font-size: var(--text-sm);
+}
+
+.socio-reset-clave {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.profile-card__actions .app-button,
+.applicant-group-card__actions .app-button {
+  min-height: 42px;
+  font-size: var(--text-sm);
+}
+
+.profile-card__name {
+  font-size: var(--text-md);
+}
+
+.profile-card__meta,
+.profile-card__location,
+.profile-card__tag {
+  font-size: var(--text-sm);
+}
+
+/* Registro postulante: errores más claros */
+.registration-card {
+  width: min(calc(100% - 32px), 760px);
+}
+
+.app-field__error {
+  margin-top: 2px;
+  font-size: var(--text-sm) !important;
+}
+
+.registration-card .app-alert {
+  margin-top: 18px;
+}
+
+.cash-table td,
+.company-table td,
+.admin-table td {
+  font-size: var(--text-sm) !important;
+}
+
+@media (max-width: 720px) {
+  .profile-modal,
+  .offer-form-modal {
+    padding: 12px;
+    align-items: start;
+  }
+
+  .profile-modal__panel,
+  .offer-form-modal__panel {
+    max-height: calc(100vh - 24px);
+  }
+
+  .cash-table__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cash-charge,
+  .cash-history {
+    width: 100%;
+    justify-content: center;
+  }
+}

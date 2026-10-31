@@ -321,7 +321,7 @@ async function resetClave() {
           </label>
           <fieldset class="new-company-form__wide socio-reset-clave">
             <legend>Restablecer clave provisional</legend>
-            <p>El sistema genera una nueva clave temporal a partir de la razón social. El socio deberá cambiarla en las siguientes 24 horas.</p>
+            <p>Se genera una clave temporal a partir de la razón social. El socio debe cambiarla dentro de las 24 horas desde que se le envía o se restablece; si vence, hay que generar una nueva.</p>
             <button class="company-edit" type="button" :disabled="resetBusy" @click="resetClave">
               {{ resetBusy ? 'Generando...' : 'Generar nueva clave' }}
             </button>
