@@ -23,7 +23,7 @@ const selectedSectorId = ref<number | null>(null)
 const loading = ref(false)
 const submitting = ref(false)
 const message = ref<string | null>(null)
-const messageTone = ref<'error' | 'success' | 'info'>('info')
+const messageTone = ref<'error' | 'success' | 'info' | 'warning'>('info')
 
 const eligibleProfiles = computed(() => profiles.value.filter((profile) =>
   profile.visible && cvs.value.some((cv) => cv.perfilLaboralId === profile.id && cv.activo),
