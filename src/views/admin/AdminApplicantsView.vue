@@ -22,7 +22,7 @@ const error = ref<string | null>(null)
 function toDisplayProfile(profile: AdminApplicantProfile): MockApplicantProfile {
   return {
     id: String(profile.id), applicantId: profile.applicantId, fullName: profile.fullName, email: profile.email,
-    initials: profile.initials, profileName: profile.profileName, categoryLabel: profile.categoryLabel,
+    phone: profile.phone || '', initials: profile.initials, profileName: profile.profileName, categoryLabel: profile.categoryLabel,
     location: profile.location || 'San José', identityCard: profile.identityCard || '', age: profile.age ?? 0,
     tags: profile.sectors, sectors: profile.sectors, interests: profile.sectors, availability: profile.availability,
     license: profile.license || 'No informada', hasVehicle: profile.hasVehicle,
@@ -72,15 +72,15 @@ async function downloadCv(profileId: string, cvId?: number) {
 
 const applicants = computed(() => {
   const term = search.value.trim().toLocaleLowerCase('es')
-  const groups = new Map<number, { id: number; fullName: string; email: string; initials: string; profiles: MockApplicantProfile[] }>()
+  const groups = new Map<number, { id: number; fullName: string; email: string; phone: string; initials: string; profiles: MockApplicantProfile[] }>()
   applicantProfiles.value.map(toDisplayProfile).forEach((profile) => {
-    const matches = !term || [profile.fullName, profile.email, profile.identityCard, profile.profileName]
+    const matches = !term || [profile.fullName, profile.email, profile.phone || '', profile.identityCard, profile.profileName]
       .some((value) => value.toLocaleLowerCase('es').includes(term))
     if (!matches) return
     const group = groups.get(profile.applicantId)
     if (group) group.profiles.push(profile)
     else groups.set(profile.applicantId, {
-      id: profile.applicantId, fullName: profile.fullName, email: profile.email,
+      id: profile.applicantId, fullName: profile.fullName, email: profile.email, phone: profile.phone || '',
       initials: profile.initials, profiles: [profile],
     })
   })

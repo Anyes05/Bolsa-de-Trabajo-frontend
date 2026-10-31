@@ -35,6 +35,7 @@ type ApplicantGroup = {
   id: number
   fullName: string
   email: string
+  phone: string
   initials: string
   profiles: MockApplicantProfile[]
 }
@@ -53,6 +54,7 @@ function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
     applicantId: profile.applicantId,
     fullName: profile.fullName,
     email: profile.email,
+    phone: profile.phone || '',
     initials: profile.initials,
     profileName: profile.profileName,
     categoryLabel: profile.categoryLabel,
@@ -142,6 +144,7 @@ const applicants = computed(() => {
       id: profile.applicantId,
       fullName: profile.fullName,
       email: profile.email,
+      phone: profile.phone || '',
       initials: profile.initials,
       profiles: [profile],
     })

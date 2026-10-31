@@ -102,12 +102,29 @@ onMounted(loadTariffs)
 </template>
 
 <style scoped>
-.fee-config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.fee-config-fields label { display: grid; gap: 6px; color: #303943; font-size: 11px; font-weight: 800; }
-.fee-config-fields input { width: 100%; height: 36px; border: 1px solid #dfe5eb; border-radius: 7px; padding: 0 10px; color: #303943; font: inherit; outline: 0; }
-.fee-config-fields input:focus { border-color: #07984c; }
-.billing-period { display: grid; gap: 6px; color: #303943; font-size: 11px; font-weight: 800; }
-.billing-period input { width: 100%; height: 36px; border: 1px solid #dfe5eb; border-radius: 7px; padding: 0 10px; color: #303943; font: inherit; outline: 0; }
+.fee-config-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fee-config-fields label,
+.billing-period {
+  display: grid;
+  gap: 8px;
+  color: #303943;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.fee-config-fields input,
+.billing-period input {
+  width: 100%;
+  min-height: 46px;
+  height: auto;
+  border: 1px solid #d5dde5;
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #1f2a24;
+  font: inherit;
+  font-size: 1.0625rem;
+  outline: 0;
+}
+.fee-config-fields input:focus,
 .billing-period input:focus { border-color: #07984c; }
 button:disabled { cursor: not-allowed; opacity: .65; }
 @media (max-width: 650px) { .fee-config-fields { grid-template-columns: 1fr; } }

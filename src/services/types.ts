@@ -246,6 +246,7 @@ export type ApplicantProfileCard = {
   applicantId: number
   fullName: string
   email: string
+  phone: string | null
   initials: string
   profileName: string
   categoryLabel: string
@@ -346,6 +347,7 @@ export type ReceivedApplication = {
   latestJob: string | null
   experienceSummary: string | null
   identityCard: string | null
+  phone: string | null
   cvId: number | null
   cvFileName: string | null
   cvMeta: string | null

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { Car, Download, FileText, Mail, MapPin } from 'lucide-vue-next'
+import { Car, Download, FileText, Mail, MapPin, Phone } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
 import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
 import type { SocioProfileCv } from '../../services/types'
@@ -40,8 +40,9 @@ onUnmounted(() => {
         <div class="profile-modal__heading">
           <h2 :id="`profile-modal-title-${profile.id}`" class="profile-modal__name">{{ profile.fullName }}</h2>
           <p class="profile-modal__meta">
-            <MapPin :size="13" aria-hidden="true" />
+            <MapPin :size="15" aria-hidden="true" />
             {{ profile.location }}
+            <template v-if="profile.phone"> · <Phone :size="15" aria-hidden="true" /> {{ profile.phone }}</template>
             <template v-if="profile.identityCard"> · CI: {{ profile.identityCard }}</template>
             <template v-if="profile.age"> · {{ profile.age }} años</template>
           </p>

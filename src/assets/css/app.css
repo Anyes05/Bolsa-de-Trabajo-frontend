@@ -4905,3 +4905,202 @@ button:disabled {
   font-size: var(--text-sm);
   font-weight: 600;
 }
+
+/* Teléfono en bolsa / postulaciones + tipografía restante */
+.applicant-group-card__identity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.applicant-group-card__header h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.applicant-group-card__contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #445249;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.applicant-group-card__contact--muted {
+  color: #7a8690;
+}
+
+.applicant-group-card__count {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  color: #556070 !important;
+}
+
+.applicant-group-card__header a {
+  font-size: var(--text-sm);
+}
+
+.socio-application-card h2 {
+  font-size: var(--text-lg) !important;
+  font-weight: 600 !important;
+}
+
+.socio-application-card p,
+.socio-application-card p span,
+.socio-application-card__status time,
+.socio-application-card__status select {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+}
+
+.socio-application-card li {
+  font-size: var(--text-sm) !important;
+  padding: 6px 10px !important;
+}
+
+.socio-application-card__status select {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+/* Configuración de cuota más legible */
+.fee-settings {
+  width: min(100%, 920px) !important;
+  gap: 22px !important;
+}
+
+.fee-panel {
+  padding: 28px 30px !important;
+}
+
+.fee-current h2,
+.fee-history h2 {
+  font-size: var(--text-xl) !important;
+  font-weight: 600 !important;
+}
+
+.fee-current__intro p {
+  width: auto !important;
+  max-width: 48rem !important;
+  font-size: var(--text-md) !important;
+  line-height: 1.5 !important;
+  color: #556070 !important;
+}
+
+.fee-input {
+  width: min(100%, 280px) !important;
+  height: 52px !important;
+  font-size: var(--text-xl) !important;
+}
+
+.fee-input input {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+}
+
+.fee-save {
+  height: auto !important;
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}
+
+.fee-history__entry strong,
+.fee-history__entry small,
+.fee-warning,
+.fee-success {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+  line-height: 1.45;
+}
+
+.fee-history__entry strong {
+  font-weight: 600 !important;
+  font-size: var(--text-md) !important;
+}
+
+/* Subida general de textos que seguían en 10–12px */
+.admin-page__eyebrow,
+.admin-sidebar__label,
+.admin-breadcrumb,
+.admin-topbar__identity span,
+.socio-header__identity span,
+.postulante-header__identity span,
+.admin-activity p,
+.admin-activity time,
+.admin-panel__header p,
+.admin-metric__change,
+.admin-quick-actions a,
+.cash-status,
+.company-empty,
+.bolsa__count,
+.bolsa__sort,
+.socio-offer-card__meta,
+.socio-offer-card__text,
+.socio-offer-card__apps,
+.socio-directory__table td small,
+.profile-card__meta,
+.profile-card__location,
+.profile-card__tag,
+.offer-card__meta,
+.offer-card__description,
+.application-card__body p,
+.profile-card-postulante__details p,
+.communication-editor label,
+.stepper__list,
+.login-form__hint,
+.app-field__error {
+  font-size: var(--text-sm) !important;
+}
+
+.admin-table th,
+.cash-table th,
+.company-table th {
+  font-size: 0.8125rem !important;
+}
+
+.admin-table td,
+.cash-table td,
+.company-table td,
+.socio-directory__table td {
+  font-size: var(--text-sm) !important;
+}
+
+.admin-nav__item,
+.socio-nav__item,
+.postulante-nav__item {
+  font-size: var(--text-sm) !important;
+}
+
+.applications-list .application-card__header h2 {
+  font-size: var(--text-lg) !important;
+  font-weight: 600 !important;
+}
+
+.applications-list .application-card__header p,
+.applications-list .application-phone,
+.applications-list .application-profile-title,
+.applications-list .application-card__body p,
+.applications-list .application-tags span,
+.applications-list .application-status {
+  font-size: var(--text-sm) !important;
+  font-weight: 500 !important;
+}
+
+.applications-list .application-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.applications-list .application-cv-button,
+.admin-back-button {
+  min-height: 42px !important;
+  font-size: var(--text-sm) !important;
+  font-weight: 600 !important;
+}

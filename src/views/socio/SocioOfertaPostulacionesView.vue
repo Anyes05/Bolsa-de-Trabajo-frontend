@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ArrowLeft, MapPin } from 'lucide-vue-next'
+import { ArrowLeft, MapPin, Phone } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 import AppButton from '../../components/AppButton.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
@@ -49,6 +49,7 @@ function profileFor(application: ReceivedApplication): MockApplicantProfile {
     applicantId: application.id,
     fullName: application.fullName,
     email: '',
+    phone: application.phone || '',
     initials: application.initials,
     profileName: application.profileName,
     categoryLabel: application.tags[0]?.toUpperCase() || 'PERFIL LABORAL',
@@ -155,8 +156,12 @@ onMounted(load)
             <p>
               Perfil: {{ application.profileName }}
               <span>
-                <MapPin :size="12" aria-hidden="true" />
+                <MapPin :size="15" aria-hidden="true" />
                 {{ application.location }}
+              </span>
+              <span v-if="application.phone">
+                <Phone :size="15" aria-hidden="true" />
+                {{ application.phone }}
               </span>
             </p>
             <ul>

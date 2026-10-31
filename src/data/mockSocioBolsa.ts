@@ -6,6 +6,7 @@ export type MockApplicantProfile = {
   applicantId: number
   fullName: string
   email: string
+  phone?: string
   initials: string
   profileName: string
   categoryLabel: string
