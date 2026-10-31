@@ -15,13 +15,29 @@ const busy = ref(false)
 const error = ref('')
 const formMode = ref<'create' | 'edit' | null>(null)
 const formOffer = ref<JobOffer | null>(null)
+const statusFilter = ref<'TODAS' | JobOffer['estado']>('TODAS')
 const availabilityLabels: Record<JobOffer['disponibilidadHoraria'], string> = {
   FULL_TIME: 'Tiempo completo',
   PART_TIME: 'Part-time',
   INDEFINIDO: 'Cualquier horario',
 }
+const statusLabels: Record<JobOffer['estado'], string> = {
+  ACTIVA: 'Activa',
+  PAUSADA: 'Pausada',
+  CERRADA: 'Cerrada',
+  VENCIDA: 'Vencida',
+}
 
-const subtitle = computed(() => `${offers.value.length} ${offers.value.length === 1 ? 'oferta' : 'ofertas'}`)
+const filteredOffers = computed(() => (
+  statusFilter.value === 'TODAS'
+    ? offers.value
+    : offers.value.filter((offer) => offer.estado === statusFilter.value)
+))
+
+const subtitle = computed(() => {
+  const total = filteredOffers.value.length
+  return `${total} ${total === 1 ? 'oferta' : 'ofertas'}${statusFilter.value !== 'TODAS' ? ` · ${statusLabels[statusFilter.value]}` : ''}`
+})
 
 async function load() {
   busy.value = true
@@ -101,8 +117,21 @@ function displayStatus(status: JobOffer['estado']) {
     </template>
 
     <section class="socio-offers" aria-label="Mis ofertas">
+      <div class="offers-status-filters" aria-label="Filtrar ofertas por estado">
+        <button
+          v-for="filter in (['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA'] as const)"
+          :key="filter"
+          class="cash-filter"
+          :class="{ 'cash-filter--active': statusFilter === filter }"
+          type="button"
+          @click="statusFilter = filter"
+        >
+          {{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Abiertas' : statusLabels[filter] }}
+        </button>
+      </div>
+
       <article
-        v-for="offer in offers"
+        v-for="offer in filteredOffers"
         :key="offer.id"
         class="socio-offer-card"
         :class="`socio-offer-card--${offer.estado.toLowerCase()}`"
@@ -156,6 +185,7 @@ function displayStatus(status: JobOffer['estado']) {
       </article>
       <p v-if="busy">Cargando ofertas...</p>
       <p v-else-if="!offers.length">No tienes ofertas laborales todavía.</p>
+      <p v-else-if="!filteredOffers.length">No hay ofertas en este estado.</p>
     </section>
 
     <template #overlay>

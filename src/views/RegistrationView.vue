@@ -127,6 +127,13 @@ function toggle(sector: string) {
     : [...chosen.value, sector]
 }
 
+function onSectorSelect(select: HTMLSelectElement) {
+  const value = select.value
+  if (!value) return
+  toggle(value)
+  select.value = ''
+}
+
 function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
@@ -560,19 +567,37 @@ async function complete() {
         <AppField id="profileName" label="Nombre de este perfil" required :error="fieldErrors.profileName">
           <input id="profileName" v-model="form.profileName" placeholder="Ej: Perfil Administración" :aria-invalid="Boolean(fieldErrors.profileName)">
         </AppField>
-        <fieldset class="sector-picker">
-          <legend>Rubros de interés</legend>
-          <button
-            v-for="sector in sectors"
-            :key="sector"
-            type="button"
-            class="sector-picker__chip"
-            :class="{ 'sector-picker__chip--selected': chosen.includes(sector) }"
-            :aria-pressed="chosen.includes(sector)"
-            @click="toggle(sector)"
-          >
-            <Check v-if="chosen.includes(sector)" :size="13" aria-hidden="true" />{{ sector }}
-          </button>
+        <fieldset class="sector-picker sector-picker--select">
+          <legend>Rubros de interés (máx. 4)</legend>
+          <label class="sector-picker__select-wrap">
+            <span class="visually-hidden">Agregar rubro</span>
+            <select
+              class="sector-picker__select"
+              :disabled="chosen.length >= 4"
+              @change="onSectorSelect(($event.target as HTMLSelectElement))"
+            >
+              <option value="">Seleccionar rubro...</option>
+              <option
+                v-for="sector in sectors.filter((item) => !chosen.includes(item))"
+                :key="sector"
+                :value="sector"
+              >
+                {{ sector }}
+              </option>
+            </select>
+          </label>
+          <div v-if="chosen.length" class="sector-picker__selected">
+            <button
+              v-for="sector in chosen"
+              :key="sector"
+              type="button"
+              class="sector-picker__chip sector-picker__chip--selected"
+              @click="toggle(sector)"
+            >
+              {{ sector }} ×
+            </button>
+          </div>
+          <small class="sector-picker__hint">Elegí hasta 4 rubros desde el desplegable. Tocá uno seleccionado para quitarlo.</small>
         </fieldset>
         <fieldset class="availability">
           <legend>Disponibilidad horaria</legend>
@@ -583,7 +608,7 @@ async function complete() {
             :aria-pressed="form.availability === 'FULL_TIME'"
             @click="form.availability = 'FULL_TIME'"
           >
-            <b>Full-time</b>
+            <span class="availability__choice-title">Full-time</span>
             <small>Más de 30 horas semanales</small>
           </button>
           <button
@@ -593,7 +618,7 @@ async function complete() {
             :aria-pressed="form.availability === 'PART_TIME'"
             @click="form.availability = 'PART_TIME'"
           >
-            <b>Part-time</b>
+            <span class="availability__choice-title">Part-time</span>
             <small>Menos de 30 horas semanales</small>
           </button>
         </fieldset>

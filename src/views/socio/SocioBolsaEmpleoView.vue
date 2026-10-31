@@ -184,8 +184,8 @@ onMounted(loadProfiles)
   >
     <div class="bolsa">
       <aside class="bolsa__filters" aria-label="Filtros de perfiles">
-        <FilterGroup v-model="rubro" legend="Rubro laboral" :options="rubroOptions" />
-        <FilterGroup v-model="zone" legend="Zona" :options="zoneOptions" />
+        <FilterGroup v-model="rubro" legend="Rubro laboral" :options="rubroOptions" variant="select" />
+        <FilterGroup v-model="zone" legend="Zona" :options="zoneOptions" variant="select" />
         <FilterGroup v-model="availability" legend="Disponibilidad" :options="['Todos', 'Full-time', 'Part-time']" />
         <FilterGroup v-model="vehicle" legend="Vehículo" :options="['Todos', 'Con vehículo', 'Sin vehículo']" />
       </aside>

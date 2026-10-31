@@ -97,7 +97,7 @@ onMounted(loadData)
         <Search :size="16" aria-hidden="true" />
         <input v-model="search" type="search" placeholder="Buscar oferta o socio..." aria-label="Buscar oferta o socio">
       </label>
-      <div class="cash-filters" aria-label="Filtrar ofertas por estado">
+      <div class="cash-filters offers-status-filters" aria-label="Filtrar ofertas por estado">
         <button
           v-for="filter in ['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA']"
           :key="filter"
@@ -105,7 +105,7 @@ onMounted(loadData)
           :class="{ 'cash-filter--active': statusFilter === filter }"
           type="button"
           @click="statusFilter = filter"
-        >{{ filter === 'TODAS' ? 'Todas' : statusLabels[filter as JobOffer['estado']] }}</button>
+        >{{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Abiertas' : statusLabels[filter as JobOffer['estado']] }}</button>
       </div>
     </div>
 
