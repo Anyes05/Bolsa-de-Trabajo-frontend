@@ -51,13 +51,15 @@ canvas {
 .socio-header__titles,
 .postulante-header__titles {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
 }
 
 .socio-header__title,
 .postulante-header__title,
 .admin-breadcrumb b {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: manual;
 }
 
 @media (max-width: 980px) {
@@ -176,10 +178,45 @@ canvas {
     position: sticky;
     top: 0;
     z-index: 20;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "menu heading tools";
+    align-items: center;
     min-height: 64px;
+    width: 100%;
     padding: 10px 12px;
-    gap: 10px;
+    gap: 8px 10px;
     flex-wrap: nowrap;
+  }
+
+  .shell-menu-button,
+  .admin-menu-button {
+    grid-area: menu;
+  }
+
+  .socio-header__titles,
+  .postulante-header__titles,
+  .admin-breadcrumb {
+    grid-area: heading;
+    min-width: 0;
+    width: 100%;
+    flex: none !important;
+  }
+
+  .socio-header__tools,
+  .postulante-header__user,
+  .admin-topbar__user {
+    grid-area: tools;
+    width: auto !important;
+    max-width: none;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    justify-self: end;
+  }
+
+  .socio-header__user {
+    width: auto !important;
   }
 
   .admin-page,
@@ -197,15 +234,22 @@ canvas {
   .admin-page__heading h1,
   .socio-header__title,
   .postulante-header__title {
-    font-size: clamp(1.25rem, 5.5vw, 1.6rem) !important;
-    line-height: 1.2 !important;
+    font-size: clamp(1.15rem, 4.8vw, 1.45rem) !important;
+    line-height: 1.25 !important;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .admin-page__heading p,
   .socio-header__subtitle,
   .postulante-header__subtitle {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
     line-height: 1.4 !important;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .admin-topbar__identity,
@@ -445,6 +489,39 @@ canvas {
     left: 12px;
     right: 12px;
     width: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .socio-header,
+  .postulante-header,
+  .admin-topbar {
+    grid-template-columns: auto 1fr !important;
+    grid-template-areas: "menu tools" "heading heading" !important;
+    align-items: center;
+  }
+
+  .socio-header__titles,
+  .postulante-header__titles,
+  .admin-breadcrumb {
+    grid-area: heading;
+    padding-top: 2px;
+  }
+
+  .socio-header__tools,
+  .postulante-header__user,
+  .admin-topbar__user {
+    grid-area: tools;
+  }
+
+  .socio-header__title,
+  .postulante-header__title {
+    font-size: 1.35rem !important;
+  }
+
+  .socio-header__subtitle,
+  .postulante-header__subtitle {
+    font-size: 0.95rem !important;
   }
 }
 

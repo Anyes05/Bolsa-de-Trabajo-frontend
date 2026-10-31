@@ -2636,8 +2636,6 @@ button:disabled {
 }
 
 @media (max-width: 700px) {
-  .socio-sidebar,
-  .socio-header,
   .bolsa__toolbar,
   .profile-card__actions,
   .bolsa__filters {
@@ -2649,17 +2647,6 @@ button:disabled {
     grid-auto-flow: row;
     width: 100%;
     margin: 0;
-  }
-
-  .socio-header__user {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .socio-header__tools {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-end;
   }
 
   .socio-offer-card,
