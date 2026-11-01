@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap');
+
 :root {
   /* Brand */
   --color-brand: #008d45;
@@ -5148,6 +5150,803 @@ button:disabled {
 .history-summary b,
 .history-summary em {
   font-size: var(--text-sm) !important;
+}
+
+/* =========================================================
+   Renovación visual integral
+   ========================================================= */
+
+:root {
+  --color-brand: #078747;
+  --color-brand-dark: #075f38;
+  --color-brand-deep: #123b2b;
+  --color-brand-soft: #e8f5ed;
+  --color-brand-muted: #9dcdb0;
+  --color-bg: #f3f7f4;
+  --color-surface: #fffefd;
+  --color-surface-soft: #f8fbf9;
+  --color-border: #dbe6df;
+  --color-text: #193126;
+  --color-text-muted: #65756c;
+  --color-accent-blue: #4169a9;
+  --color-accent-blue-soft: #edf3fb;
+  --color-accent-amber: #b67525;
+  --color-accent-amber-soft: #fff5e6;
+  --color-accent-coral: #b9584f;
+  --font-family: "Manrope", "Segoe UI", sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-sm: 0 2px 5px rgb(20 59 42 / 5%), 0 12px 30px rgb(20 59 42 / 5%);
+  --shadow-md: 0 18px 50px rgb(20 59 42 / 14%);
+  --shadow-lift: 0 18px 38px rgb(20 59 42 / 11%);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(rgb(7 135 71 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(7 135 71 / 3%) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+#app {
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+#app * {
+  letter-spacing: 0;
+}
+
+#app h1,
+#app h2,
+#app h3,
+#app p {
+  text-wrap: pretty;
+}
+
+#app button,
+#app a,
+#app input,
+#app select,
+#app textarea {
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease,
+    box-shadow 180ms ease, transform 180ms ease, opacity 180ms ease;
+}
+
+#app input,
+#app select,
+#app textarea {
+  border-color: #cedbd3;
+  background-color: rgb(255 255 255 / 92%);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 2px rgb(20 59 42 / 3%);
+}
+
+#app input:hover,
+#app select:hover,
+#app textarea:hover {
+  border-color: #9fbaaa;
+}
+
+#app input:focus,
+#app select:focus,
+#app textarea:focus {
+  outline: 0;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 4px rgb(7 135 71 / 10%);
+}
+
+#app .app-button {
+  min-height: 46px;
+  border-radius: 11px;
+  box-shadow: none;
+}
+
+#app .app-button--primary {
+  background: var(--color-brand);
+  box-shadow: 0 8px 18px rgb(7 135 71 / 18%);
+}
+
+#app .app-button--primary:hover:not(:disabled) {
+  background: var(--color-brand-dark);
+  box-shadow: 0 12px 24px rgb(7 95 56 / 22%);
+  transform: translateY(-2px);
+}
+
+#app .app-button--secondary:hover:not(:disabled),
+#app .app-button--ghost:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+#app .app-alert {
+  border-width: 1px 1px 1px 4px;
+  box-shadow: 0 8px 24px rgb(20 59 42 / 5%);
+}
+
+/* Acceso y autenticación */
+#app .access {
+  grid-template-columns: minmax(300px, 38vw) 1fr;
+  background: transparent;
+}
+
+#app .brand-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 42px clamp(30px, 5vw, 76px);
+  background-color: #075f38;
+  background-image:
+    linear-gradient(135deg, rgb(255 255 255 / 7%) 25%, transparent 25%),
+    linear-gradient(315deg, rgb(255 255 255 / 4%) 25%, transparent 25%);
+  background-size: 52px 52px;
+}
+
+#app .brand-panel::after {
+  content: "CCISJ";
+  position: absolute;
+  right: -18px;
+  bottom: -44px;
+  color: rgb(255 255 255 / 5%);
+  font-family: var(--font-display);
+  font-size: 9rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+#app .brand-panel__copy {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  margin-bottom: 24px;
+}
+
+#app .brand-panel__copy h1 {
+  max-width: 12ch;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+#app .brand-panel__copy p {
+  max-width: 38ch;
+  color: #d2e9dc;
+  font-size: 1rem;
+}
+
+#app .brand-panel__benefits {
+  margin: 20px 0 auto;
+}
+
+#app .brand-panel__benefits li {
+  color: #edf8f1;
+}
+
+#app .access__content {
+  position: relative;
+  padding: 46px 28px;
+  background-image:
+    linear-gradient(90deg, transparent 49%, rgb(7 135 71 / 4%) 50%, transparent 51%);
+  background-size: 72px 72px;
+}
+
+#app .access-card,
+#app .login-form,
+#app .session__card {
+  width: min(100%, 480px);
+  padding: 34px;
+  border: 1px solid rgb(207 222 213 / 85%);
+  border-radius: 20px;
+  background: rgb(255 254 253 / 94%);
+  box-shadow: var(--shadow-lift);
+  animation: surface-enter 480ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+#app .access-card__title,
+#app .login-form__heading h2,
+#app .session__card h1 {
+  font-family: var(--font-display);
+  color: var(--color-brand-deep);
+  font-weight: 700;
+}
+
+#app .role-option {
+  min-height: 92px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid #d8e2dc;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 82%);
+  box-shadow: 0 4px 14px rgb(20 59 42 / 4%);
+}
+
+#app .role-option:hover {
+  border-color: var(--color-brand-muted);
+  background: #fbfefc;
+  box-shadow: 0 14px 30px rgb(20 59 42 / 10%);
+  transform: translateX(5px);
+}
+
+#app .role-option__icon,
+#app .login-form__icon {
+  border: 1px solid rgb(7 135 71 / 8%);
+  border-radius: 12px;
+}
+
+#app .role-option--admin .role-option__icon {
+  border-color: rgb(65 105 169 / 10%);
+}
+
+/* Registro */
+#app .registration {
+  background: transparent;
+}
+
+#app .registration__header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: 72px;
+  padding: 12px 30px;
+  background: rgb(7 95 56 / 96%);
+  box-shadow: 0 8px 30px rgb(20 59 42 / 14%);
+  backdrop-filter: blur(14px);
+}
+
+#app .registration-card {
+  margin: 38px auto 56px;
+  padding: 32px;
+  border: 1px solid #dbe6df;
+  border-radius: 20px;
+  background: rgb(255 254 253 / 95%);
+  box-shadow: var(--shadow-lift);
+  animation: surface-enter 420ms ease both;
+}
+
+#app .registration-card__step > h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--color-brand-deep);
+}
+
+#app .stepper__step {
+  opacity: .76;
+}
+
+#app .stepper__step--active,
+#app .stepper__step--done {
+  opacity: 1;
+}
+
+#app .stepper__marker {
+  box-shadow: 0 0 0 4px rgb(255 255 255 / 9%);
+}
+
+#app .availability__choice,
+#app .cv-mode-actions__button,
+#app .upload-placeholder,
+#app .experience-form,
+#app .cv-option-panel,
+#app .manual-cv-entry {
+  border-color: #d7e4dc;
+  background: var(--color-surface-soft);
+  box-shadow: 0 6px 18px rgb(20 59 42 / 4%);
+}
+
+#app .availability__choice:hover,
+#app .cv-mode-actions__button:hover {
+  border-color: var(--color-brand-muted);
+  background: #f1f9f4;
+  transform: translateY(-2px);
+}
+
+#app .availability__choice--selected,
+#app .cv-mode-actions__button--active {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+  box-shadow: 0 0 0 3px rgb(7 135 71 / 8%);
+}
+
+/* Shells y navegación */
+#app .admin-shell,
+#app .socio-shell,
+#app .postulante-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+#app .admin-sidebar,
+#app .socio-sidebar,
+#app .postulante-sidebar {
+  background-color: #103a2b;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px);
+  background-size: 28px 28px;
+  box-shadow: 10px 0 36px rgb(16 58 43 / 12%);
+}
+
+#app .admin-sidebar__brand,
+#app .socio-sidebar__brand,
+#app .postulante-sidebar__brand {
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+}
+
+#app .admin-sidebar__label {
+  color: #9bc4ad;
+  text-transform: uppercase;
+}
+
+#app .admin-nav__item,
+#app .socio-nav__item,
+#app .postulante-nav__item {
+  position: relative;
+  min-height: 46px;
+  border-radius: 11px;
+  color: #d9e9df;
+}
+
+#app .admin-nav__item::before,
+#app .socio-nav__item::before,
+#app .postulante-nav__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 0;
+  border-radius: 3px;
+  background: #79d69e;
+  transition: height 180ms ease;
+}
+
+#app .admin-nav__item:hover,
+#app .socio-nav__item:hover,
+#app .postulante-nav__item:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  transform: translateX(3px);
+}
+
+#app .admin-nav__item--active,
+#app .socio-nav__item--active,
+#app .postulante-nav__item--active {
+  color: #fff;
+  background: rgb(255 255 255 / 13%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+
+#app .admin-nav__item--active::before,
+#app .socio-nav__item--active::before,
+#app .postulante-nav__item--active::before {
+  height: 22px;
+}
+
+#app .admin-topbar,
+#app .socio-header,
+#app .postulante-header {
+  min-height: 76px;
+  border-bottom: 1px solid rgb(211 225 216 / 80%);
+  background: rgb(255 254 253 / 88%);
+  box-shadow: 0 8px 24px rgb(20 59 42 / 5%);
+  backdrop-filter: blur(16px);
+}
+
+#app .notification-bell,
+#app .shell-exit {
+  border-color: #d5e1d9;
+  background: rgb(255 255 255 / 80%);
+}
+
+#app .notification-bell:hover,
+#app .shell-exit:hover {
+  border-color: var(--color-brand-muted);
+  background: var(--color-brand-soft);
+  transform: translateY(-1px);
+}
+
+#app .admin-topbar__avatar,
+#app .socio-header__avatar,
+#app .postulante-header__avatar {
+  border: 2px solid #fff;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-dark);
+  box-shadow: 0 0 0 1px #d5e1d9, 0 6px 14px rgb(20 59 42 / 10%);
+}
+
+#app .admin-page,
+#app .socio-shell__body,
+#app .postulante-shell__body {
+  width: 100%;
+  max-width: 1500px;
+  margin-inline: auto;
+  animation: none;
+}
+
+#app .admin-page__heading,
+#app .socio-header__titles,
+#app .postulante-header__titles {
+  position: relative;
+}
+
+#app .admin-page__heading h1,
+#app .socio-header__title,
+#app .postulante-header__title {
+  font-family: var(--font-display);
+  color: var(--color-brand-deep);
+  font-weight: 700;
+}
+
+#app .admin-page__eyebrow {
+  color: var(--color-accent-blue);
+}
+
+/* Superficies, tarjetas y paneles */
+#app :is(
+  .cash-metric,
+  .cash-table-card,
+  .company-search-card,
+  .company-table-card,
+  .admin-table-panel,
+  .admin-panel,
+  .fee-panel,
+  .new-company-card,
+  .communication-editor,
+  .socio-offer-card,
+  .applicant-group-card,
+  .profile-card,
+  .socio-application-card,
+  .socio-directory__panel,
+  .socio-notification,
+  .socio-profile__card,
+  .offer-card,
+  .application-card,
+  .profile-card-postulante,
+  .personal-profile__form
+) {
+  border-color: #dbe6df;
+  border-radius: var(--radius-md);
+  background: rgb(255 254 253 / 94%);
+  box-shadow: var(--shadow-sm);
+}
+
+#app :is(
+  .socio-offer-card,
+  .applicant-group-card,
+  .profile-card,
+  .offer-card,
+  .application-card,
+  .profile-card-postulante,
+  .socio-notification
+):hover {
+  border-color: #bed3c5;
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-3px);
+}
+
+#app .cash-metric {
+  position: relative;
+  overflow: hidden;
+}
+
+#app .cash-metric::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--color-brand);
+  opacity: .55;
+}
+
+#app .cash-metric:nth-child(2)::after {
+  background: var(--color-accent-blue);
+}
+
+#app .cash-metric:nth-child(3)::after {
+  background: var(--color-accent-amber);
+}
+
+#app .cash-metric:nth-child(4)::after {
+  background: var(--color-accent-coral);
+}
+
+#app .cash-metric__icon,
+#app .admin-metric__icon,
+#app .application-card__icon,
+#app .profile-modal__cv-icon {
+  border-radius: 12px;
+}
+
+#app .bolsa__filters {
+  border: 1px solid #dbe6df;
+  border-radius: var(--radius-md);
+  background: rgb(255 254 253 / 90%);
+  box-shadow: var(--shadow-sm);
+}
+
+#app .filter-group__select,
+#app .sector-picker__select,
+#app .postulante-offers__filter select {
+  border-color: #cedbd3;
+  background-color: #fff;
+}
+
+#app .filter-group__option {
+  border-radius: 9px;
+}
+
+#app .filter-group__option:hover {
+  background: var(--color-brand-soft);
+}
+
+#app .filter-group__option--active,
+#app .cash-filter--active {
+  color: var(--color-brand-dark);
+  background: var(--color-brand-soft);
+  box-shadow: inset 0 0 0 1px rgb(7 135 71 / 18%);
+}
+
+#app .profile-card__tag,
+#app .application-card__pill,
+#app .profile-card-postulante__skills span,
+#app .profile-card-postulante__skills button,
+#app .socio-application-card li {
+  background: #edf4ef;
+  color: #365847;
+}
+
+/* Tablas */
+#app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) th {
+  color: #52665a;
+  background: #edf4ef;
+  text-transform: uppercase;
+}
+
+#app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) tbody tr {
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+#app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) tbody tr:hover {
+  background: #f3faf6;
+  box-shadow: inset 3px 0 var(--color-brand);
+}
+
+#app .cash-status,
+#app .application-card__status,
+#app .profile-card-postulante__visibility,
+#app .socio-directory__status {
+  border: 1px solid currentColor;
+  border-color: rgb(7 135 71 / 14%);
+}
+
+/* Modales y capas */
+#app :is(
+  .profile-modal__backdrop,
+  .offer-form-modal__backdrop,
+  .modal__backdrop,
+  .cash-modal-layer,
+  .admin-modal__backdrop,
+  .shell-backdrop
+) {
+  background-color: rgb(12 38 27 / 62%);
+  backdrop-filter: blur(5px);
+}
+
+#app .modal {
+  inset: 0;
+  z-index: 80;
+  width: auto !important;
+  max-width: none !important;
+  height: auto;
+  max-height: none !important;
+  margin: 0;
+  padding: 24px;
+  border-radius: 0 !important;
+  transform: none;
+}
+
+#app :is(
+  .profile-modal__panel,
+  .offer-form-modal__panel,
+  .modal__panel,
+  .cash-modal,
+  .history-modal,
+  .excel-modal,
+  .expense-modal,
+  .publish-modal,
+  .admin-modal__card
+) {
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: var(--radius-lg) !important;
+  background: var(--color-surface);
+  box-shadow: 0 28px 70px rgb(5 34 21 / 28%) !important;
+  animation: modal-enter 260ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+#app :is(
+  .profile-modal__header,
+  .offer-form-modal__header,
+  .modal__header,
+  .cash-modal__header,
+  .publish-modal__header
+) {
+  background-color: var(--color-brand-dark) !important;
+  background-image: linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+#app :is(.profile-modal__name, .offer-form-modal__header h2, .modal__header h3, .cash-modal__header h2) {
+  font-family: var(--font-display);
+}
+
+#app :is(.profile-modal__body, .offer-form, .modal__text, .modal__form-grid, .cash-modal__body) {
+  background: var(--color-surface);
+}
+
+#app :is(.profile-modal__actions, .offer-form__actions, .modal__actions, .cash-modal__footer) {
+  border-color: #dbe6df;
+  background: #f5f9f6;
+}
+
+#app .socio-toast {
+  border: 1px solid #c9ded0;
+  border-left: 4px solid var(--color-brand);
+  border-radius: var(--radius-md);
+  background: rgb(255 254 253 / 96%);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(12px);
+  animation: toast-enter 340ms ease both;
+}
+
+/* Detalles y movimiento */
+#app .admin-page > *,
+#app .socio-shell__body > *,
+#app .postulante-shell__body > * {
+  animation: content-enter 420ms ease both;
+}
+
+#app .admin-page > :nth-child(2),
+#app .socio-shell__body > :nth-child(2),
+#app .postulante-shell__body > :nth-child(2) {
+  animation-delay: 50ms;
+}
+
+#app .admin-page > :nth-child(3),
+#app .socio-shell__body > :nth-child(3),
+#app .postulante-shell__body > :nth-child(3) {
+  animation-delay: 90ms;
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) > :is(
+  .modal,
+  .profile-modal,
+  .offer-form-modal,
+  .cash-modal-layer,
+  .admin-modal
+) {
+  animation: none;
+  transform: none;
+}
+
+#app .socio-nav__count,
+#app .notification-bell__badge {
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+@keyframes surface-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes content-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(18px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 980px) {
+  #app .brand-panel {
+    padding: 22px 24px;
+    background-size: 38px 38px;
+  }
+
+  #app .brand-panel__copy {
+    margin: 14px 0 0;
+  }
+
+  #app .brand-panel__copy h1 {
+    max-width: none;
+    font-size: 1.8rem;
+  }
+
+  #app .access__content {
+    padding: 26px 16px 38px;
+  }
+
+  #app .admin-topbar,
+  #app .socio-header,
+  #app .postulante-header {
+    min-height: 68px;
+  }
+}
+
+@media (max-width: 720px) {
+  #app .access-card,
+  #app .login-form,
+  #app .session__card,
+  #app .registration-card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+
+  #app .registration-card {
+    margin-top: 22px;
+  }
+
+  #app .registration-card__step > h2 {
+    font-size: 1.55rem;
+  }
+
+  #app .modal {
+    padding: 12px;
+  }
+
+  #app .admin-page,
+  #app .socio-shell__body,
+  #app .postulante-shell__body {
+    padding-top: 20px !important;
+  }
+
+  #app :is(
+    .socio-offer-card,
+    .applicant-group-card,
+    .profile-card,
+    .offer-card,
+    .application-card,
+    .profile-card-postulante,
+    .socio-notification
+  ):hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #app *,
+  #app *::before,
+  #app *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .history-summary strong,
