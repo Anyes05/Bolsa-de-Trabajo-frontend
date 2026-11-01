@@ -1468,7 +1468,7 @@ button:disabled {
 
 .profile-card__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
   gap: 8px;
 }
 
@@ -1486,7 +1486,7 @@ button:disabled {
 .applicant-group-card__header {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: 12px;
   padding: 16px 18px;
 }
@@ -1536,7 +1536,7 @@ button:disabled {
 
 .applicant-group-card__profiles {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 12px;
   padding: 16px 18px 18px;
   border-top: 1px solid #e6ede8;
@@ -4916,7 +4916,7 @@ button:disabled {
 
 .applicant-group-card__contact {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   color: #445249;
   font-size: var(--text-sm);
@@ -5191,10 +5191,10 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background-color: var(--color-bg);
-  background-image:
-    linear-gradient(rgb(7 135 71 / 3%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(7 135 71 / 3%) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-image: linear-gradient(135deg, #edf4f2 0%, #fdfefd 50%, #eef5f0 100%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 #app {
@@ -5332,9 +5332,7 @@ body {
 #app .access__content {
   position: relative;
   padding: 46px 28px;
-  background-image:
-    linear-gradient(90deg, transparent 49%, rgb(7 135 71 / 4%) 50%, transparent 51%);
-  background-size: 72px 72px;
+  background: transparent;
 }
 
 #app .access-card,
@@ -5386,38 +5384,145 @@ body {
 
 /* Registro */
 #app .registration {
+  --text-xs: .75rem;
+  --text-sm: .875rem;
+  --text-md: .9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --font-display: var(--font-family);
   background: transparent;
+  font-size: var(--text-md);
+  line-height: 1.6;
 }
 
 #app .registration__header {
   position: sticky;
   top: 0;
   z-index: 20;
-  min-height: 72px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 24px;
+  min-height: 80px;
   padding: 12px 30px;
-  background: rgb(7 95 56 / 96%);
+  background: linear-gradient(110deg, #106343, #103f31);
   box-shadow: 0 8px 30px rgb(20 59 42 / 14%);
-  backdrop-filter: blur(14px);
+}
+
+#app .registration__brand .brand-logo {
+  width: 136px;
+  height: 48px;
+  object-fit: contain;
+}
+
+#app .registration__divider {
+  display: none;
+}
+
+#app .registration__header h1 {
+  font-size: 1rem;
+  line-height: 1.4;
 }
 
 #app .registration-card {
-  margin: 38px auto 56px;
-  padding: 32px;
+  width: min(calc(100% - 48px), 900px);
+  max-width: 900px;
+  margin: 32px auto 48px;
+  padding: 32px 36px;
   border: 1px solid #dbe6df;
-  border-radius: 20px;
-  background: rgb(255 254 253 / 95%);
-  box-shadow: var(--shadow-lift);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   animation: surface-enter 420ms ease both;
 }
 
 #app .registration-card__step > h2 {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 1.5rem;
   color: var(--color-brand-deep);
 }
 
+#app .registration :is(h2, h3, h4) {
+  font-family: var(--font-family);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+#app .registration-card__step > p {
+  margin: 12px 0 24px;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+}
+
+#app .registration-card__step-icon,
+#app .registration-success__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #cee3d5;
+  border-radius: 10px;
+  color: var(--color-brand-dark);
+  background: var(--color-brand-soft);
+}
+
+#app .registration-success__icon {
+  margin-bottom: 16px;
+}
+
+#app .registration :is(input, select, textarea, button) {
+  min-width: 0;
+  font-family: var(--font-family);
+}
+
+#app .registration :is(button, a):focus-visible {
+  outline: 2px solid var(--color-brand-muted);
+  outline-offset: 3px;
+}
+
+#app .registration .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 20px;
+}
+
+#app .registration .form-grid > * {
+  min-width: 0;
+}
+
+#app .registration-card__notice {
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--color-accent-blue-soft);
+  border-color: #d7e3f2;
+  color: #395978;
+}
+
+#app .registration-card__notice svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+#app .registration-card__actions {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 24px;
+}
+
+#app .registration .stepper__list {
+  gap: 20px;
+  color: #c4dfd0;
+  font-size: .8125rem;
+}
+
 #app .stepper__step {
-  opacity: .76;
+  gap: 10px;
+  opacity: 1;
+  line-height: 1.4;
 }
 
 #app .stepper__step--active,
@@ -5426,7 +5531,171 @@ body {
 }
 
 #app .stepper__marker {
-  box-shadow: 0 0 0 4px rgb(255 255 255 / 9%);
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  box-shadow: none;
+}
+
+#app .registration :is(.experience-form, .cv-option-panel) {
+  margin-top: 24px;
+  padding: 24px 0 0 !important;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 !important;
+  background: transparent;
+  box-shadow: none;
+}
+
+#app .registration .cv-mode-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#app .registration .cv-mode-actions__button {
+  min-height: 56px !important;
+  padding: 12px 16px;
+  border-width: 1px;
+  border-radius: 8px;
+  line-height: 1.4;
+  transform: none;
+}
+
+#app .registration .cv-mode-actions__button svg {
+  flex-shrink: 0;
+}
+
+#app .registration .manual-cv-section {
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-color: var(--color-border);
+}
+
+#app .registration .manual-cv-section__heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+#app .registration .manual-cv-section__heading h4 {
+  gap: 12px;
+  color: var(--color-text);
+}
+
+#app .registration .manual-cv-section__heading button {
+  min-height: 40px;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--color-brand-dark);
+  line-height: 1.4;
+}
+
+#app .registration .manual-cv-section__heading button:hover {
+  background: var(--color-brand-soft);
+}
+
+.manual-cv-section__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: var(--color-brand-dark);
+  background: var(--color-brand-soft);
+}
+
+.manual-cv-section__icon--summary,
+.manual-cv-section__icon--education {
+  color: var(--color-accent-blue);
+  background: var(--color-accent-blue-soft);
+}
+
+.manual-cv-section__icon--skills {
+  color: #946222;
+  background: var(--color-accent-amber-soft);
+}
+
+.manual-cv-section__icon--languages {
+  color: #176d73;
+  background: #e7f3f4;
+}
+
+.manual-cv-section__icon--work-references {
+  color: #42634f;
+  background: #edf4ef;
+}
+
+.manual-cv-section__icon--personal-references {
+  color: var(--color-accent-coral);
+  background: #fcf0ec;
+}
+
+#app .registration .manual-cv-entry {
+  gap: 16px;
+  padding: 0 0 0 16px;
+  border: 0;
+  border-left: 2px solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#app .registration .manual-cv-entry__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+#app .registration :is(.manual-cv-entry__grid, .manual-cv-language) label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+#app .registration .manual-cv-section textarea {
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+#app .registration .manual-cv-entry__check input {
+  width: 18px;
+  height: 18px;
+  min-height: 0 !important;
+}
+
+#app .registration .manual-cv-language {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+  align-items: end;
+}
+
+#app .registration .manual-cv-language button {
+  justify-content: center;
+  width: 36px;
+  height: var(--control-height);
+  padding: 0 !important;
+}
+
+#app .registration .upload-files__item {
+  align-items: flex-start;
+  border-color: var(--color-border);
+  padding: 12px;
+  font-size: var(--text-sm);
+}
+
+#app .registration .upload-files__item span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#app .registration .upload-files__remove {
+  flex-shrink: 0;
+  min-height: 40px;
 }
 
 #app .availability__choice,
@@ -5563,10 +5832,57 @@ body {
 #app .admin-page,
 #app .socio-shell__body,
 #app .postulante-shell__body {
+  --text-xs: .75rem;
+  --text-sm: .875rem;
+  --text-md: .9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
   width: 100%;
   max-width: 1500px;
+  min-width: 0;
   margin-inline: auto;
+  font-family: var(--font-family);
+  font-size: var(--text-md);
+  line-height: 1.6;
   animation: none;
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) :is(h2, h3, h4) {
+  font-family: var(--font-family);
+  font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) h2 {
+  font-size: var(--text-lg);
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) :is(h3, h4) {
+  font-size: 1rem;
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) :is(input, select, textarea, button) {
+  font-family: var(--font-family);
+}
+
+#app :is(.admin-page, .socio-shell__body, .postulante-shell__body) :is(p, label, dd, a) {
+  overflow-wrap: anywhere;
+}
+
+#app :is(.admin-toolbar, .applicant-toolbar, .company-actions, .cash-toolbar) {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+#app :is(.admin-search, .applicant-search, .company-search, .cash-search) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#app :is(.admin-form-grid, .new-company-form, .socio-profile__row, .profile-editor, .personal-profile__form) > * {
+  min-width: 0;
 }
 
 #app .admin-page__heading,
@@ -5578,9 +5894,19 @@ body {
 #app .admin-page__heading h1,
 #app .socio-header__title,
 #app .postulante-header__title {
-  font-family: var(--font-display);
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: 1.625rem;
+  line-height: 1.3;
   color: var(--color-brand-deep);
   font-weight: 700;
+}
+
+#app :is(.admin-page__heading p:last-child, .socio-header__subtitle, .postulante-header__subtitle) {
+  margin: 6px 0 0;
+  color: var(--color-text-muted);
+  font-size: .9375rem;
+  line-height: 1.5;
 }
 
 #app .admin-page__eyebrow {
@@ -5627,12 +5953,176 @@ body {
 ):hover {
   border-color: #bed3c5;
   box-shadow: var(--shadow-lift);
-  transform: translateY(-3px);
+  transform: none;
+}
+
+#app .socio-offer-card {
+  grid-template-columns: minmax(0, 1fr) 148px;
+  align-items: start;
+  gap: 24px;
+  padding: 24px;
+}
+
+#app .socio-offer-card__body {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+#app :is(.socio-offer-card__header, .profile-card-postulante__header) {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+#app .socio-offer-card__header h2 {
+  flex: 1 1 240px;
+  margin: 0;
+}
+
+#app .socio-offer-card__meta {
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+
+#app .socio-offer-card__text {
+  margin: 0;
+  color: var(--color-text);
+  font-size: .9375rem;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+#app .socio-offer-card__actions {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+#app .socio-offer-card__actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: auto;
+  min-height: 40px;
+  padding: 8px 12px;
+  line-height: 1.4;
+}
+
+#app :is(.offer-card__category, .socio-offer-card__status, .application-card__status, .application-card__pill, .profile-card-postulante__visibility) {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 5px 10px;
+  font-size: .75rem;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+#app :is(.offer-card__company, .application-card__company) {
+  margin-top: 6px;
+  font-size: .875rem;
+  line-height: 1.5;
+  color: var(--color-brand-dark);
+}
+
+#app :is(.applicant-group-card__identity, .profile-card__identity, .socio-application-card__main, .profile-card-postulante__header > div) {
+  min-width: 0;
+}
+
+#app :is(.profile-card__tags, .profile-card-postulante__skills, .applicant-group-card__actions) {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#app :is(.applicant-group-card__contact, .socio-application-card__main, .application-card__header) svg,
+#app :is(.applicant-group-card__avatar, .socio-application-card__avatar, .application-card__icon) {
+  flex-shrink: 0;
 }
 
 #app .cash-metric {
   position: relative;
   overflow: hidden;
+}
+
+#app .postulante-offers__list > :is(.offer-card, .application-card) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px;
+}
+
+#app .postulante-offers__list :is(.offer-card__header, .application-card__header) {
+  align-items: flex-start;
+  gap: 12px 20px;
+}
+
+#app .postulante-offers__list .offer-card__header {
+  flex-wrap: wrap;
+}
+
+#app .postulante-offers__list .application-card__header {
+  justify-content: flex-start;
+}
+
+#app .postulante-offers__list :is(.offer-card__header, .application-card__header) > div {
+  min-width: 0;
+}
+
+#app .postulante-offers__list :is(.offer-card__title, .application-card__title) {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+#app .postulante-offers__list :is(.offer-card__meta, .offer-card__description) {
+  display: block;
+  margin: 0;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+#app .postulante-offers__list .offer-card__description {
+  color: var(--color-text);
+  white-space: pre-line;
+}
+
+#app .postulante-offers__list :is(.offer-card__footer, .application-card__footer) {
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
+}
+
+#app .postulante-offers__list .offer-card__applied {
+  margin: 0;
+  font-size: .875rem;
+  color: var(--color-brand-dark);
+}
+
+#app .postulante-offers__list .application-card__body {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#app .postulante-offers__list .application-card__footer p {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
 }
 
 #app .cash-metric::after {
@@ -5705,6 +6195,12 @@ body {
 #app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) {
   border-collapse: separate;
   border-spacing: 0;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+#app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) :is(th, td) {
+  vertical-align: middle;
 }
 
 #app :is(.cash-table, .company-table, .admin-table, .socio-directory__table) th {
@@ -5787,7 +6283,9 @@ body {
 }
 
 #app :is(.profile-modal__name, .offer-form-modal__header h2, .modal__header h3, .cash-modal__header h2) {
-  font-family: var(--font-display);
+  font-family: var(--font-family);
+  font-size: 1.125rem;
+  line-height: 1.4;
 }
 
 #app :is(.profile-modal__body, .offer-form, .modal__text, .modal__form-grid, .cash-modal__body) {

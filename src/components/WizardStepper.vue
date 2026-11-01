@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Check } from 'lucide-vue-next'
+
 defineProps<{
   steps: readonly string[]
   current: number
@@ -18,8 +20,11 @@ defineProps<{
         }"
         :aria-current="current === index + 1 ? 'step' : undefined"
       >
-        <b class="stepper__marker">{{ current > index + 1 ? 'OK' : index + 1 }}</b>
-        {{ label }}
+        <b class="stepper__marker">
+          <template v-if="current > index + 1"><Check :size="16" aria-hidden="true" /><span class="visually-hidden">Completado:</span></template>
+          <template v-else>{{ index + 1 }}</template>
+        </b>
+        <span class="stepper__label">{{ label }}</span>
       </li>
     </ol>
   </nav>

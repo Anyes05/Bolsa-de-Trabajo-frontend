@@ -234,7 +234,7 @@ canvas {
   .admin-page__heading h1,
   .socio-header__title,
   .postulante-header__title {
-    font-size: clamp(1.15rem, 4.8vw, 1.45rem) !important;
+    font-size: 1.25rem !important;
     line-height: 1.25 !important;
     max-width: 100%;
     white-space: normal;
@@ -430,6 +430,33 @@ canvas {
     align-items: stretch !important;
   }
 
+  #app .socio-offer-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    padding: 18px;
+  }
+
+  #app .postulante-offers__list > :is(.offer-card, .application-card) {
+    padding: 18px;
+  }
+
+  #app .socio-offer-card__header h2 {
+    flex-basis: auto;
+  }
+
+  #app .postulante-offers__list .application-card__header {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+  }
+
+  .applicant-group-card__header {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .applicant-group-card__count {
+    grid-column: 2;
+  }
+
   .profile-card-postulante__actions,
   .socio-offer-card__actions,
   .profile-modal__actions,
@@ -462,6 +489,40 @@ canvas {
 
   .registration__header h1 {
     font-size: 1.15rem;
+  }
+
+  #app .registration__header {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px 16px;
+    padding: 12px 18px;
+  }
+
+  #app .registration__header h1 {
+    text-align: right;
+  }
+
+  #app .registration .stepper {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0;
+  }
+
+  #app .registration .stepper__list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  #app .registration .stepper__step {
+    min-width: 0;
+    gap: 8px;
+    white-space: normal;
+  }
+
+  #app .registration-card {
+    width: calc(100% - 24px);
+    margin: 20px auto 32px;
+    padding: 24px;
   }
 
   .stepper__list {
@@ -526,6 +587,40 @@ canvas {
 }
 
 @media (max-width: 560px) {
+  #app .registration-card {
+    padding: 20px 16px;
+  }
+
+  #app .registration-card__step > h2 {
+    font-size: 1.25rem;
+  }
+
+  #app .registration .manual-cv-section__heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  #app .registration .manual-cv-section__heading button {
+    justify-self: start;
+    max-width: calc(100% - 48px);
+    margin-left: 48px;
+  }
+
+  #app .registration .cv-mode-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  #app .registration .stepper__step {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+
+  #app .registration .stepper__label {
+    min-height: 2.8em;
+  }
+
   .admin-metrics,
   .cash-metrics {
     grid-template-columns: 1fr !important;

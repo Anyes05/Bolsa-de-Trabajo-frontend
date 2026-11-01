@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, GraduationCap, Lightbulb, Paperclip, Plus, Trash2, Wrench } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, Check, FileText, GraduationCap, Languages, Lightbulb, Paperclip, Plus, Trash2, UserRound, UsersRound, Wrench } from 'lucide-vue-next'
 import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
@@ -21,10 +21,17 @@ import { userFacingError } from '../utils/userMessage'
 const router = useRouter()
 const auth = useAuthStore()
 const step = ref(1)
+const stepHeading = ref<HTMLHeadingElement | null>(null)
 const busy = ref(false)
 const error = ref('')
 const success = ref('')
 const registered = ref(false)
+watch([step, registered], async () => {
+  await nextTick()
+  stepHeading.value?.focus({ preventScroll: true })
+  window.scrollTo({ top: 0, behavior: 'instant' })
+})
+
 const sectors = ref<string[]>([...fallbackSectors])
 const chosen = ref<string[]>([])
 const cvFiles = ref<File[]>([])
@@ -541,7 +548,8 @@ async function complete() {
     </header>
 
     <section v-if="registered" class="registration-card registration-success" aria-labelledby="register-done-title">
-      <h2 id="register-done-title">Registro completado</h2>
+      <span class="registration-success__icon" aria-hidden="true"><Check :size="26" /></span>
+      <h2 id="register-done-title" ref="stepHeading" tabindex="-1">Registro completado</h2>
       <p>Tu ficha de postulante ya está lista. Podés entrar a la plataforma o volver al inicio de sesión.</p>
       <AppAlert tone="success">{{ success || 'Cuenta creada correctamente.' }}</AppAlert>
       <div class="registration-success__actions">
@@ -560,7 +568,7 @@ async function complete() {
 
     <form v-else class="registration-card" @submit.prevent="step < 3 ? next() : complete()">
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
-        <h2 id="step-personal">Datos Personales</h2>
+        <h2 id="step-personal" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><UserRound :size="24" /></span> Datos Personales</h2>
         <p>Completa la información básica para dar de alta tu ficha de postulante.</p>
         <div class="form-grid">
           <AppField id="fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
@@ -572,7 +580,7 @@ async function complete() {
           <AppField id="phone" label="Teléfono / Celular" required :error="fieldErrors.phone">
             <input id="phone" v-model="form.phone" placeholder="Ej: 099 123 456" autocomplete="tel" :aria-invalid="Boolean(fieldErrors.phone)">
           </AppField>
-          <AppField id="email" label="Gmail / Correo electrónico" required :error="fieldErrors.email">
+          <AppField id="email" label="Gmail / Correo electrónico" required wide :error="fieldErrors.email">
             <input id="email" v-model="form.email" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
           </AppField>
           <AppField id="password" label="Escribe una contraseña" required :error="fieldErrors.password">
@@ -590,6 +598,8 @@ async function complete() {
       </section>
 
       <section v-else-if="step === 2" class="registration-card__step" aria-labelledby="step-profile">
+        <h2 id="step-profile" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><BriefcaseBusiness :size="24" /></span> Primer Perfil Laboral</h2>
+        <p>Configura las bases de tu primera postulación activa.</p>
         <aside class="registration-card__notice">
           <Lightbulb :size="17" aria-hidden="true" />
           <div>
@@ -597,8 +607,6 @@ async function complete() {
             Después podrás crear perfiles adicionales para distintos rubros.
           </div>
         </aside>
-        <h2 id="step-profile">Primer Perfil Laboral</h2>
-        <p>Configura las bases de tu primera postulación activa.</p>
         <AppField id="profileName" label="Nombre de este perfil" required :error="fieldErrors.profileName">
           <input id="profileName" v-model="form.profileName" placeholder="Ej: Perfil Administración" :aria-invalid="Boolean(fieldErrors.profileName)">
         </AppField>
@@ -663,13 +671,13 @@ async function complete() {
       </section>
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
-        <h2 id="step-cv">Curriculum Vitae</h2>
+        <h2 id="step-cv" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><FileText :size="24" /></span> Curriculum Vitae</h2>
         <p>Elige una modalidad: adjunta un PDF existente o crea uno nuevo con tu información.</p>
         <div class="cv-mode-actions" aria-label="Modalidad de curriculum">
-          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'upload' }" @click="selectCvMode('upload')">
+          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'upload' }" :aria-pressed="cvMode === 'upload'" @click="selectCvMode('upload')">
             <Paperclip :size="17" aria-hidden="true" /> Adjuntar CV
           </button>
-          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'manual' }" @click="selectCvMode('manual')">
+          <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'manual' }" :aria-pressed="cvMode === 'manual'" @click="selectCvMode('manual')">
             <Wrench :size="17" aria-hidden="true" /> Crear CV manualmente
           </button>
         </div>
@@ -698,12 +706,20 @@ async function complete() {
         <section v-else-if="cvMode === 'manual'" class="experience-form" aria-labelledby="manual-cv-title">
           <h3 id="manual-cv-title"><BriefcaseBusiness :size="18" aria-hidden="true" /> Crear CV manualmente</h3>
           <p class="experience-form__intro">Al completar el registro se generará un PDF y se guardará como tu CV activo.</p>
-          <AppField id="manualSummary" label="Perfil profesional">
-            <textarea id="manualSummary" v-model="manualCv.summary" placeholder="Resume tu experiencia, fortalezas y objetivo laboral..."></textarea>
-          </AppField>
+          <section class="manual-cv-section manual-cv-section--summary">
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--summary" aria-hidden="true"><UserRound :size="20" /></span> Perfil profesional</h4>
+            </div>
+            <AppField id="manualSummary" label="Resumen profesional">
+              <textarea id="manualSummary" v-model="manualCv.summary" placeholder="Resume tu experiencia, fortalezas y objetivo laboral..."></textarea>
+            </AppField>
+          </section>
 
           <section class="manual-cv-section">
-            <div class="manual-cv-section__heading"><h4>Experiencia laboral</h4><button type="button" @click="addExperience"><Plus :size="14" /> Agregar experiencia</button></div>
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon" aria-hidden="true"><BriefcaseBusiness :size="20" /></span> Experiencia laboral</h4>
+              <button type="button" @click="addExperience"><Plus :size="14" aria-hidden="true" /> Agregar experiencia</button>
+            </div>
             <article v-for="(experience, index) in manualCv.experiences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
                 <label>Cargo<input v-model="experience.role" placeholder="Ej: Auxiliar administrativo"></label>
@@ -718,7 +734,10 @@ async function complete() {
           </section>
 
           <section class="manual-cv-section">
-            <div class="manual-cv-section__heading"><h4>Formación académica</h4><button type="button" @click="addEducation"><Plus :size="14" /> Agregar formación</button></div>
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--education" aria-hidden="true"><GraduationCap :size="20" /></span> Formación académica</h4>
+              <button type="button" @click="addEducation"><Plus :size="14" aria-hidden="true" /> Agregar formación</button>
+            </div>
             <article v-for="(education, index) in manualCv.education" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
                 <label>Institución<input v-model="education.institution" placeholder="Ej: UTU"></label>
@@ -732,21 +751,33 @@ async function complete() {
           </section>
 
           <section class="manual-cv-section">
-            <div class="manual-cv-section__heading"><h4><GraduationCap :size="15" aria-hidden="true" /> Competencias</h4><button v-if="!manualCv.showCompetencies" type="button" @click="manualCv.showCompetencies = true"><Plus :size="14" /> Agregar competencias</button></div>
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--skills" aria-hidden="true"><Wrench :size="20" /></span> Competencias</h4>
+              <button v-if="!manualCv.showCompetencies" type="button" @click="manualCv.showCompetencies = true"><Plus :size="14" aria-hidden="true" /> Agregar competencias</button>
+            </div>
             <template v-if="manualCv.showCompetencies">
               <label>Habilidades técnicas<textarea v-model="manualCv.technicalSkills" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
               <label>Cursos y certificaciones<textarea v-model="manualCv.certifications" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
             </template>
-            <div class="manual-cv-section__heading"><h4>Idiomas</h4><button type="button" @click="addLanguage"><Plus :size="14" /> Agregar idioma</button></div>
+          </section>
+
+          <section class="manual-cv-section">
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--languages" aria-hidden="true"><Languages :size="20" /></span> Idiomas</h4>
+              <button type="button" @click="addLanguage"><Plus :size="14" aria-hidden="true" /> Agregar idioma</button>
+            </div>
             <div v-for="(language, index) in manualCv.languages" :key="index" class="manual-cv-language">
-              <input v-model="language.name" placeholder="Idioma">
-              <select v-model="language.level"><option value="">Nivel</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select>
+              <label>Idioma<input v-model="language.name" placeholder="Ej: Inglés"></label>
+              <label>Nivel<select v-model="language.level"><option value="">Seleccionar</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select></label>
               <button v-if="manualCv.languages.length > 1" type="button" aria-label="Quitar idioma" @click="removeLanguage(index)"><Trash2 :size="14" /></button>
             </div>
           </section>
 
           <section class="manual-cv-section">
-            <div class="manual-cv-section__heading"><h4>Referencias laborales</h4><button type="button" @click="addWorkReference"><Plus :size="14" /> Agregar referencia</button></div>
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--work-references" aria-hidden="true"><BadgeCheck :size="20" /></span> Referencias laborales</h4>
+              <button type="button" @click="addWorkReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
+            </div>
             <article v-for="(reference, index) in manualCv.workReferences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
                 <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
@@ -760,7 +791,10 @@ async function complete() {
           </section>
 
           <section class="manual-cv-section">
-            <div class="manual-cv-section__heading"><h4>Referencias personales</h4><button type="button" @click="addPersonalReference"><Plus :size="14" /> Agregar referencia</button></div>
+            <div class="manual-cv-section__heading">
+              <h4><span class="manual-cv-section__icon manual-cv-section__icon--personal-references" aria-hidden="true"><UsersRound :size="20" /></span> Referencias personales</h4>
+              <button type="button" @click="addPersonalReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
+            </div>
             <article v-for="(reference, index) in manualCv.personalReferences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
                 <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
