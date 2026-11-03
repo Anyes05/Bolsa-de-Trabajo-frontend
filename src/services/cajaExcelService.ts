@@ -7,12 +7,11 @@ type TotalesMes = {
   reintegros: number
   pendiente: number
   cobros: number
-  credito: number
   cargos: number
 }
 
 function totalesVacios(): TotalesMes {
-  return { cuotas: 0, reintegros: 0, pendiente: 0, cobros: 0, credito: 0, cargos: 0 }
+  return { cuotas: 0, reintegros: 0, pendiente: 0, cobros: 0, cargos: 0 }
 }
 
 function estadoDelMes(totales: TotalesMes) {
@@ -53,41 +52,27 @@ export const cajaExcelService = {
 
     const mensual = workbook.addWorksheet('Por mes')
     mensual.columns = [
-      { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
-      { header: 'Mes del cargo / cobro', key: 'mes', width: 24 },
-      { header: 'Cuotas (UYU)', key: 'cuotas', width: 20 },
-      { header: 'Reintegros (UYU)', key: 'reintegros', width: 22 },
-      { header: 'Total emitido (UYU)', key: 'total', width: 24 },
-      { header: 'Total cubierto (UYU)', key: 'cubierto', width: 24 },
-      { header: 'Saldo a favor utilizado (UYU)', key: 'credito', width: 32 },
-      { header: 'Pendiente actual (UYU)', key: 'pendiente', width: 26 },
-      { header: 'Cobros recibidos en el mes (UYU)', key: 'cobros', width: 36 },
-      { header: 'Estado del mes', key: 'estadoMes', width: 24 },
+      { width: 16 },
+      { width: 24 },
+      { width: 18 },
+      { width: 18 },
+      { width: 20 },
     ]
-
-    const deudas = workbook.addWorksheet('Deudas')
-    deudas.columns = [
-      { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
-      { header: 'Mes correspondiente', key: 'mes', width: 24 },
-      { header: 'Tipo', key: 'tipo', width: 18 },
-      { header: 'Concepto', key: 'concepto', width: 40 },
-      { header: 'Vencimiento', key: 'vencimiento', width: 18, style: { numFmt: 'dd/mm/yyyy' } },
-      { header: 'Monto original (UYU)', key: 'monto', width: 24 },
-      { header: 'Monto cubierto (UYU)', key: 'cubierto', width: 24 },
-      { header: 'Pendiente actual (UYU)', key: 'pendiente', width: 26 },
-    ]
+    const encabezadosMensuales: number[] = []
+    const filasSocioMensuales: number[] = []
 
     for (const cuenta of cuentas) {
       const historial = await cajaService.getHistorial(cuenta.socioId)
       const socio = {
         socio: historial.razonSocial,
-        identificador: historial.bps || '',
+        identificador: historial.bps ?? '',
         rubro: historial.nombreRubro ?? '',
         telefono: cuenta.telefono ?? '',
         estado: estadoMorosidadLabel[historial.estadoMorosidad],
       }
+      const identificadorSocio = historial.cedula
+        ? `Cédula: ${historial.cedula}`
+        : `BPS: ${historial.bps || '-'}`
       const meses = new Map<string, TotalesMes>()
       for (const movimiento of historial.movimientos) {
         const mes = movimiento.fecha.slice(0, 7)
@@ -101,16 +86,6 @@ export const cajaExcelService = {
           else totales.reintegros += monto
           totales.cargos += 1
           totales.pendiente += pendiente
-          totales.credito += Math.round((movimiento.saldoFavorUtilizado ?? 0) * 100)
-          if (pendiente > 0) {
-            deudas.addRow({
-              ...socio, mes, tipo: movimiento.tipo === 'CUOTA' ? 'Cuota' : 'Reintegro',
-              concepto: movimiento.concepto,
-              vencimiento: movimiento.fechaVencimiento
-                ? new Date(`${movimiento.fechaVencimiento.slice(0, 10)}T00:00:00Z`) : null,
-              monto: monto / 100, cubierto: (monto - pendiente) / 100, pendiente: pendiente / 100,
-            })
-          }
         }
         meses.set(mes, totales)
       }
@@ -123,43 +98,72 @@ export const cajaExcelService = {
         cubierto: (actual.cuotas + actual.reintegros - actual.pendiente) / 100,
         pendiente: actual.pendiente / 100, estadoMes: estadoDelMes(actual),
       })
-      for (const [mes, totales] of [...meses.entries()].sort(([primero], [segundo]) => primero.localeCompare(segundo))) {
-        mensual.addRow({
-          ...socio, mes, cuotas: totales.cuotas / 100, reintegros: totales.reintegros / 100,
-          total: (totales.cuotas + totales.reintegros) / 100,
-          cubierto: (totales.cuotas + totales.reintegros - totales.pendiente) / 100,
-          credito: totales.credito / 100, pendiente: totales.pendiente / 100,
-          cobros: totales.cobros / 100, estadoMes: estadoDelMes(totales),
-        })
+
+      const bpsRow = mensual.addRow([identificadorSocio])
+      mensual.mergeCells(bpsRow.number, 1, bpsRow.number, 5)
+      bpsRow.font = { bold: true, size: 12, color: { argb: 'FF08775F' } }
+      filasSocioMensuales.push(bpsRow.number)
+      const socioRow = mensual.addRow([historial.razonSocial])
+      mensual.mergeCells(socioRow.number, 1, socioRow.number, 5)
+      socioRow.font = { bold: true }
+      filasSocioMensuales.push(socioRow.number)
+      const encabezado = mensual.addRow(['Fecha', 'Mes', 'Debe (UYU)', 'Haber (UYU)', 'Saldo (UYU)'])
+      encabezadosMensuales.push(encabezado.number)
+
+      for (const movimiento of historial.movimientos) {
+        const esPago = movimiento.tipo === 'PAGO'
+        mensual.addRow([
+          new Date(`${movimiento.fecha.slice(0, 10)}T00:00:00Z`),
+          movimiento.fecha.slice(0, 7),
+          esPago ? 0 : movimiento.monto,
+          esPago ? movimiento.monto : 0,
+          movimiento.saldoResultante,
+        ])
       }
+      mensual.addRow([])
+      mensual.addRow([])
     }
 
-    const columnasMonetarias = new Set([
-      'saldo', 'deuda', 'vencida', 'favor', 'total', 'cubierto', 'pendiente',
-      'cuotas', 'reintegros', 'credito', 'cobros', 'monto',
-    ])
+    const columnasMonetarias = new Set(['saldo', 'deuda', 'vencida', 'favor', 'total', 'cubierto', 'pendiente'])
     for (const hoja of workbook.worksheets) {
-      hoja.views = [{ state: 'frozen', ySplit: 1, xSplit: 2 }]
-      hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: hoja.rowCount, column: hoja.columnCount } }
-      hoja.getRow(1).height = 32
-      hoja.getRow(1).eachCell((celda) => {
-        celda.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-        celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF08775F' } }
-        celda.alignment = { vertical: 'middle', wrapText: true }
-      })
-      hoja.columns.forEach((columna) => {
-        if (columnasMonetarias.has(columna.key ?? '')) {
-          columna.numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
+      if (hoja === resumen) {
+        hoja.views = [{ state: 'frozen', ySplit: 1 }]
+        hoja.autoFilter = { from: { row: 1, column: 1 }, to: { row: hoja.rowCount, column: hoja.columnCount } }
+        hoja.getRow(1).height = 32
+        hoja.getRow(1).eachCell((celda) => {
+          celda.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+          celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF08775F' } }
+          celda.alignment = { vertical: 'middle', wrapText: true }
+        })
+        hoja.columns.forEach((columna) => {
+          if (columnasMonetarias.has(columna.key ?? '')) {
+            columna.numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
+          }
+        })
+      } else {
+        mensual.getColumn(1).numFmt = 'dd/mm/yyyy'
+        for (const columna of [3, 4, 5]) {
+          mensual.getColumn(columna).numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
         }
-      })
+      }
       hoja.eachRow((fila, indice) => {
-        if (indice === 1) return
+        if (hoja === resumen && indice === 1) return
+        if (hoja === mensual && (encabezadosMensuales.includes(indice) || filasSocioMensuales.includes(indice))) return
         fila.eachCell((celda) => {
           celda.alignment = { vertical: 'middle' }
           if (indice % 2 === 0) {
             celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F7F5' } }
           }
         })
+      })
+    }
+    for (const filaNumero of encabezadosMensuales) {
+      const fila = mensual.getRow(filaNumero)
+      fila.height = 24
+      fila.eachCell((celda) => {
+        celda.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+        celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF08775F' } }
+        celda.alignment = { vertical: 'middle', wrapText: true }
       })
     }
 
