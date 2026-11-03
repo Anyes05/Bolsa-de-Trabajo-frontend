@@ -169,11 +169,11 @@ onMounted(loadProfiles)
 </template>
 
 <style scoped>
-.admin-applicant-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.admin-applicant-filters .applicant-search { flex: 2 1 260px; min-width: 0; min-height: 38px; box-sizing: border-box; }
+.applicant-toolbar.admin-applicant-filters { display: flex; flex-wrap: wrap; align-items: flex-end !important; gap: 12px; }
+.admin-applicant-filters .applicant-search { flex: 2 1 260px; min-width: 0; height: 40px; margin: 0; box-sizing: border-box; }
 .admin-applicant-filter { display: grid; flex: 1 1 170px; min-width: 0; gap: 6px; color: #526159; font-size: 12px; font-weight: 600; }
-.admin-applicant-filter select { width: 100%; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; text-overflow: ellipsis; }
-.admin-applicant-clear { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; height: 38px; padding: 0; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
+.admin-applicant-filter select { width: 100%; min-width: 0; height: 40px; padding: 0 10px; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #34473b; font-family: var(--font-family); font-size: var(--text-md); font-weight: 400; text-overflow: ellipsis; }
+.admin-applicant-clear { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; padding: 0; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
 .admin-applicant-filter select:focus-visible, .admin-applicant-clear:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
 .admin-applicant-clear:disabled { opacity: .5; cursor: not-allowed; }
 </style>
