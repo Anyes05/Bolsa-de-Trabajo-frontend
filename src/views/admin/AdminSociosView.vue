@@ -211,6 +211,7 @@ async function resetClave() {
               <th>Estado</th>
               <th>Directivo</th>
               <th>Alta</th>
+              <th>Baja</th>
               <th>Activo</th>
               <th>Acciones</th>
             </tr>
@@ -232,6 +233,7 @@ async function resetClave() {
               </td>
               <td>{{ socio.esDirectivo ? 'Sí' : 'No' }}</td>
               <td>{{ formatDate(socio.fechaAlta) }}</td>
+              <td>{{ formatDate(socio.fechaBaja) }}</td>
               <td>
                 <button
                   class="company-toggle"
