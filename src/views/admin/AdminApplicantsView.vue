@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Search } from 'lucide-vue-next'
+import { Search, X } from 'lucide-vue-next'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
@@ -15,6 +15,9 @@ const selectedProfile = ref<MockApplicantProfile | null>(null)
 const selectedCvs = ref<SocioProfileCv[]>([])
 const expandedApplicantId = ref<number | null>(null)
 const search = ref('')
+const selectedSector = ref('')
+const selectedAvailability = ref('')
+const selectedLicense = ref('')
 const loading = ref(false)
 const loadingCvs = ref(false)
 const error = ref<string | null>(null)
@@ -70,13 +73,33 @@ async function downloadCv(profileId: string, cvId?: number) {
   }
 }
 
+const displayProfiles = computed(() => applicantProfiles.value.map(toDisplayProfile))
+const sectorOptions = computed(() => [...new Set(displayProfiles.value.flatMap((profile) => profile.sectors))]
+  .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
+const availabilityOptions = computed(() => [...new Set(displayProfiles.value.map((profile) => profile.availability))]
+  .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
+const licenseOptions = computed(() => [...new Set(displayProfiles.value.map((profile) => profile.license))]
+  .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
+const hasFilters = computed(() => !!search.value || !!selectedSector.value
+  || !!selectedAvailability.value || !!selectedLicense.value)
+
+function clearFilters() {
+  search.value = ''
+  selectedSector.value = ''
+  selectedAvailability.value = ''
+  selectedLicense.value = ''
+}
+
 const applicants = computed(() => {
   const term = search.value.trim().toLocaleLowerCase('es')
   const groups = new Map<number, { id: number; fullName: string; email: string; phone: string; initials: string; profiles: MockApplicantProfile[] }>()
-  applicantProfiles.value.map(toDisplayProfile).forEach((profile) => {
+  displayProfiles.value.forEach((profile) => {
     const matches = !term || [profile.fullName, profile.email, profile.phone || '', profile.identityCard, profile.profileName]
       .some((value) => value.toLocaleLowerCase('es').includes(term))
-    if (!matches) return
+    if (!matches
+      || (selectedSector.value && !profile.sectors.includes(selectedSector.value))
+      || (selectedAvailability.value && profile.availability !== selectedAvailability.value)
+      || (selectedLicense.value && profile.license !== selectedLicense.value)) return
     const group = groups.get(profile.applicantId)
     if (group) group.profiles.push(profile)
     else groups.set(profile.applicantId, {
@@ -96,11 +119,30 @@ onMounted(loadProfiles)
     title="Postulantes Registrados"
     :subtitle="`${applicants.length} postulantes · ${applicantProfiles.length} perfiles totales`"
   >
-    <div class="applicant-toolbar">
+    <div class="applicant-toolbar admin-applicant-filters">
       <label class="applicant-search">
         <Search :size="17" />
         <input v-model="search" placeholder="Buscar por nombre, correo, cédula o perfil...">
       </label>
+      <label class="admin-applicant-filter">Rubro
+        <select v-model="selectedSector" :disabled="loading">
+          <option value="">Todos los rubros</option>
+          <option v-for="sector in sectorOptions" :key="sector" :value="sector">{{ sector }}</option>
+        </select>
+      </label>
+      <label class="admin-applicant-filter">Disponibilidad
+        <select v-model="selectedAvailability" :disabled="loading">
+          <option value="">Todas las disponibilidades</option>
+          <option v-for="availability in availabilityOptions" :key="availability" :value="availability">{{ availability }}</option>
+        </select>
+      </label>
+      <label class="admin-applicant-filter">Libreta
+        <select v-model="selectedLicense" :disabled="loading">
+          <option value="">Todas las libretas</option>
+          <option v-for="license in licenseOptions" :key="license" :value="license">{{ license }}</option>
+        </select>
+      </label>
+      <button class="admin-applicant-clear" type="button" title="Limpiar búsqueda y filtros" aria-label="Limpiar búsqueda y filtros" :disabled="!hasFilters" @click="clearFilters"><X :size="17" /></button>
     </div>
     <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
     <p v-if="loading">Cargando postulantes...</p>
@@ -114,7 +156,7 @@ onMounted(loadProfiles)
         @view="openProfile"
       />
     </section>
-    <p v-else class="bolsa__empty">No hay postulantes que coincidan con la búsqueda.</p>
+    <p v-else class="bolsa__empty">No hay postulantes que coincidan con la búsqueda y los filtros.</p>
     <ProfileDetailModal
       v-if="selectedProfile"
       :profile="selectedProfile"
@@ -125,3 +167,13 @@ onMounted(loadProfiles)
     />
   </AdminShell>
 </template>
+
+<style scoped>
+.admin-applicant-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.admin-applicant-filters .applicant-search { flex: 2 1 260px; min-width: 0; min-height: 38px; box-sizing: border-box; }
+.admin-applicant-filter { display: grid; flex: 1 1 170px; min-width: 0; gap: 6px; color: #526159; font-size: 12px; font-weight: 600; }
+.admin-applicant-filter select { width: 100%; min-width: 0; height: 38px; padding: 0 10px; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #34473b; font: inherit; text-overflow: ellipsis; }
+.admin-applicant-clear { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; height: 38px; padding: 0; border: 1px solid #dfe5eb; border-radius: 6px; background: #fff; color: #526159; cursor: pointer; }
+.admin-applicant-filter select:focus-visible, .admin-applicant-clear:focus-visible { outline: 2px solid #07974e; outline-offset: 2px; }
+.admin-applicant-clear:disabled { opacity: .5; cursor: not-allowed; }
+</style>
