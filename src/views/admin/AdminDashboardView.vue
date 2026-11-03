@@ -451,7 +451,7 @@ function paymentLabel(method: MetodoPago | null) {
               <td class="cash-table__company">{{ company.razonSocial }}</td>
               <td>{{ company.bps || '-' }}</td>
               <td>{{ company.nombreRubro || '-' }}</td>
-              <td :class="{ 'account-credit': company.saldo < 0 }">{{ balanceLabel(company.saldo) }}</td>
+              <td :class="{ 'cash-balance-credit': company.saldo < 0 }">{{ company.saldo < 0 ? '+' : '' }}{{ balanceLabel(company.saldo) }}</td>
               <td>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`">
                   <i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}
@@ -812,6 +812,7 @@ function paymentLabel(method: MetodoPago | null) {
 .account-summary dd { margin: 0; font-weight: 700; text-align: right; }
 .account-result { color: #34473b; background: #eef8f2; padding: 10px; font-size: 12px; line-height: 1.5; }
 .account-credit { color: #08775f !important; }
+.cash-table td.cash-balance-credit { color: #005c36 !important; font-weight: 800; }
 .account-debt { color: #a52c32 !important; }
 .history-summary { grid-template-columns: 1fr 1fr; }
 .history-summary span { font-size: 0.875rem; }

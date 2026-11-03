@@ -149,13 +149,6 @@ export const cajaExcelService = {
       hoja.eachRow((fila, indice) => {
         if (hoja === resumen && indice === 1) return
         if (hoja === mensual && (encabezadosMensuales.includes(indice) || filasSocioMensuales.includes(indice))) return
-        const celdaSaldo = fila.getCell(hoja === resumen ? 'saldo' : 5)
-        if (typeof celdaSaldo.value === 'number') {
-          celdaSaldo.numFmt = '+"$" #,##0.00;[Red]-"$" #,##0.00;"$" #,##0.00'
-          if (celdaSaldo.value > 0) {
-            celdaSaldo.font = { ...celdaSaldo.font, bold: true, color: { argb: 'FF006B35' } }
-          }
-        }
         fila.eachCell((celda) => {
           celda.alignment = { vertical: 'middle' }
           if (indice % 2 === 0) {
