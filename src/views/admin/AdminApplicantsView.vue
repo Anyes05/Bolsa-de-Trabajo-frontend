@@ -78,8 +78,10 @@ const sectorOptions = computed(() => [...new Set(displayProfiles.value.flatMap((
   .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
 const availabilityOptions = computed(() => [...new Set(displayProfiles.value.map((profile) => profile.availability))]
   .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
-const licenseOptions = computed(() => [...new Set(displayProfiles.value.map((profile) => profile.license))]
-  .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
+function hasLicense(license: string) {
+  return !['', 'no', 'sin libreta', 'no tiene', 'no tiene libreta', 'no informada']
+    .includes(license.trim().toLocaleLowerCase('es'))
+}
 const hasFilters = computed(() => !!search.value || !!selectedSector.value
   || !!selectedAvailability.value || !!selectedLicense.value)
 
@@ -99,7 +101,7 @@ const applicants = computed(() => {
     if (!matches
       || (selectedSector.value && !profile.sectors.includes(selectedSector.value))
       || (selectedAvailability.value && profile.availability !== selectedAvailability.value)
-      || (selectedLicense.value && profile.license !== selectedLicense.value)) return
+      || (selectedLicense.value && hasLicense(profile.license) !== (selectedLicense.value === 'yes'))) return
     const group = groups.get(profile.applicantId)
     if (group) group.profiles.push(profile)
     else groups.set(profile.applicantId, {
@@ -138,8 +140,9 @@ onMounted(loadProfiles)
       </label>
       <label class="admin-applicant-filter">Libreta
         <select v-model="selectedLicense" :disabled="loading">
-          <option value="">Todas las libretas</option>
-          <option v-for="license in licenseOptions" :key="license" :value="license">{{ license }}</option>
+          <option value="">Todos</option>
+          <option value="yes">Tiene libreta</option>
+          <option value="no">No tiene libreta</option>
         </select>
       </label>
       <button class="admin-applicant-clear" type="button" title="Limpiar búsqueda y filtros" aria-label="Limpiar búsqueda y filtros" :disabled="!hasFilters" @click="clearFilters"><X :size="17" /></button>
