@@ -20,7 +20,6 @@ export type SocioRecord = {
   tipoIdentificador: TipoIdentificadorSocio | null
   razonSocial: string
   rut: string | null
-  giro: string | null
   telefono: string | null
   emailContacto: string | null
   emailUsuario: string | null
@@ -44,7 +43,6 @@ export type SocioCreatePayload = {
   email: string
   razonSocial: string
   rut: string
-  giro?: string | null
   telefono?: string | null
   emailContacto?: string | null
   calle: string
@@ -65,7 +63,6 @@ export type CredencialesEnviadas = {
 export type SocioUpdatePayload = {
   razonSocial: string
   rut: string
-  giro?: string | null
   telefono?: string | null
   emailContacto?: string | null
   calle: string

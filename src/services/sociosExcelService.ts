@@ -19,7 +19,7 @@ export const sociosExcelService = {
       { header: 'BPS', key: 'bps', width: 22 },
       { header: 'Cédula', key: 'cedula', width: 18 },
       { header: 'RUT', key: 'rut', width: 24 },
-      { header: 'Giro / Rubro', key: 'giroRubro', width: 36 },
+      { header: 'Rubro', key: 'nombreRubro', width: 36 },
       { header: 'Teléfono', key: 'telefono', width: 22 },
       { header: 'Email de contacto', key: 'emailContacto', width: 36 },
       { header: 'Email de cuenta', key: 'emailUsuario', width: 36 },
@@ -37,7 +37,7 @@ export const sociosExcelService = {
       sheet.addRow({
         razonSocial: socio.razonSocial,
         bps: socio.bps, cedula: socio.cedula, rut: socio.rut,
-        giroRubro: [...new Set([socio.giro?.trim(), socio.nombreRubro?.trim()].filter(Boolean))].join(' / '),
+        nombreRubro: socio.nombreRubro,
         telefono: socio.telefono, emailContacto: socio.emailContacto, emailUsuario: socio.emailUsuario,
         calle: socio.calle, numero: socio.numero, localidad: socio.localidad,
         estadoMorosidad: estadoMorosidadLabel[socio.estadoMorosidad],
