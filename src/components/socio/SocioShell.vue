@@ -50,6 +50,7 @@ onMounted(async () => {
     if (currentUser.fullName) auth.setFullName(currentUser.fullName)
     auth.setEsDirectivo(currentUser.esDirectivo === true)
   } catch {}
+  void notifications.load()
 })
 
 function logout() {
