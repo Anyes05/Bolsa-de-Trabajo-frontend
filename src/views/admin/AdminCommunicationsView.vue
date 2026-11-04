@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { CheckCircle2, Eye, FileText, Send } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { CheckCircle2, Eye, FileText, Send, X } from 'lucide-vue-next'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import {
@@ -19,10 +19,13 @@ const loading = ref(true)
 const error = ref('')
 const success = ref('')
 const selectedId = ref<number | null>(null)
+const openedNotice = ref<ComunicadoRecord | null>(null)
 const notices = ref<ComunicadoRecord[]>([])
 const counts = ref<AudienciaCounts>({ sociosActivos: 0, sociosDirectivos: 0 })
 
-const selectedNotice = computed(() => notices.value.find((item) => item.id === selectedId.value) ?? null)
+const selectedNotice = computed(() => openedNotice.value
+  ?? notices.value.find((item) => item.id === selectedId.value)
+  ?? null)
 const previewTitle = computed(() => (selectedNotice.value?.titulo || title.value || 'Título del comunicado').trim())
 const previewMessage = computed(() => (selectedNotice.value?.contenido || message.value || 'El mensaje aparecerá aquí.').trim())
 const previewAudience = computed(() => (
@@ -40,8 +43,16 @@ const previewDate = computed(() => {
   return new Date().toLocaleString('es-UY', { dateStyle: 'long', timeStyle: 'short' })
 })
 
+watch(openedNotice, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
+})
+
 onMounted(async () => {
   await refresh()
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
 })
 
 async function refresh() {
@@ -77,6 +88,7 @@ async function send() {
     })
     notices.value = [created, ...notices.value]
     selectedId.value = created.id
+    openedNotice.value = created
     title.value = ''
     message.value = ''
     const parts = [
@@ -108,7 +120,21 @@ async function send() {
 
 function viewNotice(notice: ComunicadoRecord) {
   selectedId.value = notice.id
+  openedNotice.value = notice
   success.value = ''
+  error.value = ''
+}
+
+function closeNotice() {
+  openedNotice.value = null
+}
+
+function formatNoticeDate(value: string | null | undefined) {
+  if (!value) return 'Sin fecha'
+  return new Date(value).toLocaleString('es-UY', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+  })
 }
 </script>
 
@@ -161,18 +187,23 @@ function viewNotice(notice: ComunicadoRecord) {
           <h3>Comunicados anteriores</h3>
           <p v-if="loading" class="communication-empty">Cargando historial...</p>
           <p v-else-if="!notices.length" class="communication-empty">Todavía no hay comunicados enviados.</p>
-          <div v-for="notice in notices" :key="notice.id">
+          <div
+            v-for="notice in notices"
+            :key="notice.id"
+            class="communication-previous__row"
+            :class="{ 'communication-previous__row--active': selectedId === notice.id }"
+          >
             <span><FileText :size="15" /></span>
             <p>
               <strong>{{ notice.titulo }}</strong>
               <small>
-                {{ notice.fechaPublicacion
-                  ? new Date(notice.fechaPublicacion).toLocaleString('es-UY', { dateStyle: 'medium', timeStyle: 'short' })
-                  : 'Sin fecha' }}
+                {{ formatNoticeDate(notice.fechaPublicacion) }}
                 · Audiencia: {{ destinatarioLabel(notice.destinatario) }}
               </small>
             </p>
-            <button type="button" @click="viewNotice(notice)"><Eye :size="14" /> Ver</button>
+            <button type="button" class="communication-previous__view" @click.stop="viewNotice(notice)">
+              <Eye :size="14" /> Ver
+            </button>
           </div>
         </section>
       </div>
@@ -207,6 +238,43 @@ function viewNotice(notice: ComunicadoRecord) {
         </section>
       </aside>
     </div>
+
+    <div
+      v-if="openedNotice"
+      class="notification-modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="`admin-comunicado-${openedNotice.id}`"
+      @click.self="closeNotice"
+      @keydown.esc.stop.prevent="closeNotice"
+    >
+      <section class="notification-modal__panel">
+        <header class="notification-modal__header">
+          <div>
+            <p class="notification-modal__eyebrow">Comunicado enviado</p>
+            <h2 :id="`admin-comunicado-${openedNotice.id}`">{{ openedNotice.titulo }}</h2>
+            <time>{{ formatNoticeDate(openedNotice.fechaPublicacion) }}</time>
+            <p class="communication-modal__meta">
+              Audiencia: {{ destinatarioLabel(openedNotice.destinatario) }}
+              <template v-if="openedNotice.autorEmail"> · Autor: {{ openedNotice.autorEmail }}</template>
+            </p>
+          </div>
+          <button type="button" class="notification-modal__close" aria-label="Cerrar" @click="closeNotice">
+            <X :size="18" />
+          </button>
+        </header>
+        <div class="notification-modal__body">
+          <p>{{ openedNotice.contenido }}</p>
+        </div>
+        <footer class="notification-modal__footer communication-modal__footer">
+          <div v-if="openedNotice.correosDestino?.length" class="communication-modal__emails">
+            <strong>Correos destino</strong>
+            <span>{{ openedNotice.correosDestino.join(', ') }}</span>
+          </div>
+          <button type="button" class="notification-modal__done" @click="closeNotice">Cerrar</button>
+        </footer>
+      </section>
+    </div>
   </AdminShell>
 </template>
 
@@ -220,5 +288,60 @@ function viewNotice(notice: ComunicadoRecord) {
 .communication-send:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.communication-previous__row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.communication-previous__row--active {
+  background: #f3faf6;
+}
+
+.communication-previous__view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #0a9d4d;
+  border-radius: 8px;
+  background: #fff;
+  color: #078747;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.communication-modal__meta {
+  margin: 8px 0 0;
+  color: #556070;
+  font-size: 0.9rem;
+}
+
+.communication-modal__footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.communication-modal__emails {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  color: #556070;
+  font-size: 0.85rem;
+}
+
+.communication-modal__emails strong {
+  color: #1f2a24;
+}
+
+.communication-modal__emails span {
+  overflow-wrap: anywhere;
 }
 </style>
