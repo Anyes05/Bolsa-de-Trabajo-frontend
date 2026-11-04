@@ -11,6 +11,7 @@ import { offerService } from '../../services/offerService'
 import { socioApplicationsService } from '../../services/socioApplicationsService'
 import type { ApplicantApplication, JobOffer, ReceivedApplication } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
+import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
 const route = useRoute()
 const router = useRouter()
@@ -110,13 +111,9 @@ async function updateStatus(application: ReceivedApplication, event: Event) {
 }
 
 async function downloadCv(applicationId: string) {
-  const downloadWindow = window.open('about:blank', '_blank')
   try {
-    const { url } = await socioApplicationsService.downloadCv(Number(applicationId))
-    if (!downloadWindow) throw new Error('El navegador bloqueó la ventana de descarga.')
-    downloadWindow.location.href = url
+    await openCvInNewTab(() => socioApplicationsService.downloadCv(Number(applicationId)))
   } catch (cause) {
-    downloadWindow?.close()
     error.value = userFacingError(cause, 'descargar el CV')
   }
 }

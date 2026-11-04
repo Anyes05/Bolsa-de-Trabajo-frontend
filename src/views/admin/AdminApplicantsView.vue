@@ -10,6 +10,7 @@ import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
 import { adminApplicantService } from '../../services/adminApplicantService'
 import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
+import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
 const applicantProfiles = ref<AdminApplicantProfile[]>([])
 const selectedProfile = ref<MockApplicantProfile | null>(null)
@@ -60,13 +61,9 @@ async function openProfile(profile: MockApplicantProfile) {
 
 async function downloadCv(profileId: string, cvId?: number) {
   if (cvId === undefined) return
-  const downloadWindow = window.open('', '_blank', 'noopener,noreferrer')
   try {
-    const { url } = await adminApplicantService.downloadCv(Number(profileId), cvId)
-    if (downloadWindow) downloadWindow.location.href = url
-    else window.location.assign(url)
+    await openCvInNewTab(() => adminApplicantService.downloadCv(Number(profileId), cvId))
   } catch (cause) {
-    downloadWindow?.close()
     error.value = userFacingError(cause, 'descargar el CV')
   }
 }
