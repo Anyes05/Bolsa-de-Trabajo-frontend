@@ -1,7 +1,19 @@
 import { request } from './http'
 import type { AuthResponse, ChangePasswordPayload, CurrentUserResponse, RegisterApplicantPayload, Role } from './types'
+import type { GoogleAuthResult, GoogleCredential, GoogleRegistrationPayload } from './types'
 
 export const authService = {
+  googleAuthenticate(credential: GoogleCredential) {
+    return request<GoogleAuthResult>('/auth/google', { method: 'POST', body: JSON.stringify(credential) })
+  },
+
+  googleLink(credential: GoogleCredential, password: string) {
+    return request<GoogleAuthResult>('/auth/google/link', { method: 'POST', body: JSON.stringify({ ...credential, password }) })
+  },
+
+  googleRegister(payload: GoogleRegistrationPayload) {
+    return request<AuthResponse>('/auth/google/register', { method: 'POST', body: JSON.stringify(payload) })
+  },
   currentUser() {
     return request<CurrentUserResponse>('/auth/me')
   },

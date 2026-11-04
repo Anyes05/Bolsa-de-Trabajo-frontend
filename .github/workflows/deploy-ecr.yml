@@ -17,10 +17,18 @@ env:
 jobs:
   push-image:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
     outputs:
       image_sha_tag: ${{ steps.vars.outputs.image_sha_tag }}
     steps:
       - uses: actions/checkout@v4
+      - name: Validate Google OAuth configuration
+        run: |
+          if [[ ! "${GOOGLE_CLIENT_ID}" =~ ^[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$ ]]; then
+            echo "Configura el secret GOOGLE_CLIENT_ID con el Client ID web de Google"
+            exit 1
+          fi
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -37,6 +45,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           tags: |
             ${{ steps.vars.outputs.image_sha_tag }}
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest

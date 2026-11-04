@@ -214,6 +214,21 @@ export type RegisterApplicantPayload = {
   experienceDescription: string
 }
 
+export type GoogleCredential = { credential: string; nonce: string }
+export type GoogleRegistration = {
+  registrationToken: string
+  fullName: string
+  email: string
+  fotoUrl: string | null
+}
+export type GoogleAuthResult =
+  | { status: 'LOGIN'; session: AuthResponse }
+  | ({ status: 'REGISTER' } & GoogleRegistration)
+  | { status: 'LINK_REQUIRED'; email: string; fullName: string }
+export type GoogleRegistrationPayload = Omit<RegisterApplicantPayload, 'email' | 'password'> & {
+  registrationToken: string
+}
+
 export type CvResponse = {
   id: number
   perfilLaboralId: number | null
