@@ -15,6 +15,10 @@ export const socioNotificationService = {
     return request<SocioNotificationRecord[]>('/socio/notificaciones')
   },
 
+  markOneRead(id: number | string) {
+    return request<SocioNotificationRecord>(`/socio/notificaciones/${id}/leer`, { method: 'POST' })
+  },
+
   markAllRead() {
     return request<void>('/socio/notificaciones/marcar-leidas', { method: 'POST' })
   },

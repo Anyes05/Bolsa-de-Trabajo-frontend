@@ -40,6 +40,12 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     return items.value.find((item) => item.popup) ?? null
   })
 
+  function applyLocalRead(id: string) {
+    items.value = items.value.map((entry) => (
+      entry.id === id ? { ...entry, unread: false, popup: false } : entry
+    ))
+  }
+
   async function load() {
     loading.value = true
     error.value = ''
@@ -55,13 +61,16 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     }
   }
 
-  function openDetail(item: SocioNotificationItem) {
-    opened.value = item
-    items.value = items.value.map((entry) => (
-      entry.id === item.id ? { ...entry, unread: false, popup: false } : entry
-    ))
+  async function openDetail(item: SocioNotificationItem) {
+    opened.value = { ...item, unread: false, popup: false }
+    applyLocalRead(item.id)
     toastDismissed.value = true
     document.body.style.overflow = 'hidden'
+    try {
+      await socioNotificationService.markOneRead(item.id)
+    } catch {
+      // La lectura visual no se bloquea; al recargar se reintenta el estado real.
+    }
   }
 
   function closeDetail() {
@@ -70,7 +79,16 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
   }
 
   async function markAllRead() {
-    await socioNotificationService.markAllRead()
+    applyLocalReadAll()
+    try {
+      await socioNotificationService.markAllRead()
+    } catch (exception) {
+      error.value = exception instanceof Error ? exception.message : 'No se pudieron marcar como leídas'
+      await load()
+    }
+  }
+
+  function applyLocalReadAll() {
     items.value = items.value.map((item) => ({ ...item, unread: false, popup: false }))
     toastDismissed.value = true
   }

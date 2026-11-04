@@ -2298,6 +2298,11 @@ button:disabled {
   box-shadow: 0 4px 16px rgb(21 45 32 / 8%);
 }
 
+.socio-notification-card--unread {
+  border-color: #cfe8d8;
+  background: #f7fcf9;
+}
+
 .socio-notification-card__icon {
   width: 36px;
   height: 36px;
