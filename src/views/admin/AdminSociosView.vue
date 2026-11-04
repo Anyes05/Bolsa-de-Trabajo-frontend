@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Pencil, Plus, Search } from 'lucide-vue-next'
+import { Download, Pencil, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
@@ -12,6 +12,7 @@ import {
   socioService,
 } from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
+import { sociosExcelService } from '../../services/sociosExcelService'
 import { userFacingError } from '../../utils/userMessage'
 
 const socios = ref<SocioRecord[]>([])
@@ -19,6 +20,20 @@ const rubros = ref<RubroOption[]>([])
 const query = ref('')
 const error = ref('')
 const busy = ref(false)
+const exporting = ref(false)
+
+async function downloadExcel() {
+  if (busy.value || exporting.value || !socios.value.length) return
+  exporting.value = true
+  error.value = ''
+  try {
+    await sociosExcelService.download([...socios.value])
+  } catch (exception) {
+    error.value = userFacingError(exception, 'descargar el Excel de socios')
+  } finally {
+    exporting.value = false
+  }
+}
 const editing = ref<SocioRecord | null>(null)
 const editError = ref('')
 const editBusy = ref(false)
@@ -183,6 +198,9 @@ async function resetClave() {
 <template>
   <AdminShell active="socios" title="Gestión de Socios" subtitle="Listado general y altas del padrón">
     <div class="company-actions">
+      <button class="company-button" type="button" :disabled="busy || exporting || !socios.length" @click="downloadExcel">
+        <Download :size="16" /> {{ exporting ? 'Descargando...' : 'Descargar Excel' }}
+      </button>
       <RouterLink class="company-button company-button--primary" to="/admin/socios/nueva">
         <Plus :size="16" /> Nuevo Socio
       </RouterLink>
