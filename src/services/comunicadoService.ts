@@ -12,6 +12,8 @@ export type ComunicadoRecord = {
   destinatariosNotificados: number
   correosEnviados: number
   correosFallidos: number
+  sociosSinEmail: number
+  correosDestino: string[]
 }
 
 export type AudienciaCounts = {

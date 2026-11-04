@@ -79,10 +79,25 @@ async function send() {
     selectedId.value = created.id
     title.value = ''
     message.value = ''
-    const fallidos = created.correosFallidos > 0
-      ? ` (${created.correosFallidos} correos no se pudieron enviar)`
-      : ''
-    success.value = `Comunicado enviado a ${created.destinatariosNotificados} socios por campana y ${created.correosEnviados} por correo${fallidos}.`
+    const parts = [
+      `Campana interna: ${created.destinatariosNotificados} socios`,
+      `Gmail: ${created.correosEnviados} enviados`,
+    ]
+    if (created.correosFallidos > 0) {
+      parts.push(`${created.correosFallidos} correos fallaron`)
+    }
+    if (created.sociosSinEmail > 0) {
+      parts.push(`${created.sociosSinEmail} socios sin email de contacto`)
+    }
+    if (created.correosDestino?.length) {
+      parts.push(`Destinos: ${created.correosDestino.join(', ')}`)
+    }
+    success.value = `Comunicado publicado. ${parts.join(' · ')}.`
+    if (created.correosEnviados === 0) {
+      error.value = created.sociosSinEmail > 0
+        ? 'La campana se actualizó, pero no hay emails de contacto cargados en los socios de esa audiencia. Completá el mail de contacto en Gestión de Socios.'
+        : 'La campana se actualizó, pero Gmail no pudo enviar ningún correo. Revisá SMTP o los emails de contacto.'
+    }
     counts.value = await comunicadoService.audiencia()
   } catch (exception) {
     error.value = userFacingError(exception, 'enviar el comunicado')
@@ -105,7 +120,7 @@ function viewNotice(notice: ComunicadoRecord) {
           <h2>Redactar Comunicado</h2>
           <p class="communication-draft">
             <CheckCircle2 :size="14" />
-            Se envía a la vez por la campana interna y por correo electrónico (Gmail).
+            Se envía a la vez por la campana interna y por Gmail al <strong>email de contacto</strong> del socio (si no hay, usa el email de cuenta).
           </p>
           <label>Título del Comunicado
             <input v-model="title" maxlength="180" placeholder="Asunto del aviso institucional">
