@@ -15,8 +15,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
+import ProfileAvatar from '../ProfileAvatar.vue'
+import AppAlert from '../AppAlert.vue'
 import { useAuthStore } from '../../stores/auth'
-import { authService } from '../../services/authService'
+import { userFacingError } from '../../utils/userMessage'
 
 withDefaults(defineProps<{
   title: string
@@ -32,6 +34,9 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const open = ref(false)
+const profileError = ref('')
+const photoMessage = ref('')
+const uploadingPhoto = ref(false)
 
 watch(() => route.fullPath, () => { open.value = false })
 watch(open, (value) => {
@@ -52,12 +57,31 @@ const links = [
 ]
 
 onMounted(async () => {
-  if (auth.fullName || auth.role !== 'ADMIN') return
+  if (auth.role !== 'ADMIN') return
   try {
-    const currentUser = await authService.currentUser()
-    auth.setFullName(currentUser.fullName)
-  } catch {}
+    await auth.refreshCurrentUser()
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'cargar tu perfil')
+  }
 })
+
+async function onPhotoChange(event: Event) {
+  if (!(event.target instanceof HTMLInputElement)) return
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  uploadingPhoto.value = true
+  profileError.value = ''
+  photoMessage.value = ''
+  try {
+    await auth.uploadPhoto(file)
+    photoMessage.value = 'Tu foto de perfil se actualizó correctamente.'
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'actualizar la foto de perfil')
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AD'
@@ -115,7 +139,10 @@ function logout() {
             <strong>{{ displayName }}</strong>
             <span>{{ auth.role || 'ADMIN' }}</span>
           </div>
-          <span class="admin-topbar__avatar">{{ avatarInitials }}</span>
+          <label title="Cambiar foto de perfil">
+            <ProfileAvatar class="admin-topbar__avatar" :src="auth.photoUrl" :initials="avatarInitials" />
+            <input class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" aria-label="Cambiar foto de perfil" :disabled="uploadingPhoto" @change="onPhotoChange">
+          </label>
           <button class="shell-exit" type="button" @click="logout">
             <span class="shell-exit__label">Cerrar sesión</span>
             <LogOut :size="17" aria-hidden="true" />
@@ -123,6 +150,8 @@ function logout() {
         </div>
       </header>
       <main class="admin-page">
+        <AppAlert v-if="profileError" tone="error">{{ profileError }}</AppAlert>
+        <AppAlert v-if="photoMessage" tone="success">{{ photoMessage }}</AppAlert>
         <header class="admin-page__heading">
           <div>
             <p class="admin-page__eyebrow">Panel administrativo</p>

@@ -22,6 +22,7 @@ const error = ref<string | null>(null)
 function toDisplayProfile(profile: AdminApplicantProfile): MockApplicantProfile {
   return {
     id: String(profile.id), applicantId: profile.applicantId, fullName: profile.fullName, email: profile.email,
+    fotoUrl: profile.fotoUrl,
     phone: profile.phone || '', initials: profile.initials, profileName: profile.profileName, categoryLabel: profile.categoryLabel,
     location: profile.location || 'San José', identityCard: profile.identityCard || '', age: profile.age ?? 0,
     tags: profile.sectors, sectors: profile.sectors, interests: profile.sectors, availability: profile.availability,

@@ -13,11 +13,9 @@ import { socioPerfilService } from '../../services/socioPerfilService'
 import type { RubroOption, SocioRecord } from '../../services/types'
 import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 import { useAuthStore } from '../../stores/auth'
-import { useSocioProfileStore } from '../../stores/socioProfile'
 import { userFacingError } from '../../utils/userMessage'
 
 const auth = useAuthStore()
-const profile = useSocioProfileStore()
 const router = useRouter()
 
 const socio = ref<SocioRecord | null>(null)
@@ -30,6 +28,7 @@ const savedHint = ref('')
 const passwordHint = ref('')
 const passwordError = ref('')
 const photoError = ref('')
+const uploadingPhoto = ref(false)
 
 const form = reactive({
   razonSocial: '',
@@ -153,25 +152,44 @@ async function updatePassword() {
   }
 }
 
-function onPhotoChange(event: Event) {
-  const input = event.target as HTMLInputElement
+async function onPhotoChange(event: Event) {
+  if (!(event.target instanceof HTMLInputElement)) return
+  const input = event.target
   const file = input.files?.[0]
   input.value = ''
   photoError.value = ''
   if (!file) return
-  if (!file.type.startsWith('image/')) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     photoError.value = 'Elige una imagen (JPG, PNG o WEBP).'
     return
   }
-  if (file.size > 2 * 1024 * 1024) {
-    photoError.value = 'La imagen debe pesar menos de 2 MB.'
+  if (file.size > 5 * 1024 * 1024) {
+    photoError.value = 'La imagen debe pesar hasta 5 MB.'
     return
   }
-  profile.setPhoto(file)
+  uploadingPhoto.value = true
+  try {
+    await auth.uploadPhoto(file)
+  } catch (cause) {
+    photoError.value = userFacingError(cause, 'actualizar la foto de perfil')
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
+
+async function removePhoto() {
+  uploadingPhoto.value = true
+  photoError.value = ''
+  try {
+    await auth.removePhoto()
+  } catch (cause) {
+    photoError.value = userFacingError(cause, 'quitar la foto de perfil')
+  } finally {
+    uploadingPhoto.value = false
+  }
 }
 
 function logout() {
-  profile.clearPhoto()
   auth.logout()
   router.push({ name: 'access' })
 }
@@ -194,19 +212,19 @@ function logout() {
         <section class="socio-profile__identity">
           <div class="socio-profile__photo">
             <label class="socio-profile__avatar">
-              <img v-if="profile.photoUrl" :src="profile.photoUrl" alt="Foto de perfil">
+              <img v-if="auth.photoUrl" :src="auth.photoUrl" alt="Foto de perfil">
               <template v-else>{{ initials }}</template>
-              <input type="file" accept="image/*" class="visually-hidden" @change="onPhotoChange">
+              <input type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden" :disabled="uploadingPhoto" @change="onPhotoChange">
               <span class="socio-profile__camera" aria-hidden="true">
                 <Camera :size="14" />
               </span>
             </label>
             <div class="socio-profile__photo-actions">
               <label class="socio-profile__photo-button">
-                Cambiar foto
-                <input type="file" accept="image/*" class="visually-hidden" @change="onPhotoChange">
+                {{ uploadingPhoto ? 'Actualizando foto...' : 'Cambiar foto' }}
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden" :disabled="uploadingPhoto" @change="onPhotoChange">
               </label>
-              <button v-if="profile.photoUrl" type="button" class="socio-profile__photo-clear" @click="profile.clearPhoto()">
+              <button v-if="auth.photoUrl" type="button" class="socio-profile__photo-clear" :disabled="uploadingPhoto" @click="removePhoto">
                 Quitar
               </button>
             </div>

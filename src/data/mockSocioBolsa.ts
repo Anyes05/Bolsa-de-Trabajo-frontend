@@ -3,6 +3,7 @@ export type SortOption = 'updated' | 'name'
 
 export type MockApplicantProfile = {
   id: string
+  fotoUrl?: string | null
   applicantId: number
   fullName: string
   email: string

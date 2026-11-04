@@ -187,6 +187,7 @@ export type AuthResponse = {
 
 export type CurrentUserResponse = {
   email: string
+  fotoUrl: string | null
   roles: unknown[]
   fullName: string | null
   esDirectivo?: boolean | null
@@ -240,6 +241,7 @@ export type ProfessionalProfile = {
 
 export type ApplicantProfileCard = {
   id: number
+  fotoUrl: string | null
   applicantId: number
   fullName: string
   email: string

@@ -6,6 +6,16 @@ export const authService = {
     return request<CurrentUserResponse>('/auth/me')
   },
 
+  uploadProfilePhoto(file: File) {
+    const body = new FormData()
+    body.append('file', file)
+    return request<{ fotoUrl: string }>('/auth/me/foto', { method: 'POST', body })
+  },
+
+  removeProfilePhoto() {
+    return request<void>('/auth/me/foto', { method: 'DELETE' })
+  },
+
   login(role: Role, identifier: string, password: string) {
     return request<AuthResponse>('/auth/login', {
       method: 'POST',

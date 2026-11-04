@@ -4,10 +4,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
-import { authService } from '../../services/authService'
+import ProfileAvatar from '../ProfileAvatar.vue'
+import AppAlert from '../AppAlert.vue'
+import { userFacingError } from '../../utils/userMessage'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioNotificationsStore } from '../../stores/socioNotifications'
-import { useSocioProfileStore } from '../../stores/socioProfile'
 
 const props = defineProps<{
   title: string
@@ -20,10 +21,10 @@ const props = defineProps<{
 
 const auth = useAuthStore()
 const notifications = useSocioNotificationsStore()
-const profile = useSocioProfileStore()
 const router = useRouter()
 const route = useRoute()
 const open = ref(false)
+const profileError = ref('')
 
 watch(() => route.fullPath, () => { open.value = false })
 watch(open, (value) => {
@@ -46,15 +47,14 @@ const shownCompany = computed(() => {
 onMounted(async () => {
   if (auth.role !== 'SOCIO') return
   try {
-    const currentUser = await authService.currentUser()
-    if (currentUser.fullName) auth.setFullName(currentUser.fullName)
-    auth.setEsDirectivo(currentUser.esDirectivo === true)
-  } catch {}
+    await auth.refreshCurrentUser()
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'cargar tu perfil')
+  }
   void notifications.load()
 })
 
 function logout() {
-  profile.clearPhoto()
   auth.logout()
   router.push({ name: 'access' })
 }
@@ -149,10 +149,7 @@ function openToastDetail() {
               <strong>{{ shownCompany.name }}</strong>
               <span>{{ shownCompany.roleLabel }}</span>
             </div>
-            <span class="socio-header__avatar" aria-hidden="true">
-              <img v-if="profile.photoUrl" :src="profile.photoUrl" alt="">
-              <template v-else>{{ shownCompany.initials }}</template>
-            </span>
+            <ProfileAvatar class="socio-header__avatar" :src="auth.photoUrl" :initials="shownCompany.initials" />
             <button type="button" class="shell-exit" @click="logout">
               <span class="shell-exit__label">Cerrar sesión</span>
               <LogOut :size="17" aria-hidden="true" />
@@ -161,6 +158,7 @@ function openToastDetail() {
         </div>
       </header>
       <div class="socio-shell__body">
+        <AppAlert v-if="profileError" tone="error">{{ profileError }}</AppAlert>
         <slot />
       </div>
       <slot name="overlay" />

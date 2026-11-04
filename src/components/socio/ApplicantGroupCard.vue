@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown, Mail, Phone } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
+import ProfileAvatar from '../ProfileAvatar.vue'
 import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
 import ProfileCard from './ProfileCard.vue'
 
@@ -26,7 +27,7 @@ const emit = defineEmits<{
 <template>
   <article class="applicant-group-card">
     <header class="applicant-group-card__header">
-      <span class="applicant-group-card__avatar" aria-hidden="true">{{ applicant.initials }}</span>
+      <ProfileAvatar class="applicant-group-card__avatar" :src="applicant.profiles[0]?.fotoUrl" :initials="applicant.initials" />
       <div class="applicant-group-card__identity">
         <h3>{{ applicant.fullName }}</h3>
         <a class="applicant-group-card__contact" :href="`mailto:${applicant.email}`">

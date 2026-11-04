@@ -40,6 +40,7 @@ type ApplicantGroup = {
 function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
   return {
     id: String(profile.id),
+    fotoUrl: profile.fotoUrl,
     applicantId: profile.applicantId,
     fullName: profile.fullName,
     email: profile.email,
