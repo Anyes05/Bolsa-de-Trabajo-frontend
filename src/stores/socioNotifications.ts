@@ -32,6 +32,7 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
   const loading = ref(false)
   const error = ref('')
   const toastDismissed = ref(false)
+  const opened = ref<SocioNotificationItem | null>(null)
 
   const unreadCount = computed(() => items.value.filter((item) => item.unread).length)
   const toast = computed(() => {
@@ -54,6 +55,20 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     }
   }
 
+  function openDetail(item: SocioNotificationItem) {
+    opened.value = item
+    items.value = items.value.map((entry) => (
+      entry.id === item.id ? { ...entry, unread: false, popup: false } : entry
+    ))
+    toastDismissed.value = true
+    document.body.style.overflow = 'hidden'
+  }
+
+  function closeDetail() {
+    opened.value = null
+    document.body.style.overflow = ''
+  }
+
   async function markAllRead() {
     await socioNotificationService.markAllRead()
     items.value = items.value.map((item) => ({ ...item, unread: false, popup: false }))
@@ -70,5 +85,17 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     }
   }
 
-  return { items, loading, error, unreadCount, toast, load, markAllRead, dismissToast }
+  return {
+    items,
+    loading,
+    error,
+    unreadCount,
+    toast,
+    opened,
+    load,
+    openDetail,
+    closeDetail,
+    markAllRead,
+    dismissToast,
+  }
 })

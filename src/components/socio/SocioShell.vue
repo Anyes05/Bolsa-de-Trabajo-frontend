@@ -58,6 +58,12 @@ function logout() {
   auth.logout()
   router.push({ name: 'access' })
 }
+
+function openToastDetail() {
+  if (notifications.toast) {
+    notifications.openDetail(notifications.toast)
+  }
+}
 </script>
 
 <template>
@@ -158,18 +164,56 @@ function logout() {
         <slot />
       </div>
       <slot name="overlay" />
-      <aside v-if="notifications.toast" class="socio-toast" role="status">
-        <span class="socio-toast__icon" aria-hidden="true">
-          <Megaphone :size="16" />
-        </span>
-        <div>
-          <strong>{{ notifications.toast.title }}</strong>
-          <p>{{ notifications.toast.body }}</p>
-        </div>
+      <aside
+        v-if="notifications.toast && !notifications.opened"
+        class="socio-toast"
+        role="status"
+      >
+        <button type="button" class="socio-toast__open" @click="openToastDetail">
+          <span class="socio-toast__icon" aria-hidden="true">
+            <Megaphone :size="16" />
+          </span>
+          <span>
+            <strong>{{ notifications.toast.title }}</strong>
+            <p>{{ notifications.toast.body }}</p>
+            <em>Abrir comunicado</em>
+          </span>
+        </button>
         <button type="button" class="socio-toast__close" aria-label="Cerrar aviso" @click="notifications.dismissToast()">
           <X :size="14" />
         </button>
       </aside>
+
+      <div
+        v-if="notifications.opened"
+        class="notification-modal"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="`notification-modal-title-${notifications.opened.id}`"
+        @click.self="notifications.closeDetail()"
+        @keydown.esc.stop.prevent="notifications.closeDetail()"
+      >
+        <section class="notification-modal__panel">
+          <header class="notification-modal__header">
+            <div>
+              <p class="notification-modal__eyebrow">Comunicado CCISJ</p>
+              <h2 :id="`notification-modal-title-${notifications.opened.id}`">{{ notifications.opened.title }}</h2>
+              <time v-if="notifications.opened.date">{{ notifications.opened.date }}</time>
+            </div>
+            <button type="button" class="notification-modal__close" aria-label="Cerrar" @click="notifications.closeDetail()">
+              <X :size="18" />
+            </button>
+          </header>
+          <div class="notification-modal__body">
+            <p>{{ notifications.opened.body }}</p>
+          </div>
+          <footer class="notification-modal__footer">
+            <button type="button" class="notification-modal__done" @click="notifications.closeDetail()">
+              Cerrar
+            </button>
+          </footer>
+        </section>
+      </div>
     </div>
   </div>
 </template>

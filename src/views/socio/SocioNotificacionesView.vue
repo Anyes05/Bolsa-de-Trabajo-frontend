@@ -5,13 +5,17 @@ import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import { mockCompany } from '../../data/mockSocioBolsa'
-import { useSocioNotificationsStore } from '../../stores/socioNotifications'
+import { useSocioNotificationsStore, type SocioNotificationItem } from '../../stores/socioNotifications'
 
 const notifications = useSocioNotificationsStore()
 
 onMounted(() => {
   void notifications.load()
 })
+
+function openNotice(item: SocioNotificationItem) {
+  notifications.openDetail(item)
+}
 </script>
 
 <template>
@@ -39,6 +43,11 @@ onMounted(() => {
         :key="item.id"
         class="socio-notification-card"
         :class="{ 'socio-notification-card--unread': item.unread }"
+        role="button"
+        tabindex="0"
+        @click="openNotice(item)"
+        @keydown.enter.prevent="openNotice(item)"
+        @keydown.space.prevent="openNotice(item)"
       >
         <span class="socio-notification-card__icon" aria-hidden="true">
           <Megaphone :size="16" />
@@ -48,7 +57,10 @@ onMounted(() => {
             <h2>{{ item.title }}</h2>
           </header>
           <p>{{ item.body }}</p>
-          <time>{{ item.date }}</time>
+          <div class="socio-notification-card__meta">
+            <time>{{ item.date }}</time>
+            <span class="socio-notification-card__read">Ver completo</span>
+          </div>
         </div>
         <span v-if="item.unread" class="socio-notification-card__dot" aria-label="No leída"></span>
       </article>
