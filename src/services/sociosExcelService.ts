@@ -15,21 +15,17 @@ export const sociosExcelService = {
     workbook.created = new Date()
     const sheet = workbook.addWorksheet('Socios')
     sheet.columns = [
-      { header: 'ID socio', key: 'id', width: 12 },
       { header: 'Razón social', key: 'razonSocial', width: 36 },
-      { header: 'Tipo de identificador', key: 'tipoIdentificador', width: 24 },
       { header: 'BPS', key: 'bps', width: 22 },
       { header: 'Cédula', key: 'cedula', width: 18 },
-      { header: 'RUT / Cédula fiscal', key: 'rut', width: 24 },
-      { header: 'Giro', key: 'giro', width: 30 },
+      { header: 'RUT', key: 'rut', width: 24 },
+      { header: 'Giro / Rubro', key: 'giroRubro', width: 36 },
       { header: 'Teléfono', key: 'telefono', width: 22 },
       { header: 'Email de contacto', key: 'emailContacto', width: 36 },
       { header: 'Email de cuenta', key: 'emailUsuario', width: 36 },
       { header: 'Calle', key: 'calle', width: 30 },
       { header: 'Número', key: 'numero', width: 14 },
       { header: 'Localidad', key: 'localidad', width: 24 },
-      { header: 'ID rubro', key: 'rubroId', width: 12 },
-      { header: 'Rubro', key: 'nombreRubro', width: 30 },
       { header: 'Estado de morosidad', key: 'estadoMorosidad', width: 24 },
       { header: 'Directivo', key: 'esDirectivo', width: 14 },
       { header: 'Fecha de alta', key: 'fechaAlta', width: 20 },
@@ -39,12 +35,11 @@ export const sociosExcelService = {
     ]
     for (const socio of socios) {
       sheet.addRow({
-        id: socio.id, razonSocial: socio.razonSocial,
-        tipoIdentificador: socio.tipoIdentificador === 'CEDULA' ? 'Cédula' : socio.tipoIdentificador,
-        bps: socio.bps, cedula: socio.cedula, rut: socio.rut, giro: socio.giro,
+        razonSocial: socio.razonSocial,
+        bps: socio.bps, cedula: socio.cedula, rut: socio.rut,
+        giroRubro: [...new Set([socio.giro?.trim(), socio.nombreRubro?.trim()].filter(Boolean))].join(' / '),
         telefono: socio.telefono, emailContacto: socio.emailContacto, emailUsuario: socio.emailUsuario,
         calle: socio.calle, numero: socio.numero, localidad: socio.localidad,
-        rubroId: socio.rubroId, nombreRubro: socio.nombreRubro,
         estadoMorosidad: estadoMorosidadLabel[socio.estadoMorosidad],
         esDirectivo: socio.esDirectivo ? 'Sí' : 'No',
         fechaAlta: excelDate(socio.fechaAlta), fechaBaja: excelDate(socio.fechaBaja),

@@ -198,7 +198,7 @@ async function resetClave() {
 <template>
   <AdminShell active="socios" title="Gestión de Socios" subtitle="Listado general y altas del padrón">
     <div class="company-actions">
-      <button class="company-button" type="button" :disabled="busy || exporting || !socios.length" @click="downloadExcel">
+      <button class="cash-download" type="button" :disabled="busy || exporting || !socios.length" @click="downloadExcel">
         <Download :size="16" /> {{ exporting ? 'Descargando...' : 'Descargar Excel' }}
       </button>
       <RouterLink class="company-button company-button--primary" to="/admin/socios/nueva">
