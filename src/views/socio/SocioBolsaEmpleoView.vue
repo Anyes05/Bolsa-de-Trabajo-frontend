@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
-import FilterGroup from '../../components/socio/FilterGroup.vue'
+import ApplicantFilters from '../../components/ApplicantFilters.vue'
+import { useApplicantFilters } from '../../composables/useApplicantFilters'
 import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
 import ApplicantContactModal from '../../components/socio/ApplicantContactModal.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
@@ -14,11 +15,8 @@ import {
 import { socioBolsaService } from '../../services/socioBolsaService'
 import type { ApplicantProfileCard, SocioProfileCv } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
+import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
-const rubro = ref('Todos')
-const zone = ref('Todos')
-const availability = ref('Todos')
-const vehicle = ref('Todos')
 const sortBy = ref<SortOption>('updated')
 const selectedProfile = ref<MockApplicantProfile | null>(null)
 const selectedCvs = ref<SocioProfileCv[]>([])
@@ -40,17 +38,10 @@ type ApplicantGroup = {
   profiles: MockApplicantProfile[]
 }
 
-const rubroOptions = computed(() => ['Todos', ...new Set(applicantProfiles.value.flatMap((profile) => profile.sectors))])
-const zoneOptions = computed(() => {
-  const zones = applicantProfiles.value
-    .map((profile) => (profile.location || '').trim())
-    .filter(Boolean)
-  return ['Todos', ...new Set(zones)]
-})
-
 function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
   return {
     id: String(profile.id),
+    fotoUrl: profile.fotoUrl,
     applicantId: profile.applicantId,
     fullName: profile.fullName,
     email: profile.email,
@@ -105,31 +96,21 @@ async function openProfile(profile: MockApplicantProfile) {
 
 async function downloadCv(profileId: string, cvId?: number) {
   if (cvId === undefined) return
-  const downloadWindow = window.open('', '_blank', 'noopener,noreferrer')
   try {
-    const { url } = await socioBolsaService.downloadCv(Number(profileId), cvId)
-    if (downloadWindow) downloadWindow.location.href = url
-    else window.location.assign(url)
+    await openCvInNewTab(() => socioBolsaService.downloadCv(Number(profileId), cvId))
   } catch (cause) {
-    downloadWindow?.close()
     error.value = userFacingError(cause, 'descargar el CV')
   }
 }
 
-const profiles = computed(() => {
-  const filtered = applicantProfiles.value.map(toDisplayProfile).filter((profile) => {
-    const matchesRubro = rubro.value === 'Todos' || profile.sectors.includes(rubro.value)
-    const matchesZone = zone.value === 'Todos' || profile.location === zone.value
-    const matchesAvailability = availability.value === 'Todos'
-      || (availability.value === 'Full-time' && profile.availability === 'FULL_TIME')
-      || (availability.value === 'Part-time' && profile.availability === 'PART_TIME')
-    const matchesVehicle = vehicle.value === 'Todos'
-      || (vehicle.value === 'Con vehículo' && profile.hasVehicle)
-      || (vehicle.value === 'Sin vehículo' && !profile.hasVehicle)
-    return matchesRubro && matchesZone && matchesAvailability && matchesVehicle
-  })
+const displayProfiles = computed(() => applicantProfiles.value.map(toDisplayProfile))
+const {
+  search, selectedSector, selectedAvailability, selectedLicense,
+  sectorOptions, availabilityOptions, hasFilters, clearFilters, filteredProfiles,
+} = useApplicantFilters(displayProfiles)
 
-  return [...filtered].sort((left, right) => {
+const profiles = computed(() => {
+  return [...filteredProfiles.value].sort((left, right) => {
     if (sortBy.value === 'name') return left.fullName.localeCompare(right.fullName, 'es')
     return right.updatedAt.localeCompare(left.updatedAt)
   })
@@ -185,13 +166,18 @@ onMounted(loadProfiles)
     :company-initials="mockCompany.initials"
     :company-role="mockCompany.roleLabel"
   >
-    <div class="bolsa">
-      <aside class="bolsa__filters" aria-label="Filtros de perfiles">
-        <FilterGroup v-model="rubro" legend="Rubro laboral" :options="rubroOptions" variant="select" />
-        <FilterGroup v-model="zone" legend="Zona" :options="zoneOptions" variant="select" />
-        <FilterGroup v-model="availability" legend="Disponibilidad" :options="['Todos', 'Full-time', 'Part-time']" />
-        <FilterGroup v-model="vehicle" legend="Vehículo" :options="['Todos', 'Con vehículo', 'Sin vehículo']" />
-      </aside>
+    <div class="bolsa bolsa--shared-filters">
+      <ApplicantFilters
+        v-model:search="search"
+        v-model:selected-sector="selectedSector"
+        v-model:selected-availability="selectedAvailability"
+        v-model:selected-license="selectedLicense"
+        :sector-options="sectorOptions"
+        :availability-options="availabilityOptions"
+        :loading="loading"
+        :has-filters="hasFilters"
+        @clear="clearFilters"
+      />
 
       <section class="bolsa__results" aria-labelledby="bolsa-results-title">
         <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
@@ -221,7 +207,7 @@ onMounted(loadProfiles)
             @contact="openContact(applicant)"
           />
         </div>
-        <p v-else class="bolsa__empty">No hay perfiles que coincidan con los filtros.</p>
+        <p v-else class="bolsa__empty">No hay perfiles que coincidan con la búsqueda y los filtros.</p>
       </section>
     </div>
     <template #overlay>
@@ -242,5 +228,9 @@ onMounted(loadProfiles)
         @notify="notifyApplicant"
       />
     </template>
+
+    <style scoped>
+    .bolsa.bolsa--shared-filters { display: block; }
+    </style>
   </SocioShell>
 </template>

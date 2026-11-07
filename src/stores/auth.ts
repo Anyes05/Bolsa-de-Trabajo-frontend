@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { AuthResponse, Role } from '../services/types'
+import { authService } from '../services/authService'
 
 const STORAGE_KEY = 'ccisj-session'
 
@@ -39,6 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
   const email = ref<string | null>(stored?.email ?? null)
   const role = ref<Role | null>(stored?.role ?? null)
   const fullName = ref<string | null>(stored?.fullName?.trim() || null)
+  const photoUrl = ref<string | null>(null)
+  let photoRevision = 0
+  let pendingRefresh: { token: string; promise: Promise<void> } | null = null
   const esDirectivo = ref(stored?.esDirectivo === true)
   const debeCambiarPassword = ref(stored?.debeCambiarPassword === true)
 
@@ -73,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!normalizedRole) {
       throw new Error('Rol de sesión inválido')
     }
+    if (email.value !== session.email || role.value !== normalizedRole) setPhotoUrl(null)
     token.value = session.token
     email.value = session.email
     role.value = normalizedRole
@@ -85,6 +90,43 @@ export const useAuthStore = defineStore('auth', () => {
   function setFullName(value: string | null | undefined) {
     fullName.value = value?.trim() || null
     persist()
+  }
+
+  function setPhotoUrl(value: string | null | undefined) {
+    photoUrl.value = value || null
+    photoRevision++
+  }
+
+  async function refreshCurrentUser() {
+    const sessionToken = token.value
+    if (!sessionToken) return
+    if (pendingRefresh?.token === sessionToken) return pendingRefresh.promise
+    const revision = photoRevision
+    const promise = authService.currentUser().then((user) => {
+      if (token.value !== sessionToken) return
+      setFullName(user.fullName)
+      setEsDirectivo(user.esDirectivo)
+      setDebeCambiarPassword(user.debeCambiarPassword === true)
+      if (photoRevision === revision) setPhotoUrl(user.fotoUrl)
+    })
+    pendingRefresh = { token: sessionToken, promise }
+    try {
+      await promise
+    } finally {
+      if (pendingRefresh?.promise === promise) pendingRefresh = null
+    }
+  }
+
+  async function uploadPhoto(file: File) {
+    const sessionToken = token.value
+    const result = await authService.uploadProfilePhoto(file)
+    if (token.value === sessionToken) setPhotoUrl(result.fotoUrl)
+  }
+
+  async function removePhoto() {
+    const sessionToken = token.value
+    await authService.removeProfilePhoto()
+    if (token.value === sessionToken) setPhotoUrl(null)
   }
 
   function setEsDirectivo(value: boolean | null | undefined) {
@@ -103,6 +145,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    setPhotoUrl(null)
     token.value = null
     email.value = null
     role.value = null
@@ -117,12 +160,17 @@ export const useAuthStore = defineStore('auth', () => {
     email,
     role,
     fullName,
+    photoUrl,
     isAuthenticated,
     isDirectivo,
     debeCambiarPassword,
     homeRoute,
     setSession,
     setFullName,
+    setPhotoUrl,
+    refreshCurrentUser,
+    uploadPhoto,
+    removePhoto,
     setEsDirectivo,
     setDebeCambiarPassword,
     logout,

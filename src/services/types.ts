@@ -189,6 +189,7 @@ export type AuthResponse = {
 
 export type CurrentUserResponse = {
   email: string
+  fotoUrl: string | null
   roles: unknown[]
   fullName: string | null
   esDirectivo?: boolean | null
@@ -213,6 +214,21 @@ export type RegisterApplicantPayload = {
   hasVehicle: boolean
   latestJob: string
   experienceDescription: string
+}
+
+export type GoogleCredential = { credential: string; nonce: string }
+export type GoogleRegistration = {
+  registrationToken: string
+  fullName: string
+  email: string
+  fotoUrl: string | null
+}
+export type GoogleAuthResult =
+  | { status: 'LOGIN'; session: AuthResponse }
+  | ({ status: 'REGISTER' } & GoogleRegistration)
+  | { status: 'LINK_REQUIRED'; email: string; fullName: string }
+export type GoogleRegistrationPayload = Omit<RegisterApplicantPayload, 'email' | 'password'> & {
+  registrationToken: string
 }
 
 export type CvResponse = {
@@ -242,6 +258,7 @@ export type ProfessionalProfile = {
 
 export type ApplicantProfileCard = {
   id: number
+  fotoUrl: string | null
   applicantId: number
   fullName: string
   email: string

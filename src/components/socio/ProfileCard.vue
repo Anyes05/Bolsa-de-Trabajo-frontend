@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { MapPin } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
+import ProfileAvatar from '../ProfileAvatar.vue'
 import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
 
 defineProps<{
@@ -15,7 +16,7 @@ defineEmits<{
 <template>
   <article class="profile-card">
     <header class="profile-card__header">
-      <span class="profile-card__avatar" aria-hidden="true">{{ profile.initials }}</span>
+      <ProfileAvatar class="profile-card__avatar" :src="profile.fotoUrl" :initials="profile.initials" />
       <div>
         <h3 class="profile-card__name">{{ profile.fullName }}</h3>
         <p class="profile-card__role">{{ profile.profileName }}</p>

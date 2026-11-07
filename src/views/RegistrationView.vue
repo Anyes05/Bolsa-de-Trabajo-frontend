@@ -9,6 +9,10 @@ import AppButton from '../components/AppButton.vue'
 import AppField from '../components/AppField.vue'
 import PasswordInput from '../components/PasswordInput.vue'
 import WizardStepper from '../components/WizardStepper.vue'
+import GoogleSignInButton from '../components/GoogleSignInButton.vue'
+import ProfileAvatar from '../components/ProfileAvatar.vue'
+import { useGoogleRegistrationStore } from '../stores/googleRegistration'
+import type { GoogleCredential } from '../services/types'
 import { validatePassword } from '../utils/password'
 import { fallbackSectors, residenceAreas, wizardSteps } from '../data/registration'
 import { authService } from '../services/authService'
@@ -20,7 +24,8 @@ import { userFacingError } from '../utils/userMessage'
 
 const router = useRouter()
 const auth = useAuthStore()
-const step = ref(1)
+const googleRegistration = useGoogleRegistrationStore()
+const step = ref(googleRegistration.pending ? 2 : 1)
 const stepHeading = ref<HTMLHeadingElement | null>(null)
 const busy = ref(false)
 const error = ref('')
@@ -38,10 +43,10 @@ const cvFiles = ref<File[]>([])
 const cvMode = ref<'upload' | 'manual' | null>(null)
 const fieldErrors = reactive<Record<string, string>>({})
 const form = reactive({
-  fullName: '',
+  fullName: googleRegistration.pending?.fullName || '',
   identityCard: '',
   phone: '',
-  email: '',
+  email: googleRegistration.pending?.email || '',
   password: '',
   confirmPassword: '',
   residenceArea: residenceAreas[0],
@@ -345,6 +350,16 @@ function manualProfileSummary() {
 
 function validateStep(current: number) {
   clearFeedback()
+  if (current === 2 && googleRegistration.pending) {
+    if (!form.fullName.trim()) fieldErrors.fullName = 'Ingresa tu nombre completo.'
+    if (!form.identityCard.trim()) fieldErrors.identityCard = 'Ingresa tu cédula.'
+    if (!form.phone.trim()) fieldErrors.phone = 'Ingresa un teléfono.'
+    if (!form.residenceArea) fieldErrors.residenceArea = 'Selecciona una zona.'
+    if (Object.values(fieldErrors).some(Boolean)) {
+      error.value = 'Completa los datos personales que Google no proporciona.'
+      return false
+    }
+  }
   if (current === 1) {
     if (!form.fullName) fieldErrors.fullName = 'Ingresa tu nombre completo.'
     if (!form.identityCard) fieldErrors.identityCard = 'Ingresa tu cédula.'
@@ -380,7 +395,7 @@ const checkingAvailability = ref(false)
 async function next() {
   if (checkingAvailability.value) return
   if (!validateStep(step.value)) return
-  if (step.value === 1) {
+  if (step.value === 1 || (step.value === 2 && googleRegistration.pending)) {
     checkingAvailability.value = true
     const email = form.email
     const identityCard = form.identityCard
@@ -409,7 +424,44 @@ async function next() {
 
 function previous() {
   clearFeedback()
-  if (step.value > 1) step.value -= 1
+  if (step.value > (googleRegistration.pending ? 2 : 1)) step.value -= 1
+}
+
+async function registerWithGoogle(credential: GoogleCredential) {
+  if (busy.value || checkingAvailability.value) return
+  busy.value = true
+  clearFeedback()
+  try {
+    const result = await authService.googleAuthenticate(credential)
+    if (result.status === 'LOGIN') {
+      googleRegistration.clear()
+      auth.setSession(result.session)
+      await router.push({ name: 'postulante-bolsa-empleo' })
+    } else if (result.status === 'REGISTER') {
+      if (googleRegistration.pending && googleRegistration.pending.email !== result.email) {
+        throw new Error('Usá la misma cuenta de Google para continuar este registro.')
+      }
+      if (!googleRegistration.pending) form.fullName = result.fullName
+      googleRegistration.save(result)
+      form.email = result.email
+      form.password = ''
+      form.confirmPassword = ''
+      step.value = 2
+    } else {
+      error.value = 'Este correo ya tiene una cuenta. Entrá desde Iniciar sesión y confirmá tu contraseña para vincular Google.'
+    }
+  } catch (cause) {
+    error.value = userFacingError(cause, 'registrarte con Google')
+  } finally {
+    busy.value = false
+  }
+}
+
+function cancelGoogleRegistration() {
+  clearFeedback()
+  googleRegistration.clear()
+  form.email = ''
+  step.value = 1
 }
 
 function onCvFileChange(event: Event) {
@@ -484,6 +536,10 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
 }
 
 async function complete() {
+  if (googleRegistration.pending && !validateStep(2)) {
+    step.value = 2
+    return
+  }
   busy.value = true
   clearFeedback()
   try {
@@ -492,12 +548,28 @@ async function complete() {
       return
     }
     const manualSummary = cvMode.value === 'manual' ? manualProfileSummary() : null
-    const session = await authService.registerApplicant({
+    const payload = {
       ...form,
       ...(manualSummary ?? {}),
       sectors: chosen.value,
-    })
+    }
+    const session = googleRegistration.pending
+      ? await authService.googleRegister({
+        registrationToken: googleRegistration.pending.registrationToken,
+        fullName: payload.fullName,
+        identityCard: payload.identityCard,
+        phone: payload.phone,
+        residenceArea: payload.residenceArea,
+        profileName: payload.profileName,
+        sectors: payload.sectors,
+        availability: payload.availability,
+        hasVehicle: payload.hasVehicle,
+        latestJob: payload.latestJob,
+        experienceDescription: payload.experienceDescription,
+      })
+      : await authService.registerApplicant(payload)
     auth.setSession(session)
+    googleRegistration.clear()
 
     // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
     const generatedManualCv = cvMode.value === 'manual' ? buildManualCvFile() : null
@@ -570,6 +642,7 @@ async function complete() {
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
         <h2 id="step-personal" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><UserRound :size="24" /></span> Datos Personales</h2>
         <p>Completa la información básica para dar de alta tu ficha de postulante.</p>
+        <GoogleSignInButton text="signup_with" :disabled="busy || checkingAvailability" @credential="registerWithGoogle" />
         <div class="form-grid">
           <AppField id="fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
             <input id="fullName" v-model="form.fullName" placeholder="Ingresa tu nombre y apellido" autocomplete="name" :aria-invalid="Boolean(fieldErrors.fullName)">
@@ -600,6 +673,31 @@ async function complete() {
       <section v-else-if="step === 2" class="registration-card__step" aria-labelledby="step-profile">
         <h2 id="step-profile" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><BriefcaseBusiness :size="24" /></span> Primer Perfil Laboral</h2>
         <p>Configura las bases de tu primera postulación activa.</p>
+        <section v-if="googleRegistration.pending" class="registration-google">
+          <AppAlert tone="info">Google completó tu nombre, correo y foto. Completá los datos restantes para continuar. No necesitás crear una contraseña.</AppAlert>
+          <ProfileAvatar class="registration-google__avatar" :src="googleRegistration.pending.fotoUrl" :initials="form.fullName.slice(0, 1).toUpperCase()" />
+          <div class="form-grid">
+            <AppField id="google-fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
+              <input id="google-fullName" v-model="form.fullName" maxlength="160" autocomplete="name">
+            </AppField>
+            <AppField id="google-email" label="Correo de Google" wide :error="fieldErrors.email">
+              <input id="google-email" :value="form.email" type="email" readonly>
+            </AppField>
+            <AppField id="google-identityCard" label="Cédula de Identidad" required :error="fieldErrors.identityCard">
+              <input id="google-identityCard" v-model="form.identityCard" maxlength="30">
+            </AppField>
+            <AppField id="google-phone" label="Teléfono / Celular" required :error="fieldErrors.phone">
+              <input id="google-phone" v-model="form.phone" maxlength="40" autocomplete="tel">
+            </AppField>
+            <AppField id="google-residenceArea" label="Zona de residencia" required wide :error="fieldErrors.residenceArea">
+              <select id="google-residenceArea" v-model="form.residenceArea">
+                <option v-for="area in residenceAreas" :key="area" :value="area">{{ area }}</option>
+              </select>
+            </AppField>
+          </div>
+          <details><summary>Volver a autenticarme con Google si venció el registro</summary><GoogleSignInButton text="signup_with" :disabled="busy || checkingAvailability" @credential="registerWithGoogle" /></details>
+          <button type="button" :disabled="busy || checkingAvailability" @click="cancelGoogleRegistration">Usar otro correo o registrarme con contraseña</button>
+        </section>
         <aside class="registration-card__notice">
           <Lightbulb :size="17" aria-hidden="true" />
           <div>
@@ -812,11 +910,11 @@ async function complete() {
       <AppAlert v-if="success" tone="success">{{ success }}</AppAlert>
 
       <footer class="registration-card__actions">
-        <AppButton v-if="step > 1" variant="secondary" @click="previous">
+        <AppButton v-if="step > (googleRegistration.pending ? 2 : 1)" variant="secondary" @click="previous">
           <ArrowLeft :size="14" aria-hidden="true" /> Anterior
         </AppButton>
         <span v-else></span>
-        <AppButton v-if="step < 3" type="submit" :loading="checkingAvailability">
+        <AppButton v-if="step < 3" type="submit" :loading="checkingAvailability || busy">
           {{ checkingAvailability ? 'Verificando...' : 'Continuar' }} <ArrowRight :size="15" aria-hidden="true" />
         </AppButton>
         <AppButton v-else type="submit" :loading="busy">
@@ -827,3 +925,8 @@ async function complete() {
     </form>
   </main>
 </template>
+
+<style scoped>
+.registration-google { display: grid; gap: 16px; margin-bottom: 24px; }
+.registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #e8f5ee; color: #087b48; }
+</style>

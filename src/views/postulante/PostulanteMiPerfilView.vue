@@ -21,6 +21,7 @@ async function load() {
   loading.value = true
   try {
     profile.value = await postulanteService.personalProfile(auth.token ?? undefined)
+    auth.setPhotoUrl(profile.value.fotoUrl)
   } catch (error) {
     messageTone.value = 'error'
     message.value = userFacingError(error, 'cargar tus datos personales')
@@ -42,6 +43,7 @@ async function save() {
     const updated = await postulanteService.updatePersonalProfile(data, auth.token ?? undefined)
     profile.value = updated
     auth.setFullName(updated.nombreCompleto)
+    auth.setPhotoUrl(updated.fotoUrl)
     messageTone.value = 'success'
     message.value = 'Tus datos personales se guardaron correctamente.'
   } catch (error) {
@@ -53,16 +55,19 @@ async function save() {
 }
 
 async function onPhotoChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!(event.target instanceof HTMLInputElement)) return
+  const file = event.target.files?.[0]
+  event.target.value = ''
   if (!file) return
-  if (!file.type.startsWith('image/')) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     messageTone.value = 'error'
-    message.value = 'Seleccioná una imagen (JPG o PNG) para tu foto de perfil.'
+    message.value = 'Seleccioná una imagen (JPG, PNG o WEBP) para tu foto de perfil.'
     return
   }
   uploadingPhoto.value = true
   try {
     profile.value = await postulanteService.uploadProfilePhoto(file, auth.token ?? undefined)
+    auth.setPhotoUrl(profile.value.fotoUrl)
     messageTone.value = 'success'
     message.value = 'Tu foto de perfil se actualizó correctamente.'
   } catch (error) {
@@ -85,7 +90,7 @@ onMounted(load)
         <div class="personal-profile__photo">
           <img v-if="profile.fotoUrl" :src="profile.fotoUrl" alt="Foto de perfil">
           <span v-else>{{ profile.nombreCompleto.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() }}</span>
-          <label><input type="file" accept="image/*" :disabled="uploadingPhoto" @change="onPhotoChange"><span>{{ uploadingPhoto ? 'Subiendo foto...' : 'Cambiar foto' }}</span></label>
+          <label><input type="file" accept="image/jpeg,image/png,image/webp" :disabled="uploadingPhoto" @change="onPhotoChange"><span>{{ uploadingPhoto ? 'Subiendo foto...' : 'Cambiar foto' }}</span></label>
         </div>
         <label>Nombre y apellido *
           <input v-model="profile.nombreCompleto" required placeholder="Como figura en tu documento">

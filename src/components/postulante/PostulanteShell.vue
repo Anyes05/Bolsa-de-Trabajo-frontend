@@ -4,8 +4,10 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
+import ProfileAvatar from '../ProfileAvatar.vue'
+import AppAlert from '../AppAlert.vue'
 import { useAuthStore } from '../../stores/auth'
-import { authService } from '../../services/authService'
+import { userFacingError } from '../../utils/userMessage'
 
 defineProps<{
   title: string
@@ -17,6 +19,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const open = ref(false)
+const profileError = ref('')
 
 watch(() => route.fullPath, () => { open.value = false })
 watch(open, (value) => {
@@ -28,11 +31,12 @@ function initials(name: string) {
 }
 
 onMounted(async () => {
-  if (auth.fullName || auth.role !== 'POSTULANTE') return
+  if (auth.role !== 'POSTULANTE') return
   try {
-    const currentUser = await authService.currentUser()
-    auth.setFullName(currentUser.fullName)
-  } catch {}
+    await auth.refreshCurrentUser()
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'cargar tu perfil')
+  }
 })
 
 function logout() {
@@ -98,7 +102,7 @@ function logout() {
             <strong>{{ auth.fullName || auth.email || 'Postulante' }}</strong>
             <span>{{ auth.role || 'POSTULANTE' }}</span>
           </div>
-          <span class="postulante-header__avatar" aria-hidden="true">{{ initials(auth.fullName || auth.email || 'Postulante') }}</span>
+          <ProfileAvatar class="postulante-header__avatar" :src="auth.photoUrl" :initials="initials(auth.fullName || auth.email || 'Postulante')" />
           <button type="button" class="shell-exit" @click="logout">
             <span class="shell-exit__label">Cerrar sesión</span>
             <LogOut :size="17" aria-hidden="true" />
@@ -107,6 +111,7 @@ function logout() {
       </header>
 
       <div class="postulante-shell__body">
+        <AppAlert v-if="profileError" tone="error">{{ profileError }}</AppAlert>
         <slot />
       </div>
     </div>

@@ -8,14 +8,19 @@ import AppField from '../components/AppField.vue'
 import AppButton from '../components/AppButton.vue'
 import AppAlert from '../components/AppAlert.vue'
 import PasswordInput from '../components/PasswordInput.vue'
+import GoogleSignInButton from '../components/GoogleSignInButton.vue'
+import { useGoogleRegistrationStore } from '../stores/googleRegistration'
 import { getRoleOption, roleOptions } from '../data/roles'
 import { authService } from '../services/authService'
 import { useAuthStore } from '../stores/auth'
 import type { Role } from '../services/types'
+import type { GoogleCredential, AuthResponse } from '../services/types'
 import { userFacingError } from '../utils/userMessage'
 
 const router = useRouter()
 const auth = useAuthStore()
+const googleRegistration = useGoogleRegistrationStore()
+const googleLinkCredential = ref<GoogleCredential | null>(null)
 const role = ref<Role | null>(null)
 const identifier = ref('')
 const password = ref('')
@@ -32,6 +37,7 @@ function routeByRole(roleValue: string) {
 }
 
 function selectRole(value: Role) {
+  googleLinkCredential.value = null
   role.value = value
   identifier.value = ''
   password.value = ''
@@ -39,6 +45,7 @@ function selectRole(value: Role) {
 }
 
 function returnToRoles() {
+  googleLinkCredential.value = null
   role.value = null
   error.value = ''
 }
@@ -62,7 +69,23 @@ async function submitLogin() {
   busy.value = true
   error.value = ''
   try {
+    if (googleLinkCredential.value && role.value === 'POSTULANTE') {
+      const result = await authService.googleLink(googleLinkCredential.value, password.value)
+      if (result.status !== 'LOGIN') throw new Error('No se pudo vincular tu cuenta. Volvé a iniciar sesión con Google.')
+      await enterSession(result.session)
+      return
+    }
     const session = await authService.login(role.value, identifierValue, password.value)
+    await enterSession(session)
+  } catch (exception) {
+    error.value = userFacingError(exception, 'iniciar sesión')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function enterSession(session: AuthResponse) {
+    googleRegistration.clear()
     auth.setSession(session)
     if (session.debeCambiarPassword) {
       await router.replace({ name: 'socio-cambiar-clave' })
@@ -73,8 +96,26 @@ async function submitLogin() {
     if (window.location.pathname !== target.path) {
       window.location.assign(target.path)
     }
-  } catch (exception) {
-    error.value = userFacingError(exception, 'iniciar sesión')
+}
+
+async function signInGoogle(credential: GoogleCredential) {
+  busy.value = true
+  error.value = ''
+  googleLinkCredential.value = null
+  try {
+    const result = await authService.googleAuthenticate(credential)
+    if (result.status === 'LOGIN') await enterSession(result.session)
+    else if (result.status === 'REGISTER') {
+      googleRegistration.save(result)
+      await router.push({ name: 'register' })
+    } else {
+      googleLinkCredential.value = credential
+      identifier.value = result.email
+      password.value = ''
+      error.value = 'Este correo ya tiene una cuenta. Confirmá su contraseña para vincularla con Google.'
+    }
+  } catch (cause) {
+    error.value = userFacingError(cause, 'iniciar sesión con Google')
   } finally {
     busy.value = false
   }
@@ -115,6 +156,7 @@ async function submitLogin() {
             <p>Ingresa con tus credenciales</p>
           </div>
         </header>
+        <GoogleSignInButton v-if="role === 'POSTULANTE'" :disabled="busy" @credential="signInGoogle" />
         <AppField id="login-identifier" :label="detail?.label ?? ''" required>
           <input
             id="login-identifier"
@@ -122,6 +164,7 @@ async function submitLogin() {
             :placeholder="detail?.placeholder"
             :inputmode="role === 'SOCIO' ? 'numeric' : 'email'"
             autocomplete="username"
+            :readonly="!!googleLinkCredential"
             required
           >
         </AppField>
