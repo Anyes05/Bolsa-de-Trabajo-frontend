@@ -51,7 +51,8 @@ onMounted(async () => {
   } catch (cause) {
     profileError.value = userFacingError(cause, 'cargar tu perfil')
   }
-  void notifications.load()
+  await notifications.load()
+  notifications.presentBlockingPopup()
 })
 
 function logout() {
@@ -63,6 +64,27 @@ function openToastDetail() {
   if (notifications.toast) {
     notifications.openDetail(notifications.toast)
   }
+}
+
+function onModalKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  event.stopPropagation()
+  event.preventDefault()
+  if (notifications.blocking) return
+  notifications.closeDetail()
+}
+
+function onModalBackdropClick() {
+  if (notifications.blocking) return
+  notifications.closeDetail()
+}
+
+function closeOpenedModal() {
+  if (notifications.blocking) {
+    void notifications.dismissBlockingPopup()
+    return
+  }
+  notifications.closeDetail()
 }
 </script>
 
@@ -185,20 +207,23 @@ function openToastDetail() {
       <div
         v-if="notifications.opened"
         class="notification-modal"
+        :class="{ 'notification-modal--blocking': notifications.blocking }"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="`notification-modal-title-${notifications.opened.id}`"
-        @click.self="notifications.closeDetail()"
-        @keydown.esc.stop.prevent="notifications.closeDetail()"
+        @click.self="onModalBackdropClick"
+        @keydown="onModalKeydown"
       >
         <section class="notification-modal__panel">
           <header class="notification-modal__header">
             <div>
-              <p class="notification-modal__eyebrow">Comunicado CCISJ</p>
+              <p class="notification-modal__eyebrow">
+                {{ notifications.blocking ? 'Comunicado obligatorio' : 'Comunicado CCISJ' }}
+              </p>
               <h2 :id="`notification-modal-title-${notifications.opened.id}`">{{ notifications.opened.title }}</h2>
               <time v-if="notifications.opened.date">{{ notifications.opened.date }}</time>
             </div>
-            <button type="button" class="notification-modal__close" aria-label="Cerrar" @click="notifications.closeDetail()">
+            <button type="button" class="notification-modal__close" aria-label="Cerrar" @click="closeOpenedModal">
               <X :size="18" />
             </button>
           </header>
@@ -206,7 +231,7 @@ function openToastDetail() {
             <p>{{ notifications.opened.body }}</p>
           </div>
           <footer class="notification-modal__footer">
-            <button type="button" class="notification-modal__done" @click="notifications.closeDetail()">
+            <button type="button" class="notification-modal__done" @click="closeOpenedModal">
               Cerrar
             </button>
           </footer>

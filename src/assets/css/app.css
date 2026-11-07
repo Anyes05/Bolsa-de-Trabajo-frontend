@@ -2453,6 +2453,26 @@ button:disabled {
   background: rgb(17 33 27 / 55%);
 }
 
+/* RF-17: cubre toda la app (incl. menú) hasta que el socio cierre el comunicado. */
+.notification-modal--blocking {
+  z-index: 120;
+  padding: 0;
+  background: rgb(10 22 18 / 78%);
+}
+
+.notification-modal--blocking .notification-modal__panel {
+  width: min(100%, 820px);
+  max-height: min(92dvh, 900px);
+  border-radius: 0;
+}
+
+@media (min-width: 721px) {
+  .notification-modal--blocking .notification-modal__panel {
+    border-radius: 16px;
+    width: min(92vw, 820px);
+  }
+}
+
 .notification-modal__panel {
   display: flex;
   flex-direction: column;

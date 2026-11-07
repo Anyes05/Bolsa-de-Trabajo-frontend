@@ -33,17 +33,24 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
   const error = ref('')
   const toastDismissed = ref(false)
   const opened = ref<SocioNotificationItem | null>(null)
+  const blocking = ref(false)
 
   const unreadCount = computed(() => items.value.filter((item) => item.unread).length)
+  const pendingPopup = computed(() => items.value.find((item) => item.popup) ?? null)
   const toast = computed(() => {
-    if (toastDismissed.value) return null
-    return items.value.find((item) => item.popup) ?? null
+    if (toastDismissed.value || blocking.value || opened.value) return null
+    return pendingPopup.value
   })
 
   function applyLocalRead(id: string) {
     items.value = items.value.map((entry) => (
       entry.id === id ? { ...entry, unread: false, popup: false } : entry
     ))
+  }
+
+  function clearLocalPopups() {
+    items.value = items.value.map((item) => (item.popup ? { ...item, popup: false } : item))
+    toastDismissed.value = true
   }
 
   async function load() {
@@ -61,7 +68,17 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     }
   }
 
+  /** RF-17: al cargar el shell, si hay popup pendiente se abre modal bloqueante. */
+  function presentBlockingPopup() {
+    const item = pendingPopup.value
+    if (!item || opened.value) return
+    blocking.value = true
+    opened.value = { ...item }
+    document.body.style.overflow = 'hidden'
+  }
+
   async function openDetail(item: SocioNotificationItem) {
+    blocking.value = false
     opened.value = { ...item, unread: false, popup: false }
     applyLocalRead(item.id)
     toastDismissed.value = true
@@ -74,8 +91,26 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
   }
 
   function closeDetail() {
+    if (blocking.value) return
     opened.value = null
     document.body.style.overflow = ''
+  }
+
+  /** Cierre del pop-up bloqueante: llama dismiss API existente. */
+  async function dismissBlockingPopup() {
+    if (!blocking.value && !opened.value) return
+    const current = opened.value
+    opened.value = null
+    blocking.value = false
+    document.body.style.overflow = ''
+    clearLocalPopups()
+    if (current) applyLocalRead(current.id)
+    try {
+      if (current) await socioNotificationService.markOneRead(current.id)
+      await socioNotificationService.dismissPopup()
+    } catch {
+      // El cierre visual no debe bloquearse si falla el backend.
+    }
   }
 
   async function markAllRead() {
@@ -95,7 +130,7 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
 
   async function dismissToast() {
     toastDismissed.value = true
-    items.value = items.value.map((item) => (item.popup ? { ...item, popup: false } : item))
+    clearLocalPopups()
     try {
       await socioNotificationService.dismissPopup()
     } catch {
@@ -109,10 +144,14 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     error,
     unreadCount,
     toast,
+    pendingPopup,
     opened,
+    blocking,
     load,
+    presentBlockingPopup,
     openDetail,
     closeDetail,
+    dismissBlockingPopup,
     markAllRead,
     dismissToast,
   }
