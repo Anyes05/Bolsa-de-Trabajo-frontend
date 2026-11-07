@@ -14,6 +14,7 @@ import { userFacingError } from '../../utils/userMessage'
 const title = ref('')
 const message = ref('')
 const audience = ref<'SOCIOS' | 'SOLO_DIRECTIVOS'>('SOCIOS')
+const asPopup = ref(false)
 const busy = ref(false)
 const loading = ref(true)
 const error = ref('')
@@ -85,16 +86,21 @@ async function send() {
       titulo: title.value.trim(),
       contenido: message.value.trim(),
       destinatario: audience.value,
+      popup: asPopup.value,
     })
     notices.value = [created, ...notices.value]
     selectedId.value = created.id
     openedNotice.value = created
     title.value = ''
     message.value = ''
+    asPopup.value = false
     const parts = [
       `Campana interna: ${created.destinatariosNotificados} socios`,
       `Gmail: ${created.correosEnviados} enviados`,
     ]
+    if (created.popup) {
+      parts.push('pop-up bloqueante activado')
+    }
     if (created.correosFallidos > 0) {
       parts.push(`${created.correosFallidos} correos fallaron`)
     }
@@ -175,6 +181,13 @@ function formatNoticeDate(value: string | null | undefined) {
               </button>
             </div>
           </fieldset>
+          <label class="communication-popup-option">
+            <input v-model="asPopup" type="checkbox">
+            <span>
+              <strong>Mostrar como ventana emergente</strong>
+              <small>Al ingresar, el socio verá un pop-up bloqueante hasta cerrarlo (además de la campana y el mail).</small>
+            </span>
+          </label>
           <AppAlert v-if="error">{{ error }}</AppAlert>
           <AppAlert v-if="success" tone="success">{{ success }}</AppAlert>
           <button class="communication-send" type="button" :disabled="busy || loading" @click="send">
@@ -199,6 +212,7 @@ function formatNoticeDate(value: string | null | undefined) {
               <small>
                 {{ formatNoticeDate(notice.fechaPublicacion) }}
                 · Audiencia: {{ destinatarioLabel(notice.destinatario) }}
+                <template v-if="notice.popup"> · Pop-up</template>
               </small>
             </p>
             <button type="button" class="communication-previous__view" @click.stop="viewNotice(notice)">
@@ -217,7 +231,7 @@ function formatNoticeDate(value: string | null | undefined) {
               <strong>📢 {{ previewTitle }}</strong>
               <small>Audiencia: {{ previewAudience }} · {{ previewDate }}</small>
               <p>{{ previewMessage }}</p>
-              <b>Notificación interna</b>
+              <b>{{ asPopup || selectedNotice?.popup ? 'Pop-up bloqueante + campana' : 'Notificación interna' }}</b>
             </article>
           </div>
         </section>
@@ -256,6 +270,7 @@ function formatNoticeDate(value: string | null | undefined) {
             <time>{{ formatNoticeDate(openedNotice.fechaPublicacion) }}</time>
             <p class="communication-modal__meta">
               Audiencia: {{ destinatarioLabel(openedNotice.destinatario) }}
+              <template v-if="openedNotice.popup"> · Pop-up bloqueante</template>
               <template v-if="openedNotice.autorEmail"> · Autor: {{ openedNotice.autorEmail }}</template>
             </p>
           </div>

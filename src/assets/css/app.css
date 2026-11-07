@@ -3033,6 +3033,41 @@ button:disabled {
 @media (max-width: 850px) { .communications-layout { grid-template-columns: 1fr; } }
 @media (max-width: 650px) { .communication-audiences { grid-template-columns: 1fr; }.communication-audiences small { margin-left: auto; } }
 
+.communication-popup-option {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  background: #f8fafb;
+  cursor: pointer;
+}
+
+.communication-popup-option input {
+  width: auto !important;
+  margin-top: 2px;
+  accent-color: #07984c;
+}
+
+.communication-popup-option span {
+  display: grid;
+  gap: 4px;
+}
+
+.communication-popup-option strong {
+  color: #303943;
+  font-size: 12px;
+}
+
+.communication-popup-option small {
+  color: #66727e;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 /* Block: postulante-shell */
 .postulante-shell {
   display: grid;

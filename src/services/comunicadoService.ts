@@ -7,6 +7,7 @@ export type ComunicadoRecord = {
   titulo: string
   contenido: string
   destinatario: DestinatarioComunicado
+  popup: boolean
   fechaPublicacion: string | null
   autorEmail: string | null
   destinatariosNotificados: number
@@ -25,6 +26,7 @@ export type ComunicadoCreatePayload = {
   titulo: string
   contenido: string
   destinatario: 'SOCIOS' | 'SOLO_DIRECTIVOS'
+  popup: boolean
 }
 
 export const comunicadoService = {
