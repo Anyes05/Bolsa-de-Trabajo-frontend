@@ -105,6 +105,8 @@ async function submit() {
   }
   busy.value = true
   error.value = ''
+  mailSent.value = ''
+  mailError.value = ''
   try {
     createdSocio.value = await socioService.createSocio({
       tipoIdentificador: form.tipoIdentificador,
@@ -122,6 +124,12 @@ async function submit() {
       fechaAlta: toIsoDate(form.fechaAlta),
       fechaAniversario: toIsoDate(form.fechaAniversario),
     })
+    if (createdSocio.value.credencialesEnviadas) {
+      mailSent.value = createdSocio.value.credencialesEnvioMensaje
+        || 'Credenciales enviadas automáticamente por correo.'
+    } else if (createdSocio.value.credencialesEnvioMensaje) {
+      mailError.value = createdSocio.value.credencialesEnvioMensaje
+    }
   } catch (exception) {
     error.value = userFacingError(exception, 'crear el socio')
   } finally {
@@ -163,16 +171,18 @@ async function sendCredentialsMail() {
           <small>Se generó automáticamente a partir de la razón social.</small>
         </label>
         <p class="new-company-form__wide">
-          Podés enviarle las credenciales por mail a <strong>{{ createdSocio.emailUsuario || createdSocio.emailContacto || 'su correo registrado' }}</strong>
-          (usuario de acceso y clave provisional, con el aviso de las 24 horas). Al enviarlo se genera una clave nueva y el plazo de 24 horas corre desde ese momento.
+          Al dar de alta se intenta enviar automáticamente las credenciales a
+          <strong>{{ createdSocio.emailContacto || createdSocio.emailUsuario || 'su correo registrado' }}</strong>
+          (prioridad: email de contacto). Si el envío falla, el socio igual queda creado y podés reenviar.
+          Al reenviar se genera una clave nueva y el plazo de 24 horas corre desde ese momento.
         </p>
         <AppAlert v-if="mailError">{{ mailError }}</AppAlert>
         <p v-if="mailSent" class="socio-profile__hint">{{ mailSent }}</p>
         <footer class="new-company-form__footer">
-          <button class="new-company-cancel" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado sin enviar</button>
+          <button class="new-company-cancel" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado</button>
           <button class="new-company-submit" type="button" :disabled="mailBusy" @click="sendCredentialsMail">
             <Mail :size="15" aria-hidden="true" />
-            {{ mailBusy ? 'Enviando...' : (mailSent ? 'Reenviar mail al socio' : 'Mandar mail al socio') }}
+            {{ mailBusy ? 'Enviando...' : (mailSent ? 'Reenviar mail al socio' : 'Reintentar envío de mail') }}
           </button>
         </footer>
       </div>

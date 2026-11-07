@@ -209,7 +209,7 @@ async function resetClave() {
     <section class="company-search-card">
       <label class="company-search">
         <Search :size="17" />
-        <input v-model="query" placeholder="Buscar por razón social, RUT, cédula o rubro...">
+        <input v-model="query" placeholder="Buscar por razón social, BPS, RUT, cédula o rubro...">
       </label>
       <span>{{ filtered.length }} de {{ socios.length }} socios listados</span>
     </section>

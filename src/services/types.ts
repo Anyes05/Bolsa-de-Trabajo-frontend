@@ -35,6 +35,8 @@ export type SocioRecord = {
   fechaAniversario: string | null
   activo: boolean
   passwordProvisional?: string | null
+  credencialesEnviadas?: boolean | null
+  credencialesEnvioMensaje?: string | null
 }
 
 export type SocioCreatePayload = {
