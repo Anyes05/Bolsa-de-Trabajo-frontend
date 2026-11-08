@@ -1,19 +1,16 @@
 <script setup lang="ts">
-import { AlertTriangle, CheckCircle2, FilePlus2, Save } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle2, Save } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import { tarifaService } from '../../services/tarifaService'
 import type { Tarifa } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 
-const today = new Date()
-const billingPeriod = ref(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`)
-const year = ref(today.getFullYear())
+const year = ref(new Date().getFullYear())
 const amount = ref('')
 const history = ref<Tarifa[]>([])
 const loading = ref(false)
 const saving = ref(false)
-const generating = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 
@@ -46,32 +43,12 @@ async function saveAmount() {
   saving.value = true
   try {
     await tarifaService.save({ anio: year.value, montoBase: numericAmount, diaVencimiento: 31 })
-    successMessage.value = 'Tarifa anual guardada. Se aplicará a cada cuota mensual de este año.'
+    successMessage.value = 'Monto de cuota guardado. Se aplicará a las cuotas mensuales de este año.'
     await loadTariffs()
   } catch (error) {
     errorMessage.value = userFacingError(error, 'guardar la tarifa')
   } finally {
     saving.value = false
-  }
-}
-
-async function generateBilling() {
-  if (generating.value) return
-  errorMessage.value = ''
-  successMessage.value = ''
-  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(billingPeriod.value)) {
-    errorMessage.value = 'Seleccione un mes válido.'
-    return
-  }
-
-  generating.value = true
-  try {
-    const result = await tarifaService.generateBilling(`${billingPeriod.value}-01`)
-    successMessage.value = `Facturación emitida: ${result.cuotasGeneradas} cuotas nuevas y ${result.cuotasExistentes} ya existentes.`
-  } catch (error) {
-    errorMessage.value = userFacingError(error, 'generar la facturación')
-  } finally {
-    generating.value = false
   }
 }
 
@@ -82,21 +59,35 @@ onMounted(loadTariffs)
   <AdminShell active="configuracion" title="Configuración de Cuota" subtitle="Monto mensual para socios del CCISJ">
     <div class="fee-settings">
       <section class="fee-panel fee-current">
-        <div class="fee-current__intro"><h2>Tarifa anual</h2><p>Define el valor mensual de la cuota social para todo el año. Las cuotas y los reintegros recurrentes activos se generan automáticamente cada mes, con horario de Uruguay.</p></div>
-        <div class="fee-config-fields"><label>Año<input v-model.number="year" type="number" min="2000" max="9999" @change="loadTariffs"></label><label>Vencimiento<input value="Último día del mes siguiente" readonly></label></div>
-        <div class="fee-current__control"><label class="fee-input"><span>$</span><input v-model="amount" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente"></label><button class="fee-save" type="button" :disabled="saving || loading" @click="saveAmount"><Save :size="16" /> {{ saving ? 'Guardando...' : 'Guardar monto' }}</button></div>
+        <div class="fee-current__intro">
+          <h2>Monto de cuota</h2>
+          <p>Define el valor mensual de la cuota social. Las cuotas y los reintegros recurrentes activos se generan automáticamente cada mes, con horario de Uruguay.</p>
+        </div>
+        <div class="fee-current__control">
+          <label class="fee-input">
+            <span>$</span>
+            <input v-model="amount" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente">
+          </label>
+          <button class="fee-save" type="button" :disabled="saving || loading" @click="saveAmount">
+            <Save :size="16" /> {{ saving ? 'Guardando...' : 'Guardar monto' }}
+          </button>
+        </div>
         <p v-if="successMessage" class="fee-success"><CheckCircle2 :size="15" /> {{ successMessage }}</p>
         <p v-if="errorMessage" class="fee-warning"><AlertTriangle :size="15" /> {{ errorMessage }}</p>
         <p class="fee-warning"><AlertTriangle :size="15" /> La tarifa no puede modificarse cuando ya generó cuotas. Las cuotas ya emitidas no se alteran.</p>
       </section>
 
-      <form class="fee-panel fee-current" @submit.prevent="generateBilling">
-        <div class="fee-current__intro"><h2>Generar cuotas por mes</h2></div>
-        <label class="billing-period">Mes a facturar<input v-model="billingPeriod" type="month" min="2000-01" max="9999-12" required></label>
-        <button class="fee-save" type="submit" :disabled="generating || loading || saving"><FilePlus2 :size="16" /> {{ generating ? 'Generando...' : 'Generar cuotas' }}</button>
-      </form>
-
-      <section class="fee-panel fee-history"><h2>Historial de tarifas</h2><div v-for="entry in history" :key="entry.id" class="fee-history__entry"><span>$</span><div><strong>{{ formatMoney(entry.montoBase) }} / mes</strong><small>Año {{ entry.anio }} · Nuevas cuotas: vencimiento al final del mes siguiente</small></div><b v-if="entry.anio === year">Seleccionada</b></div></section>
+      <section class="fee-panel fee-history">
+        <h2>Historial de tarifas</h2>
+        <div v-for="entry in history" :key="entry.id" class="fee-history__entry">
+          <span>$</span>
+          <div>
+            <strong>{{ formatMoney(entry.montoBase) }} / mes</strong>
+            <small>Año {{ entry.anio }}</small>
+          </div>
+          <b v-if="entry.anio === year">Vigente</b>
+        </div>
+      </section>
     </div>
   </AdminShell>
 </template>
@@ -120,57 +111,8 @@ onMounted(loadTariffs)
   font-size: 1.0625rem;
 }
 
-.fee-config-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  width: 100%;
-}
-
-.fee-config-fields label,
-.billing-period {
-  display: grid;
-  gap: 8px;
-  color: #303943;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.fee-config-fields input,
-.billing-period input {
-  width: 100%;
-  min-height: 46px;
-  height: auto;
-  border: 1px solid #d5dde5;
-  border-radius: 8px;
-  padding: 0 14px;
-  color: #1f2a24;
-  font: inherit;
-  font-size: 1.0625rem;
-  outline: 0;
-}
-
-.fee-config-fields input:focus,
-.billing-period input:focus {
-  border-color: #07984c;
-}
-
-.billing-period {
-  max-width: 420px;
-}
-
 button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
-}
-
-@media (max-width: 650px) {
-  .fee-config-fields {
-    grid-template-columns: 1fr;
-  }
-
-  .billing-period {
-    max-width: none;
-  }
 }
 </style>
