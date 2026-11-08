@@ -64,11 +64,15 @@ const paymentMethods: Array<{ key: MetodoPago; label: string }> = [
 ]
 
 const metrics = computed(() => [
-  { label: 'Total Socios', value: resumen.value?.totalSocios ?? 0, icon: UsersRound, tone: 'blue' },
-  { label: 'Al Dia', value: resumen.value?.alDia ?? 0, icon: CheckCircle2, tone: 'green' },
-  { label: 'Pendiente', value: resumen.value?.pendiente ?? 0, icon: Clock3, tone: 'orange' },
-  { label: 'Inactivos', value: resumen.value?.inactivos ?? 0, icon: AlertCircle, tone: 'red' },
+  { label: 'Total Socios', value: resumen.value?.totalSocios ?? 0, icon: UsersRound, tone: 'blue', filterKey: 'TODOS' as CajaFilter },
+  { label: 'Al Dia', value: resumen.value?.alDia ?? 0, icon: CheckCircle2, tone: 'green', filterKey: 'AL_DIA' as CajaFilter },
+  { label: 'Pendiente', value: resumen.value?.pendiente ?? 0, icon: Clock3, tone: 'orange', filterKey: 'DEUDA' as CajaFilter },
+  { label: 'Inactivos', value: resumen.value?.inactivos ?? 0, icon: AlertCircle, tone: 'red', filterKey: 'INACTIVO' as CajaFilter },
 ])
+
+function applyMetricFilter(next: CajaFilter) {
+  filter.value = filter.value === next && next !== 'TODOS' ? 'TODOS' : next
+}
 
 const companies = computed(() => {
   const term = query.value.trim().toLowerCase()
@@ -416,10 +420,19 @@ function paymentLabel(method: MetodoPago | null) {
 <template>
   <AdminShell active="dashboard" title="Control de Caja y Cobranza" subtitle="Gestion de cuotas y cobros">
     <section class="cash-metrics" aria-label="Resumen de cobranza">
-      <article v-for="metric in metrics" :key="metric.label" class="cash-metric">
+      <button
+        v-for="metric in metrics"
+        :key="metric.label"
+        type="button"
+        class="cash-metric"
+        :class="{ 'cash-metric--active': filter === metric.filterKey }"
+        :aria-pressed="filter === metric.filterKey"
+        :aria-label="`Filtrar por ${metric.label}`"
+        @click="applyMetricFilter(metric.filterKey)"
+      >
         <span class="cash-metric__icon" :class="`cash-metric__icon--${metric.tone}`"><component :is="metric.icon" :size="20" /></span>
         <div><strong>{{ metric.value }}</strong><span>{{ metric.label }}</span></div>
-      </article>
+      </button>
     </section>
 
     <section class="cash-toolbar">
