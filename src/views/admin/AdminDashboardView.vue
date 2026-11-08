@@ -303,7 +303,9 @@ async function saveExpense() {
     })
     await loadResumen()
     await openExpense(account)
-    expenseSuccess.value = 'Reintegro registrado en la cuenta.'
+    expenseSuccess.value = expenseRecurring.value
+      ? 'Reintegro recurrente registrado. Quedó guardado el tipo recurrente y se cobrará también los meses siguientes.'
+      : 'Reintegro puntual registrado. Quedó guardado el tipo puntual (solo este cargo).'
   } catch (exception) {
     expenseError.value = userFacingError(exception, 'registrar el reintegro')
   } finally {
@@ -601,6 +603,12 @@ function paymentLabel(method: MetodoPago | null) {
                 >
                   {{ movement.tipo }}
                 </span>
+                <span
+                  v-if="movement.tipo === 'REINTEGRO' && movement.recurrente != null"
+                  class="history-entry__tag history-entry__tag--tipo"
+                >
+                  {{ movement.recurrente ? 'Recurrente' : 'Puntual' }}
+                </span>
                 <strong>{{ movement.concepto }}</strong>
                 <p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p>
                 <p v-if="movement.referencia">Referencia: {{ movement.referencia }}</p>
@@ -663,7 +671,17 @@ function paymentLabel(method: MetodoPago | null) {
           >
             <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
             <label class="cash-payment-detail">Importe<input v-model="expenseAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
-            <label class="expense-recurring"><input v-model="expenseRecurring" type="checkbox"> Recurrente mensual</label>
+            <label class="expense-recurring">
+              <input v-model="expenseRecurring" type="checkbox">
+              Recurrente mensual
+            </label>
+            <p class="expense-type-hint" role="note">
+              Tipo a guardar:
+              <strong>{{ expenseRecurring ? 'Recurrente' : 'Puntual' }}</strong>
+              — {{ expenseRecurring
+                ? 'se crea el cargo de este mes y queda programado para los siguientes.'
+                : 'solo se crea el cargo de este mes.' }}
+            </p>
           </form>
           <section
             v-show="expenseTab === 'RECURRENTES'"

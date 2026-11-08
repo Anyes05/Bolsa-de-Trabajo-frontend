@@ -119,6 +119,8 @@ export type MovimientoCaja = {
   metodoPago: MetodoPago | null
   referencia: string | null
   observaciones: string | null
+  /** true = reintegro/timbre recurrente; false = puntual; null = no aplica */
+  recurrente: boolean | null
 }
 
 export type ReintegroProgramado = {
