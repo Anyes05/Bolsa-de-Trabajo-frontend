@@ -5,7 +5,7 @@ import ProfileAvatar from '../ProfileAvatar.vue'
 import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
 import ProfileCard from './ProfileCard.vue'
 
-defineProps<{
+withDefaults(defineProps<{
   applicant: {
     id: number
     fullName: string
@@ -13,9 +13,14 @@ defineProps<{
     phone?: string
     initials: string
     profiles: MockApplicantProfile[]
+    estado?: 'ACTIVO' | 'INACTIVO'
+    estadoDetalle?: string
   }
   expanded: boolean
-}>()
+  showEstado?: boolean
+}>(), {
+  showEstado: false,
+})
 
 const emit = defineEmits<{
   toggle: []
@@ -29,7 +34,19 @@ const emit = defineEmits<{
     <header class="applicant-group-card__header">
       <ProfileAvatar class="applicant-group-card__avatar" :src="applicant.profiles[0]?.fotoUrl" :initials="applicant.initials" />
       <div class="applicant-group-card__identity">
-        <h3>{{ applicant.fullName }}</h3>
+        <h3>
+          {{ applicant.fullName }}
+          <span
+            v-if="showEstado && applicant.estado"
+            class="applicant-group-card__badge"
+            :class="applicant.estado === 'ACTIVO'
+              ? 'applicant-group-card__badge--activo'
+              : 'applicant-group-card__badge--inactivo'"
+            :title="applicant.estadoDetalle || undefined"
+          >
+            {{ applicant.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+          </span>
+        </h3>
         <a class="applicant-group-card__contact" :href="`mailto:${applicant.email}`">
           <Mail :size="15" aria-hidden="true" />{{ applicant.email }}
         </a>

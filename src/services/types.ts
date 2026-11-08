@@ -291,7 +291,13 @@ export type SocioProfileCv = {
   uploadedAt: string
 }
 
-export type AdminApplicantProfile = Omit<ApplicantProfileCard, 'hasApplication'>
+export type AdminApplicantProfile = Omit<ApplicantProfileCard, 'hasApplication'> & {
+  cuentaActiva: boolean
+  visibleEnBolsa: boolean
+  perfilVisible: boolean
+  /** ACTIVO | INACTIVO — visible en bolsa para socios */
+  estado: 'ACTIVO' | 'INACTIVO'
+}
 
 export type PersonalProfile = {
   nombreCompleto: string

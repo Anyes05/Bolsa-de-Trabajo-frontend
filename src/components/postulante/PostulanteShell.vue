@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { Briefcase, ClipboardList, LogOut, Menu, UserRound, X } from 'lucide-vue-next'
+import { Briefcase, ClipboardList, Bell, LogOut, Menu, UserRound, X } from 'lucide-vue-next'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
 import ProfileAvatar from '../ProfileAvatar.vue'
 import AppAlert from '../AppAlert.vue'
+import AppButton from '../AppButton.vue'
+import { permanenciaService, type PermanenciaEstado } from '../../services/permanenciaService'
+import { postulanteNotificationService } from '../../services/postulanteNotificationService'
 import { useAuthStore } from '../../stores/auth'
 import { userFacingError } from '../../utils/userMessage'
 
 defineProps<{
   title: string
   subtitle: string
-  activeSection: 'ofertas' | 'perfiles' | 'mi-perfil'
+  activeSection: 'ofertas' | 'perfiles' | 'mi-perfil' | 'notificaciones'
 }>()
 
 const auth = useAuthStore()
@@ -20,6 +23,9 @@ const router = useRouter()
 const route = useRoute()
 const open = ref(false)
 const profileError = ref('')
+const unreadCount = ref(0)
+const permanencia = ref<PermanenciaEstado | null>(null)
+const confirming = ref(false)
 
 watch(() => route.fullPath, () => { open.value = false })
 watch(open, (value) => {
@@ -30,13 +36,38 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'P'
 }
 
-onMounted(async () => {
+async function loadShellData() {
   if (auth.role !== 'POSTULANTE') return
   try {
     await auth.refreshCurrentUser()
   } catch (cause) {
     profileError.value = userFacingError(cause, 'cargar tu perfil')
   }
+  try {
+    const [notifs, estado] = await Promise.all([
+      postulanteNotificationService.list(),
+      permanenciaService.estado(),
+    ])
+    unreadCount.value = notifs.filter((item) => !item.leida).length
+    permanencia.value = estado
+  } catch {
+    // La campana/permanencia no deben bloquear el módulo.
+  }
+}
+
+async function confirmarPermanencia() {
+  confirming.value = true
+  try {
+    permanencia.value = await permanenciaService.confirmarAutenticado()
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'confirmar tu permanencia')
+  } finally {
+    confirming.value = false
+  }
+}
+
+onMounted(() => {
+  void loadShellData()
 })
 
 function logout() {
@@ -83,6 +114,15 @@ function logout() {
           <UserRound :size="17" aria-hidden="true" />
           Mi perfil
         </RouterLink>
+        <RouterLink
+          class="postulante-nav__item"
+          :class="{ 'postulante-nav__item--active': activeSection === 'notificaciones' }"
+          to="/postulante/notificaciones"
+          @click="open = false"
+        >
+          <Bell :size="17" aria-hidden="true" />
+          Notificaciones
+        </RouterLink>
       </nav>
       <small class="postulante-sidebar__footer">© 2026 CCISJ · San José, Uruguay</small>
     </aside>
@@ -97,7 +137,11 @@ function logout() {
           <p class="postulante-header__subtitle">{{ subtitle }}</p>
         </div>
         <div class="postulante-header__user">
-          <NotificationBell :count="0" label="Notificaciones" />
+          <NotificationBell
+            :count="unreadCount"
+            label="Notificaciones"
+            :to="{ name: 'postulante-notificaciones' }"
+          />
           <div class="postulante-header__identity">
             <strong>{{ auth.fullName || auth.email || 'Postulante' }}</strong>
             <span>{{ auth.role || 'POSTULANTE' }}</span>
@@ -112,8 +156,43 @@ function logout() {
 
       <div class="postulante-shell__body">
         <AppAlert v-if="profileError" tone="error">{{ profileError }}</AppAlert>
+        <div v-if="permanencia?.requiereAccion" class="permanencia-banner" role="status">
+          <div>
+            <strong>Confirmá tu permanencia en la Bolsa</strong>
+            <p>
+              Llevás más de 2 meses sin actividad.
+              <template v-if="permanencia.avisoPendiente && permanencia.deadline">
+                Tenés tiempo hasta el {{ new Date(permanencia.deadline).toLocaleDateString('es-UY') }}.
+              </template>
+              <template v-else-if="permanencia.ocultoPorRetencion">
+                Tu perfil está oculto para las empresas hasta que confirmes.
+              </template>
+            </p>
+          </div>
+          <AppButton type="button" :disabled="confirming" @click="confirmarPermanencia">
+            Confirmar permanencia
+          </AppButton>
+        </div>
         <slot />
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.permanencia-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff7e8;
+  border: 1px solid #efd4a0;
+  color: #5c4316;
+}
+.permanencia-banner strong { display: block; margin-bottom: 4px; }
+.permanencia-banner p { margin: 0; font-size: 0.92rem; line-height: 1.4; }
+</style>

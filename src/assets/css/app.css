@@ -5176,6 +5176,24 @@ button:disabled {
   color: #7a8690;
 }
 
+.applicant-group-card__badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.applicant-group-card__badge--activo {
+  background: #e7f2ec;
+  color: #1f5a42;
+}
+.applicant-group-card__badge--inactivo {
+  background: #f3e8e8;
+  color: #8a3a3a;
+}
 .applicant-group-card__count {
   font-size: var(--text-sm) !important;
   font-weight: 500 !important;

@@ -12,13 +12,23 @@ import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types
 import { userFacingError } from '../../utils/userMessage'
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
+type EstadoFiltro = 'TODOS' | 'ACTIVO' | 'INACTIVO'
+
 const applicantProfiles = ref<AdminApplicantProfile[]>([])
 const selectedProfile = ref<MockApplicantProfile | null>(null)
 const selectedCvs = ref<SocioProfileCv[]>([])
 const expandedApplicantId = ref<number | null>(null)
+const estadoFiltro = ref<EstadoFiltro>('TODOS')
 const loading = ref(false)
 const loadingCvs = ref(false)
 const error = ref<string | null>(null)
+
+function estadoDetalle(profile: AdminApplicantProfile) {
+  if (!profile.cuentaActiva) return 'Cuenta de usuario desactivada'
+  if (!profile.visibleEnBolsa) return 'Oculto en la bolsa (retención / no confirmó permanencia)'
+  if (!profile.perfilVisible) return 'Activo en bolsa; este perfil laboral está oculto por el postulante'
+  return 'Visible en la bolsa de empleo'
+}
 
 function toDisplayProfile(profile: AdminApplicantProfile): MockApplicantProfile {
   return {
@@ -74,18 +84,51 @@ const {
   sectorOptions, availabilityOptions, hasFilters, clearFilters, filteredProfiles,
 } = useApplicantFilters(displayProfiles)
 
+const estadoByApplicant = computed(() => {
+  const map = new Map<number, { estado: 'ACTIVO' | 'INACTIVO'; detalle: string }>()
+  for (const profile of applicantProfiles.value) {
+    if (!map.has(profile.applicantId)) {
+      map.set(profile.applicantId, {
+        estado: profile.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
+        detalle: estadoDetalle(profile),
+      })
+    }
+  }
+  return map
+})
+
 const applicants = computed(() => {
-  const groups = new Map<number, { id: number; fullName: string; email: string; phone: string; initials: string; profiles: MockApplicantProfile[] }>()
+  type Group = {
+    id: number
+    fullName: string
+    email: string
+    phone: string
+    initials: string
+    profiles: MockApplicantProfile[]
+    estado: 'ACTIVO' | 'INACTIVO'
+    estadoDetalle: string
+  }
+  const groups = new Map<number, Group>()
   filteredProfiles.value.forEach((profile) => {
+    const meta = estadoByApplicant.value.get(profile.applicantId)
+    const estado = meta?.estado ?? 'ACTIVO'
+    if (estadoFiltro.value !== 'TODOS' && estado !== estadoFiltro.value) return
     const group = groups.get(profile.applicantId)
     if (group) group.profiles.push(profile)
     else groups.set(profile.applicantId, {
       id: profile.applicantId, fullName: profile.fullName, email: profile.email, phone: profile.phone || '',
       initials: profile.initials, profiles: [profile],
+      estado,
+      estadoDetalle: meta?.detalle || '',
     })
   })
   return [...groups.values()]
 })
+
+const activosCount = computed(() =>
+  [...estadoByApplicant.value.values()].filter((item) => item.estado === 'ACTIVO').length)
+const inactivosCount = computed(() =>
+  [...estadoByApplicant.value.values()].filter((item) => item.estado === 'INACTIVO').length)
 
 onMounted(loadProfiles)
 </script>
@@ -94,7 +137,7 @@ onMounted(loadProfiles)
   <AdminShell
     active="postulantes"
     title="Postulantes Registrados"
-    :subtitle="`${applicants.length} postulantes · ${applicantProfiles.length} perfiles totales`"
+    :subtitle="`${activosCount} activos · ${inactivosCount} inactivos · ${applicantProfiles.length} perfiles`"
   >
     <ApplicantFilters
       v-model:search="search"
@@ -107,6 +150,32 @@ onMounted(loadProfiles)
       :has-filters="hasFilters"
       @clear="clearFilters"
     />
+    <div class="admin-applicants__estado-filter" role="group" aria-label="Filtrar por estado en bolsa">
+      <button
+        type="button"
+        class="admin-applicants__chip"
+        :class="{ 'admin-applicants__chip--active': estadoFiltro === 'TODOS' }"
+        @click="estadoFiltro = 'TODOS'"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        class="admin-applicants__chip"
+        :class="{ 'admin-applicants__chip--active': estadoFiltro === 'ACTIVO' }"
+        @click="estadoFiltro = 'ACTIVO'"
+      >
+        Activos ({{ activosCount }})
+      </button>
+      <button
+        type="button"
+        class="admin-applicants__chip"
+        :class="{ 'admin-applicants__chip--active': estadoFiltro === 'INACTIVO' }"
+        @click="estadoFiltro = 'INACTIVO'"
+      >
+        Inactivos ({{ inactivosCount }})
+      </button>
+    </div>
     <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
     <p v-if="loading">Cargando postulantes...</p>
     <section v-else-if="applicants.length" class="bolsa__applicants">
@@ -115,6 +184,7 @@ onMounted(loadProfiles)
         :key="applicant.id"
         :applicant="applicant"
         :expanded="expandedApplicantId === applicant.id"
+        show-estado
         @toggle="expandedApplicantId = expandedApplicantId === applicant.id ? null : applicant.id"
         @view="openProfile"
       />
@@ -130,3 +200,27 @@ onMounted(loadProfiles)
     />
   </AdminShell>
 </template>
+
+<style scoped>
+.admin-applicants__estado-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.admin-applicants__chip {
+  border: 1px solid #cfd9d3;
+  background: #fff;
+  color: #2f4a3d;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.admin-applicants__chip--active {
+  border-color: #1f5a42;
+  background: #e7f2ec;
+  color: #16382b;
+  font-weight: 600;
+}
+</style>

@@ -154,6 +154,17 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['POSTULANTE'] },
     },
     {
+      path: '/postulante/notificaciones',
+      name: 'postulante-notificaciones',
+      component: () => import('../views/postulante/PostulanteNotificacionesView.vue'),
+      meta: { requiresAuth: true, roles: ['POSTULANTE'] },
+    },
+    {
+      path: '/permanencia',
+      name: 'permanencia',
+      component: () => import('../views/PermanenciaConfirmView.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
