@@ -12,7 +12,7 @@ import {
   type MockApplicantProfile,
   type SortOption,
 } from '../../data/mockSocioBolsa'
-import { socioBolsaService } from '../../services/socioBolsaService'
+import { socioBolsaService, type ContactApplication } from '../../services/socioBolsaService'
 import type { ApplicantProfileCard, SocioProfileCv } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
@@ -28,6 +28,9 @@ const error = ref<string | null>(null)
 const contactSuccess = ref<string | null>(null)
 const notifying = ref(false)
 const selectedApplicant = ref<ApplicantGroup | null>(null)
+const contactApplications = ref<ContactApplication[]>([])
+const loadingContactApplications = ref(false)
+const contactError = ref<string | null>(null)
 
 type ApplicantGroup = {
   id: number
@@ -133,22 +136,33 @@ const applicants = computed(() => {
   return [...groups.values()]
 })
 
-function openContact(applicant: ApplicantGroup) {
+async function openContact(applicant: ApplicantGroup) {
   contactSuccess.value = null
   selectedApplicant.value = applicant
+  contactApplications.value = []
+  contactError.value = null
+  loadingContactApplications.value = true
+  try {
+    const applications = await socioBolsaService.listContactApplications(applicant.id)
+    if (selectedApplicant.value?.id === applicant.id) contactApplications.value = applications
+  } catch (cause) {
+    if (selectedApplicant.value?.id === applicant.id) contactError.value = userFacingError(cause, 'cargar las postulaciones')
+  } finally {
+    if (selectedApplicant.value?.id === applicant.id) loadingContactApplications.value = false
+  }
 }
 
-async function notifyApplicant(selected: boolean) {
+async function notifyApplicant(selected: boolean, application: ContactApplication) {
   const applicant = selectedApplicant.value
-  if (!applicant || !applicant.profiles.length) return
+  if (!applicant || notifying.value) return
   notifying.value = true
-  error.value = null
+  contactError.value = null
   try {
-    const result = await socioBolsaService.notifyApplicant(Number(applicant.profiles[0].id), selected)
+    const result = await socioBolsaService.notifyApplicant(application.perfilId, selected, application.ofertaId)
     contactSuccess.value = result.message
     selectedApplicant.value = null
   } catch (cause) {
-    error.value = userFacingError(cause, 'enviar la notificación')
+    contactError.value = userFacingError(cause, 'enviar la notificación')
   } finally {
     notifying.value = false
   }
@@ -224,6 +238,9 @@ onMounted(loadProfiles)
         :applicant-name="selectedApplicant.fullName"
         :applicant-email="selectedApplicant.email"
         :loading="notifying"
+        :applications="contactApplications"
+        :loading-applications="loadingContactApplications"
+        :error="contactError"
         @close="selectedApplicant = null"
         @notify="notifyApplicant"
       />

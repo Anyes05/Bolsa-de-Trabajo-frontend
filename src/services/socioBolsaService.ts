@@ -1,6 +1,13 @@
 import { request } from './http'
 import type { ApplicantProfileCard, SocioCvLink, SocioProfileCv } from './types'
 
+export type ContactApplication = {
+  ofertaId: number
+  ofertaTitulo: string
+  perfilId: number
+  perfilNombre: string
+}
+
 export const socioBolsaService = {
   searchProfiles(rubro?: string) {
     const query = rubro ? `?rubro=${encodeURIComponent(rubro)}` : ''
@@ -15,10 +22,14 @@ export const socioBolsaService = {
     return request<SocioCvLink>(`/socio/bolsa/${profileId}/cvs/${cvId}`)
   },
 
-  notifyApplicant(profileId: number, selected: boolean) {
+  listContactApplications(applicantId: number) {
+    return request<ContactApplication[]>(`/socio/bolsa/postulantes/${applicantId}/postulaciones`)
+  },
+
+  notifyApplicant(profileId: number, selected: boolean, ofertaId: number) {
     return request<{ message: string }>(`/socio/bolsa/${profileId}/notificacion`, {
       method: 'POST',
-      body: JSON.stringify({ selected }),
+      body: JSON.stringify({ selected, ofertaId }),
     })
   },
 }
