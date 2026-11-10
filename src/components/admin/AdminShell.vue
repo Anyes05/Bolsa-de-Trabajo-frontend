@@ -15,7 +15,6 @@ import {
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
-import NotificationBell from '../NotificationBell.vue'
 import ProfileAvatar from '../ProfileAvatar.vue'
 import AppAlert from '../AppAlert.vue'
 import { useAuthStore } from '../../stores/auth'
@@ -136,7 +135,6 @@ function logout() {
           <b>{{ title }}</b>
         </div>
         <div class="admin-topbar__user">
-          <NotificationBell :count="0" label="Notificaciones" />
           <div class="admin-topbar__identity">
             <strong>{{ displayName }}</strong>
             <span>{{ auth.role || 'ADMIN' }}</span>

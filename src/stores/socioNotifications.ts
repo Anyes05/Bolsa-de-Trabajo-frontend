@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { socioNotificationService, type SocioNotificationRecord } from '../services/socioNotificationService'
+import { useAuthStore } from './auth'
 
 export type SocioNotificationItem = {
   id: string
@@ -8,6 +9,7 @@ export type SocioNotificationItem = {
   title: string
   body: string
   date: string
+  createdAt: string | null
   unread: boolean
   popup: boolean
 }
@@ -18,6 +20,7 @@ function mapItem(item: SocioNotificationRecord): SocioNotificationItem {
     kind: 'comunicado',
     title: item.titulo,
     body: item.cuerpo,
+    createdAt: item.createdAt,
     date: item.createdAt ? new Date(item.createdAt).toLocaleString('es-UY', {
       dateStyle: 'medium',
       timeStyle: 'short',
@@ -28,12 +31,24 @@ function mapItem(item: SocioNotificationRecord): SocioNotificationItem {
 }
 
 export const useSocioNotificationsStore = defineStore('socio-notifications', () => {
+  const auth = useAuthStore()
   const items = ref<SocioNotificationItem[]>([])
   const loading = ref(false)
   const error = ref('')
   const toastDismissed = ref(false)
   const opened = ref<SocioNotificationItem | null>(null)
   const blocking = ref(false)
+  let pending: { token: string; promise: Promise<void> } | null = null
+
+  watch(() => auth.token, () => {
+    items.value = []
+    error.value = ''
+    loading.value = false
+    if (opened.value) document.body.style.overflow = ''
+    opened.value = null
+    blocking.value = false
+    toastDismissed.value = false
+  }, { flush: 'sync' })
 
   const unreadCount = computed(() => items.value.filter((item) => item.unread).length)
   const pendingPopup = computed(() => items.value.find((item) => item.popup) ?? null)
@@ -54,18 +69,25 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
   }
 
   async function load() {
+    const token = auth.token
+    if (!token || auth.role !== 'SOCIO') return
+    if (pending?.token === token) return pending.promise
     loading.value = true
     error.value = ''
-    try {
-      const records = await socioNotificationService.list()
+    const promise = socioNotificationService.list().then((records) => {
+      if (auth.token !== token) return
       items.value = records.map(mapItem)
       toastDismissed.value = false
-    } catch (exception) {
+    }).catch((exception: unknown) => {
+      if (auth.token !== token) return
       error.value = exception instanceof Error ? exception.message : 'No se pudieron cargar las notificaciones'
       items.value = []
-    } finally {
-      loading.value = false
-    }
+    }).finally(() => {
+      if (auth.token === token) loading.value = false
+      if (pending?.promise === promise) pending = null
+    })
+    pending = { token, promise }
+    return promise
   }
 
   /** RF-17: al cargar el shell, si hay popup pendiente se abre modal bloqueante. */
@@ -87,6 +109,19 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
       await socioNotificationService.markOneRead(item.id)
     } catch {
       // La lectura visual no se bloquea; al recargar se reintenta el estado real.
+    }
+  }
+
+  async function markOneRead(id: string) {
+    const token = auth.token
+    error.value = ''
+    try {
+      await socioNotificationService.markOneRead(id)
+      if (auth.token === token) applyLocalRead(id)
+    } catch (exception) {
+      if (auth.token === token) {
+        error.value = exception instanceof Error ? exception.message : 'No se pudo marcar la notificación como leída'
+      }
     }
   }
 
@@ -150,6 +185,7 @@ export const useSocioNotificationsStore = defineStore('socio-notifications', () 
     load,
     presentBlockingPopup,
     openDetail,
+    markOneRead,
     closeDetail,
     dismissBlockingPopup,
     markAllRead,

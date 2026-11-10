@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Briefcase, ClipboardList, Bell, LogOut, Menu, UserRound, X } from 'lucide-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BrandLogo from '../BrandLogo.vue'
 import NotificationBell from '../NotificationBell.vue'
@@ -24,6 +24,9 @@ const route = useRoute()
 const open = ref(false)
 const profileError = ref('')
 const notifications = usePostulanteNotificationsStore()
+const notificationPreviews = computed(() => notifications.items.map((item) => ({
+  id: String(item.id), title: item.titulo, body: item.cuerpo, createdAt: item.createdAt, unread: !item.leida,
+})))
 const permanencia = ref<PermanenciaEstado | null>(null)
 const confirming = ref(false)
 
@@ -140,6 +143,11 @@ function logout() {
             :count="notifications.unreadCount"
             label="Notificaciones"
             :to="{ name: 'postulante-notificaciones' }"
+            :items="notificationPreviews"
+            :loading="notifications.loading"
+            :error="notifications.error"
+            @refresh="notifications.load()"
+            @read="notifications.markOneRead(Number($event))"
           />
           <div class="postulante-header__identity">
             <strong>{{ auth.fullName || auth.email || 'Postulante' }}</strong>

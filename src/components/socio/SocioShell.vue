@@ -25,6 +25,9 @@ const router = useRouter()
 const route = useRoute()
 const open = ref(false)
 const profileError = ref('')
+const notificationPreviews = computed(() => notifications.items.map((item) => ({
+  id: item.id, title: item.title, body: item.body, createdAt: item.createdAt, unread: item.unread,
+})))
 
 watch(() => route.fullPath, () => { open.value = false })
 watch(open, (value) => {
@@ -165,6 +168,11 @@ function closeOpenedModal() {
             :count="notifications.unreadCount"
             :to="{ name: 'socio-notificaciones' }"
             label="Notificaciones"
+            :items="notificationPreviews"
+            :loading="notifications.loading"
+            :error="notifications.error"
+            @refresh="notifications.load()"
+            @read="notifications.markOneRead"
           />
           <div class="socio-header__user">
             <div class="socio-header__identity">
