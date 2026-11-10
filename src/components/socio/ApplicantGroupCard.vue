@@ -18,8 +18,10 @@ withDefaults(defineProps<{
   }
   expanded: boolean
   showEstado?: boolean
+  showContact?: boolean
 }>(), {
   showEstado: false,
+  showContact: true,
 })
 
 const emit = defineEmits<{
@@ -69,7 +71,7 @@ const emit = defineEmits<{
       <AppButton variant="secondary" type="button" @click="emit('toggle')">
         Ver sus perfiles <ChevronDown :size="15" :class="{ 'applicant-group-card__chevron--open': expanded }" />
       </AppButton>
-      <AppButton variant="primary" type="button" @click="emit('contact')">
+      <AppButton v-if="showContact" variant="primary" type="button" @click="emit('contact')">
         <Mail :size="14" aria-hidden="true" /> Contactar
       </AppButton>
     </footer>

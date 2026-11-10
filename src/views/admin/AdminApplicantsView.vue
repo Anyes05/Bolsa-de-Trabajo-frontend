@@ -184,6 +184,7 @@ onMounted(loadProfiles)
         :key="applicant.id"
         :applicant="applicant"
         :expanded="expandedApplicantId === applicant.id"
+        :show-contact="false"
         show-estado
         @toggle="expandedApplicantId = expandedApplicantId === applicant.id ? null : applicant.id"
         @view="openProfile"
