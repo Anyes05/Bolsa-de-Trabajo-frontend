@@ -82,7 +82,24 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/ccisj.pem
           chmod 600 ~/.ssh/ccisj.pem
-          ssh-keyscan -H "${EC2_HOST}" >> ~/.ssh/known_hosts
+          HOST_KEYS="$(mktemp)"
+          trap 'rm -f "${HOST_KEYS}"' EXIT
+          SSH_READY=false
+          for ATTEMPT in {1..6}; do
+            echo "Consultando SSH en ${EC2_HOST}:22 (intento ${ATTEMPT}/6)"
+            if ssh-keyscan -T 10 -H "${EC2_HOST}" > "${HOST_KEYS}" && [ -s "${HOST_KEYS}" ]; then
+              cat "${HOST_KEYS}" >> ~/.ssh/known_hosts
+              SSH_READY=true
+              break
+            fi
+            if [ "${ATTEMPT}" -lt 6 ]; then
+              sleep 5
+            fi
+          done
+          if [ "${SSH_READY}" != true ]; then
+            echo "::error::EC2 no respondio a ssh-keyscan tras 6 intentos. Revisar la regla SSH del runner, el estado de EC2 y el servicio SSH."
+            exit 1
+          fi
 
           ssh -i ~/.ssh/ccisj.pem "ec2-user@${EC2_HOST}" \
             "IMAGE_SHA_TAG='${IMAGE_SHA_TAG}' AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}' AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}' AWS_SESSION_TOKEN='${AWS_SESSION_TOKEN}' AWS_REGION='${AWS_REGION}' bash -s" <<'EOF'
