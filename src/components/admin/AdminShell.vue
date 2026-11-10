@@ -9,6 +9,7 @@ import {
   Megaphone,
   Settings,
   Tags,
+  UserRound,
   X,
 } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -54,6 +55,7 @@ const links = [
   { key: 'ofertas', label: 'Ofertas Laborales', to: '/admin/ofertas', icon: BriefcaseBusiness },
   { key: 'configuracion', label: 'Config. Cuota', to: '/admin/configuracion', icon: Settings },
   { key: 'comunicados', label: 'Comunicados', to: '/admin/comunicados', icon: Megaphone },
+  { key: 'perfil', label: 'Mi Perfil', to: '/admin/perfil', icon: UserRound },
 ]
 
 onMounted(async () => {

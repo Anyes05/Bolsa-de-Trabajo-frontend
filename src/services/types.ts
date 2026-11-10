@@ -23,6 +23,7 @@ export type SocioRecord = {
   telefono: string | null
   emailContacto: string | null
   emailUsuario: string | null
+  fotoUrl: string | null
   calle: string | null
   numero: string | null
   localidad: string | null

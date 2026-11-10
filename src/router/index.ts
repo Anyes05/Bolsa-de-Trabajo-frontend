@@ -135,6 +135,12 @@ const router = createRouter({
       component: AdminCommunicationsView,
       meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
+    {
+      path: '/admin/perfil',
+      name: 'admin-perfil',
+      component: () => import('../views/admin/AdminPerfilView.vue'),
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
+    },
         {
       path: '/postulante/ofertas-empleo',
       name: 'postulante-bolsa-empleo',

@@ -3,6 +3,7 @@ import { Download, Pencil, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
+import ProfileAvatar from '../../components/ProfileAvatar.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
 import { localidadesConActual } from '../../data/localidades'
 import {
@@ -236,11 +237,20 @@ async function resetClave() {
           </thead>
           <tbody>
             <tr v-for="socio in filtered" :key="socio.id">
-              <td class="company-table__name">
-                <strong>{{ socio.razonSocial }}</strong>
-                <small>{{ adminIdentificadorLabel(socio) }}</small>
-                <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
-                <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
+              <td>
+                <div class="company-table__identity">
+                  <ProfileAvatar
+                    class="company-table__avatar"
+                    :src="socio.fotoUrl"
+                    :initials="socio.razonSocial.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()"
+                  />
+                  <div class="company-table__name">
+                    <strong>{{ socio.razonSocial }}</strong>
+                    <small>{{ adminIdentificadorLabel(socio) }}</small>
+                    <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
+                    <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
+                  </div>
+                </div>
               </td>
               <td>{{ socio.rut || '—' }}</td>
               <td>{{ socio.nombreRubro || '—' }}</td>
@@ -364,6 +374,23 @@ async function resetClave() {
 </template>
 
 <style scoped>
+.company-table__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.company-table__avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #008d45;
+  color: #fff;
+  font-weight: 700;
+}
+
 .socio-reset-clave {
   display: grid;
   gap: 10px;
