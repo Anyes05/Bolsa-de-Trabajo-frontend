@@ -1,11 +1,25 @@
 import { request } from './http'
-import type { CvDownloadResponse, CvResponse, PersonalProfile, ProfessionalProfile } from './types'
+import type { CvDownloadResponse, CvResponse, DisponibilidadLaboral, PersonalProfile, ProfessionalProfile } from './types'
 
 function authHeaders(authToken?: string) {
   return authToken ? { Authorization: `Bearer ${authToken}` } : undefined
 }
 
 export const postulanteService = {
+  disponibilidadLaboral(authToken?: string) {
+    return request<DisponibilidadLaboral>('/postulante/disponibilidad-laboral', {
+      headers: authHeaders(authToken),
+    })
+  },
+
+  updateDisponibilidadLaboral(busquedaPausada: boolean, authToken?: string) {
+    return request<DisponibilidadLaboral>('/postulante/disponibilidad-laboral', {
+      method: 'PUT',
+      body: JSON.stringify({ busquedaPausada }),
+      headers: authHeaders(authToken),
+    })
+  },
+
   listCvs(authToken?: string) {
     return request<CvResponse[]>('/postulante/cvs', {
       headers: authHeaders(authToken),

@@ -25,6 +25,7 @@ const error = ref<string | null>(null)
 
 function estadoDetalle(profile: AdminApplicantProfile) {
   if (!profile.cuentaActiva) return 'Cuenta de usuario desactivada'
+  if (profile.busquedaPausada) return 'Búsqueda pausada: no busca trabajo actualmente'
   if (!profile.visibleEnBolsa) return 'Oculto en la bolsa (retención / no confirmó permanencia)'
   if (!profile.perfilVisible) return 'Activo en bolsa; este perfil laboral está oculto por el postulante'
   return 'Visible en la bolsa de empleo'
@@ -85,12 +86,13 @@ const {
 } = useApplicantFilters(displayProfiles)
 
 const estadoByApplicant = computed(() => {
-  const map = new Map<number, { estado: 'ACTIVO' | 'INACTIVO'; detalle: string }>()
+  const map = new Map<number, { estado: 'ACTIVO' | 'INACTIVO'; detalle: string; busquedaPausada: boolean }>()
   for (const profile of applicantProfiles.value) {
     if (!map.has(profile.applicantId)) {
       map.set(profile.applicantId, {
         estado: profile.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
         detalle: estadoDetalle(profile),
+        busquedaPausada: profile.cuentaActiva && profile.busquedaPausada,
       })
     }
   }
@@ -107,6 +109,7 @@ const applicants = computed(() => {
     profiles: MockApplicantProfile[]
     estado: 'ACTIVO' | 'INACTIVO'
     estadoDetalle: string
+    busquedaPausada: boolean
   }
   const groups = new Map<number, Group>()
   filteredProfiles.value.forEach((profile) => {
@@ -120,6 +123,7 @@ const applicants = computed(() => {
       initials: profile.initials, profiles: [profile],
       estado,
       estadoDetalle: meta?.detalle || '',
+      busquedaPausada: meta?.busquedaPausada ?? false,
     })
   })
   return [...groups.values()]

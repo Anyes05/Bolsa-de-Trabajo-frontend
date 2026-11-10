@@ -259,6 +259,10 @@ export type ProfessionalProfile = {
   rubros: string[]
 }
 
+export type DisponibilidadLaboral = {
+  busquedaPausada: boolean
+}
+
 export type ApplicantProfileCard = {
   id: number
   fotoUrl: string | null
@@ -295,6 +299,7 @@ export type SocioProfileCv = {
 }
 
 export type AdminApplicantProfile = Omit<ApplicantProfileCard, 'hasApplication'> & {
+  busquedaPausada: boolean
   cuentaActiva: boolean
   visibleEnBolsa: boolean
   perfilVisible: boolean

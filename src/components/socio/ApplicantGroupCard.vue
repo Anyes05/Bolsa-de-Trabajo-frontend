@@ -15,6 +15,7 @@ withDefaults(defineProps<{
     profiles: MockApplicantProfile[]
     estado?: 'ACTIVO' | 'INACTIVO'
     estadoDetalle?: string
+    busquedaPausada?: boolean
   }
   expanded: boolean
   showEstado?: boolean
@@ -46,7 +47,7 @@ const emit = defineEmits<{
               : 'applicant-group-card__badge--inactivo'"
             :title="applicant.estadoDetalle || undefined"
           >
-            {{ applicant.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
+            {{ applicant.busquedaPausada ? 'Búsqueda pausada' : applicant.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
           </span>
         </h3>
         <a class="applicant-group-card__contact" :href="`mailto:${applicant.email}`">

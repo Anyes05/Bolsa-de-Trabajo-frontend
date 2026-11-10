@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { jsPDF } from 'jspdf'
-import { Plus, Trash2, Wrench } from 'lucide-vue-next'
+import { Briefcase, Pause, Plus, Trash2, Wrench } from 'lucide-vue-next'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
 import { catalogService } from '../../services/catalogService'
 import { postulanteService } from '../../services/postulanteService'
-import type { CvResponse, ProfessionalProfile } from '../../services/types'
+import type { CvResponse, DisponibilidadLaboral, ProfessionalProfile } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
 import { userFacingError } from '../../utils/userMessage'
 
@@ -16,6 +16,11 @@ const profiles = ref<ProfessionalProfile[]>([])
 const cvs = ref<CvResponse[]>([])
 const sectors = ref<string[]>([])
 const loading = ref(false)
+const disponibilidad = ref<DisponibilidadLaboral | null>(null)
+const disponibilidadLoading = ref(false)
+const disponibilidadSaving = ref(false)
+const disponibilidadError = ref('')
+const disponibilidadMessage = ref('')
 const saving = ref(false)
 const uploading = ref(false)
 const message = ref<string | null>(null)
@@ -95,6 +100,37 @@ async function load() {
   }
 }
 
+async function loadDisponibilidad() {
+  disponibilidadLoading.value = true
+  disponibilidadError.value = ''
+  try {
+    disponibilidad.value = await postulanteService.disponibilidadLaboral(auth.token ?? undefined)
+  } catch (error) {
+    disponibilidadError.value = userFacingError(error, 'cargar tu disponibilidad laboral')
+  } finally {
+    disponibilidadLoading.value = false
+  }
+}
+
+async function toggleDisponibilidad() {
+  if (!disponibilidad.value || disponibilidadSaving.value) return
+  disponibilidadSaving.value = true
+  disponibilidadError.value = ''
+  disponibilidadMessage.value = ''
+  try {
+    disponibilidad.value = await postulanteService.updateDisponibilidadLaboral(
+      !disponibilidad.value.busquedaPausada, auth.token ?? undefined,
+    )
+    disponibilidadMessage.value = disponibilidad.value.busquedaPausada
+      ? 'Búsqueda pausada. Tus perfiles ya no aparecen en las búsquedas de socios.'
+      : 'Volviste a activar tu búsqueda. Se conserva la visibilidad individual de tus perfiles.'
+  } catch (error) {
+    disponibilidadError.value = userFacingError(error, 'actualizar tu disponibilidad laboral')
+  } finally {
+    disponibilidadSaving.value = false
+  }
+}
+
 function openEditor(profile: ProfessionalProfile) {
   selectedFile.value = null
   manualCvOpen.value = false
@@ -151,7 +187,9 @@ async function setVisibility(profile: ProfessionalProfile, visible: boolean) {
     profiles.value = profiles.value.map((current) => current.id === updated.id ? updated : current)
     messageTone.value = 'success'
     message.value = visible
-      ? 'El perfil ahora es visible para los socios en la bolsa de empleo.'
+      ? disponibilidad.value?.busquedaPausada
+        ? 'El perfil quedó habilitado, pero seguirá oculto mientras tu búsqueda esté pausada.'
+        : 'El perfil ahora es visible para los socios en la bolsa de empleo.'
       : 'El perfil quedó oculto y no aparecerá en la bolsa de empleo.'
   } catch (error) {
     messageTone.value = 'error'
@@ -303,6 +341,7 @@ function openDownload(url: string) {
 
 const editingCvs = computed(() => editing.value ? cvsFor(editing.value.id) : [])
 onMounted(load)
+onMounted(loadDisponibilidad)
 </script>
 
 <template>
@@ -310,6 +349,24 @@ onMounted(load)
     <section class="postulante-profiles">
       <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
       <AppAlert tone="info">Administra tus perfiles profesionales y los PDFs asociados a cada uno.</AppAlert>
+      <section class="job-search-status" :class="{ 'job-search-status--paused': disponibilidad?.busquedaPausada }" aria-labelledby="job-search-title" :aria-busy="disponibilidadLoading || disponibilidadSaving">
+        <div class="job-search-status__heading">
+          <span class="job-search-status__icon" aria-hidden="true"><Pause v-if="disponibilidad?.busquedaPausada" :size="22" /><Briefcase v-else :size="22" /></span>
+          <div>
+            <h2 id="job-search-title">Disponibilidad laboral</h2>
+            <p v-if="disponibilidad" class="job-search-status__state">{{ disponibilidad.busquedaPausada ? 'Búsqueda pausada' : 'Estoy buscando trabajo' }}</p>
+            <p v-else>{{ disponibilidadLoading ? 'Cargando disponibilidad...' : 'Disponibilidad no disponible' }}</p>
+          </div>
+        </div>
+        <div v-if="disponibilidad" class="job-search-status__control">
+          <span id="job-search-label">No busco trabajo actualmente</span>
+          <button type="button" class="job-search-status__switch" role="switch" aria-labelledby="job-search-label" aria-describedby="job-search-help" :aria-checked="disponibilidad.busquedaPausada" :disabled="disponibilidadLoading || disponibilidadSaving" @click="toggleDisponibilidad"><span /></button>
+        </div>
+        <p id="job-search-help" class="job-search-status__help">{{ disponibilidad?.busquedaPausada ? 'Tus perfiles están ocultos para las búsquedas de socios. El administrador puede seguir viéndolos y vos podés editarlos. Desactivá esta opción cuando quieras volver a buscar trabajo.' : 'Podés pausar todos tus perfiles sin eliminar tu cuenta. Al reanudar la búsqueda se respeta la visibilidad individual de cada perfil.' }}</p>
+        <p v-if="disponibilidadSaving" class="job-search-status__help" role="status">Guardando disponibilidad...</p>
+        <AppAlert v-if="disponibilidadError" tone="error">{{ disponibilidadError }} <button v-if="!disponibilidad" type="button" :disabled="disponibilidadLoading" @click="loadDisponibilidad">Reintentar</button></AppAlert>
+        <p v-if="disponibilidadMessage" class="job-search-status__confirmation" role="status">{{ disponibilidadMessage }}</p>
+      </section>
       <div class="postulante-profiles__toolbar"><AppButton @click="openNewProfile">Agregar perfil profesional</AppButton></div>
       <p v-if="loading">Cargando perfiles...</p>
 
@@ -317,10 +374,10 @@ onMounted(load)
         <header class="profile-card-postulante__header">
           <div>
             <h2>{{ profile.nombre }}</h2>
-            <span class="profile-card-postulante__visibility" :class="profile.visible ? 'profile-card-postulante__visibility--visible' : 'profile-card-postulante__visibility--hidden'">{{ profile.visible ? 'Perfil visible' : 'Perfil oculto' }}</span>
+            <span class="profile-card-postulante__visibility" :class="profile.visible && disponibilidad && !disponibilidad.busquedaPausada ? 'profile-card-postulante__visibility--visible' : 'profile-card-postulante__visibility--hidden'">{{ !profile.visible ? 'Perfil oculto' : !disponibilidad ? 'Visibilidad pendiente' : disponibilidad.busquedaPausada ? 'Oculto por búsqueda pausada' : 'Perfil visible' }}</span>
           </div>
           <div class="profile-card-postulante__actions">
-            <AppButton variant="secondary" @click="setVisibility(profile, !profile.visible)">{{ profile.visible ? 'Ocultar perfil' : 'Hacer visible' }}</AppButton>
+            <AppButton variant="secondary" @click="setVisibility(profile, !profile.visible)">{{ profile.visible ? 'Ocultar perfil' : disponibilidad?.busquedaPausada ? 'Habilitar al reanudar' : 'Hacer visible' }}</AppButton>
             <AppButton variant="secondary" @click="openEditor(profile)">Editar</AppButton>
           </div>
         </header>
@@ -365,7 +422,7 @@ onMounted(load)
           <label>Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
           <label class="modal__checkbox">
             <input v-model="editing.visible" type="checkbox">
-            <span>Perfil visible para socios en la bolsa de empleo</span>
+            <span>{{ disponibilidad?.busquedaPausada ? 'Habilitar este perfil para cuando reanude mi búsqueda' : 'Perfil visible para socios en la bolsa de empleo' }}</span>
           </label>
           <AppAlert v-if="editorError">{{ editorError }}</AppAlert>
           <section v-if="editing.id" class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton variant="danger" @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton><AppButton variant="secondary" @click="manualCvOpen = !manualCvOpen"><Wrench :size="15" /> Crear PDF manual</AppButton></div>
@@ -377,3 +434,31 @@ onMounted(load)
     </div>
   </PostulanteShell>
 </template>
+
+<style scoped>
+.job-search-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; padding: 24px; border: 1px solid #dce8df; border-radius: 16px; background: #fff; box-shadow: 0 4px 18px #163c2908; }
+.job-search-status__heading { display: flex; align-items: center; gap: 14px; }
+.job-search-status__icon { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px; color: #087c42; background: #eaf5ee; }
+.job-search-status h2 { margin: 0; font-size: 1.05rem; color: #24352b; }
+.job-search-status__heading p { margin: 5px 0 0; font-size: .875rem; color: #087c42; }
+.job-search-status--paused { border-color: #e4dcc6; background: #fffdf8; }
+.job-search-status--paused .job-search-status__icon { color: #886322; background: #f7eed8; }
+.job-search-status--paused .job-search-status__state { color: #886322; }
+.job-search-status__control { display: flex; align-items: center; gap: 14px; font-size: .875rem; color: #344b3d; }
+.job-search-status__switch { display: flex; align-items: center; flex-shrink: 0; width: 48px; height: 28px; padding: 3px; border: 1px solid #bdcfc3; border-radius: 20px; background: #dce7df; cursor: pointer; }
+.job-search-status__switch span { width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #163c2933; transition: transform .18s; }
+.job-search-status__switch[aria-checked="true"] { background: #078844; border-color: #078844; }
+.job-search-status__switch[aria-checked="true"] span { transform: translateX(20px); }
+.job-search-status__switch:focus-visible { outline: 2px solid #078844; outline-offset: 3px; }
+.job-search-status__switch:disabled { cursor: wait; opacity: .6; }
+.job-search-status__help, .job-search-status__confirmation { grid-column: 1 / -1; margin: 0; font-size: .875rem; line-height: 1.6; color: #64736a; }
+.job-search-status__confirmation { color: #087c42; }
+.job-search-status > :deep(.app-alert) { grid-column: 1 / -1; }
+@media (max-width: 700px) {
+  .job-search-status { grid-template-columns: 1fr; padding: 20px; gap: 16px; }
+  .job-search-status__control { justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .job-search-status__switch span { transition: none; }
+}
+</style>
