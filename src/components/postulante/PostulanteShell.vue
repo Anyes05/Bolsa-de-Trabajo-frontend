@@ -8,7 +8,7 @@ import ProfileAvatar from '../ProfileAvatar.vue'
 import AppAlert from '../AppAlert.vue'
 import AppButton from '../AppButton.vue'
 import { permanenciaService, type PermanenciaEstado } from '../../services/permanenciaService'
-import { postulanteNotificationService } from '../../services/postulanteNotificationService'
+import { usePostulanteNotificationsStore } from '../../stores/postulanteNotifications'
 import { useAuthStore } from '../../stores/auth'
 import { userFacingError } from '../../utils/userMessage'
 
@@ -23,7 +23,7 @@ const router = useRouter()
 const route = useRoute()
 const open = ref(false)
 const profileError = ref('')
-const unreadCount = ref(0)
+const notifications = usePostulanteNotificationsStore()
 const permanencia = ref<PermanenciaEstado | null>(null)
 const confirming = ref(false)
 
@@ -44,14 +44,13 @@ async function loadShellData() {
     profileError.value = userFacingError(cause, 'cargar tu perfil')
   }
   try {
-    const [notifs, estado] = await Promise.all([
-      postulanteNotificationService.list(),
+    const [, estado] = await Promise.all([
+      notifications.load(),
       permanenciaService.estado(),
     ])
-    unreadCount.value = notifs.filter((item) => !item.leida).length
     permanencia.value = estado
-  } catch {
-    // La campana/permanencia no deben bloquear el módulo.
+  } catch (cause) {
+    profileError.value = userFacingError(cause, 'cargar tu estado de permanencia')
   }
 }
 
@@ -138,7 +137,7 @@ function logout() {
         </div>
         <div class="postulante-header__user">
           <NotificationBell
-            :count="unreadCount"
+            :count="notifications.unreadCount"
             label="Notificaciones"
             :to="{ name: 'postulante-notificaciones' }"
           />
@@ -156,6 +155,7 @@ function logout() {
 
       <div class="postulante-shell__body">
         <AppAlert v-if="profileError" tone="error">{{ profileError }}</AppAlert>
+        <AppAlert v-if="notifications.error" tone="error">{{ notifications.error }}</AppAlert>
         <div v-if="permanencia?.requiereAccion" class="permanencia-banner" role="status">
           <div>
             <strong>Confirmá tu permanencia en la Bolsa</strong>

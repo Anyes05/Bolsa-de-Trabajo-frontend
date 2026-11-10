@@ -1,44 +1,20 @@
 <script setup lang="ts">
 import { Megaphone } from 'lucide-vue-next'
-import { onMounted, ref } from 'vue'
-import AppAlert from '../../components/AppAlert.vue'
+import { onMounted } from 'vue'
 import AppButton from '../../components/AppButton.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
-import { postulanteNotificationService } from '../../services/postulanteNotificationService'
+import { usePostulanteNotificationsStore } from '../../stores/postulanteNotifications'
 import type { SocioNotificationRecord } from '../../services/socioNotificationService'
-import { userFacingError } from '../../utils/userMessage'
-
-const items = ref<SocioNotificationRecord[]>([])
-const loading = ref(true)
-const error = ref('')
-
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
-    items.value = await postulanteNotificationService.list()
-  } catch (cause) {
-    error.value = userFacingError(cause, 'cargar las notificaciones')
-    items.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-async function markAll() {
-  await postulanteNotificationService.markAllRead()
-  await load()
-}
+const notifications = usePostulanteNotificationsStore()
 
 async function openOne(item: SocioNotificationRecord) {
   if (!item.leida) {
-    await postulanteNotificationService.markOneRead(item.id)
-    item.leida = true
+    await notifications.markOneRead(item.id)
   }
 }
 
 onMounted(() => {
-  void load()
+  void notifications.load()
 })
 </script>
 
@@ -49,16 +25,15 @@ onMounted(() => {
     active-section="notificaciones"
   >
     <div class="postulante-notifications__actions">
-      <AppButton variant="secondary" type="button" :disabled="!items.some((i) => !i.leida)" @click="markAll">
+      <AppButton variant="secondary" type="button" :disabled="notifications.loading || !notifications.unreadCount" @click="notifications.markAllRead()">
         Marcar todo como leído
       </AppButton>
     </div>
-    <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
-    <p v-if="loading" class="postulante-notifications__empty">Cargando notificaciones...</p>
-    <p v-else-if="!items.length" class="postulante-notifications__empty">No tenés notificaciones por ahora.</p>
+    <p v-if="notifications.loading" class="postulante-notifications__empty">Cargando notificaciones...</p>
+    <p v-else-if="!notifications.items.length" class="postulante-notifications__empty">No tenés notificaciones por ahora.</p>
     <section v-else class="postulante-notifications" aria-label="Listado de notificaciones">
       <article
-        v-for="item in items"
+        v-for="item in notifications.items"
         :key="item.id"
         class="postulante-notification-card"
         :class="{ 'postulante-notification-card--unread': !item.leida }"
@@ -66,6 +41,7 @@ onMounted(() => {
         tabindex="0"
         @click="openOne(item)"
         @keydown.enter.prevent="openOne(item)"
+        @keydown.space.prevent="openOne(item)"
       >
         <span class="postulante-notification-card__icon" aria-hidden="true">
           <Megaphone :size="16" />
