@@ -237,12 +237,10 @@ export type GoogleRegistrationPayload = Omit<RegisterApplicantPayload, 'email' |
 export type CvResponse = {
   id: number
   perfilLaboralId: number | null
-  version: number
   resumen: string | null
   nombreArchivo: string | null
   mimeType: string | null
   sizeBytes: number | null
-  activo: boolean
   fechaCarga: string
   downloadUrl: string
 }

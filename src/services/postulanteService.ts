@@ -26,10 +26,11 @@ export const postulanteService = {
     })
   },
 
-  uploadCv(file: File, resumen?: string, authToken?: string, profileId?: number) {
+  uploadCv(file: File, resumen?: string, authToken?: string, profileId?: number, reemplazar = false) {
     const body = new FormData()
     body.append('file', file)
     if (profileId) body.append('perfilLaboralId', String(profileId))
+    body.append('reemplazar', String(reemplazar))
     if (resumen?.trim()) {
       body.append('resumen', resumen.trim())
     }
@@ -81,13 +82,6 @@ export const postulanteService = {
     return request<PersonalProfile>('/postulante/datos-personales/foto', {
       method: 'POST',
       body,
-      headers: authHeaders(authToken),
-    })
-  },
-
-  activateCv(cvId: number, authToken?: string) {
-    return request<CvResponse>(`/postulante/cvs/${cvId}/activar`, {
-      method: 'PATCH',
       headers: authHeaders(authToken),
     })
   },

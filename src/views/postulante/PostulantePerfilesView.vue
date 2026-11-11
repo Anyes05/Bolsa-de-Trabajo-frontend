@@ -207,10 +207,12 @@ function onFileChange(event: Event) {
 }
 
 async function uploadCv() {
-  if (!editing.value || !selectedFile.value) return
+  if (!editing.value || !selectedFile.value || uploading.value) return
+  const reemplazar = editingCvs.value.length > 0
+  if (reemplazar && !window.confirm('¿Reemplazar el CV de este perfil? El documento anterior será eliminado y las postulaciones vinculadas utilizarán el nuevo CV.')) return
   uploading.value = true
   try {
-    await postulanteService.uploadCv(selectedFile.value, undefined, auth.token ?? undefined, editing.value.id)
+    await postulanteService.uploadCv(selectedFile.value, undefined, auth.token ?? undefined, editing.value.id, reemplazar)
     selectedFile.value = null
     messageTone.value = 'success'
     message.value = 'El PDF del CV se subió correctamente.'
@@ -218,6 +220,7 @@ async function uploadCv() {
   } catch (error) {
     messageTone.value = 'error'
     message.value = userFacingError(error, 'subir el PDF del CV')
+    editorError.value = message.value
   } finally {
     uploading.value = false
   }
@@ -289,16 +292,18 @@ function buildManualCv() {
 }
 
 async function uploadManualCv() {
-  if (!editing.value) return
+  if (!editing.value || uploading.value) return
   const file = buildManualCv()
   if (!file) {
     editorError.value = 'Agregá al menos una referencia laboral o personal para poder generar el CV.'
     return
   }
+  const reemplazar = editingCvs.value.length > 0
+  if (reemplazar && !window.confirm('¿Reemplazar el CV de este perfil por el CV manual? El documento anterior será eliminado y las postulaciones vinculadas utilizarán el nuevo CV.')) return
   uploading.value = true
   editorError.value = ''
   try {
-    await postulanteService.uploadCv(file, manualCv.summary || undefined, auth.token ?? undefined, editing.value.id)
+    await postulanteService.uploadCv(file, manualCv.summary || undefined, auth.token ?? undefined, editing.value.id, reemplazar)
     messageTone.value = 'success'
     message.value = 'El CV manual se generó y guardó correctamente.'
     manualCvOpen.value = false
@@ -310,20 +315,9 @@ async function uploadManualCv() {
   }
 }
 
-async function activateCv(cvId: number) {
-  try {
-    await postulanteService.activateCv(cvId, auth.token ?? undefined)
-    await load()
-    messageTone.value = 'success'
-    message.value = 'El PDF quedó activo y se usará en tus postulaciones.'
-  } catch (error) {
-    messageTone.value = 'error'
-    message.value = userFacingError(error, 'activar el PDF del CV')
-  }
-}
-
 async function deleteCv(cvId: number) {
-  if (!window.confirm('¿Eliminar este PDF? Esta acción no se puede deshacer.')) return
+  if (uploading.value || !window.confirm('¿Eliminar el CV de este perfil? Las postulaciones vinculadas quedarán sin este documento. Esta acción no se puede deshacer.')) return
+  uploading.value = true
   try {
     await postulanteService.deleteCv(cvId, auth.token ?? undefined)
     await load()
@@ -332,6 +326,9 @@ async function deleteCv(cvId: number) {
   } catch (error) {
     messageTone.value = 'error'
     message.value = userFacingError(error, 'eliminar el PDF del CV')
+    editorError.value = message.value
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -348,7 +345,7 @@ onMounted(loadDisponibilidad)
   <PostulanteShell title="Mis Perfiles Profesionales" subtitle="Gestiona tus diferentes perfiles de postulación" active-section="perfiles">
     <section class="postulante-profiles">
       <AppAlert v-if="message" :tone="messageTone">{{ message }}</AppAlert>
-      <AppAlert tone="info">Administra tus perfiles profesionales y los PDFs asociados a cada uno.</AppAlert>
+      <AppAlert tone="info">Cada perfil puede tener un único CV, subido o creado manualmente. Podés reemplazarlo o eliminarlo cuando lo necesites.</AppAlert>
       <section class="job-search-status" :class="{ 'job-search-status--paused': disponibilidad?.busquedaPausada }" aria-labelledby="job-search-title" :aria-busy="disponibilidadLoading || disponibilidadSaving">
         <div class="job-search-status__heading">
           <span class="job-search-status__icon" aria-hidden="true"><Pause v-if="disponibilidad?.busquedaPausada" :size="22" /><Briefcase v-else :size="22" /></span>
@@ -390,14 +387,13 @@ onMounted(loadDisponibilidad)
           <p><strong>Resumen de experiencia laboral y presentación:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
         </div>
         <section class="profile-pdfs">
-          <h3>PDFs</h3>
-          <p v-if="!cvsFor(profile.id).length">Todavía no hay PDFs asociados a este perfil.</p>
+          <h3>CV del perfil</h3>
+          <p v-if="!cvsFor(profile.id).length">Este perfil todavía no tiene un CV. Podés subirlo o crearlo desde Editar.</p>
           <div v-for="cv in cvsFor(profile.id)" :key="cv.id" class="profile-pdfs__item">
-            <span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }} {{ cv.activo ? '(Activo)' : '' }}</span>
+            <span>{{ cv.nombreArchivo || 'CV del perfil' }}</span>
             <div class="profile-card-postulante__actions">
               <AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
-              <AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton>
-              <AppButton variant="danger" @click="deleteCv(cv.id)">Eliminar</AppButton>
+              <AppButton variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
             </div>
           </div>
         </section>
@@ -425,7 +421,21 @@ onMounted(loadDisponibilidad)
             <span>{{ disponibilidad?.busquedaPausada ? 'Habilitar este perfil para cuando reanude mi búsqueda' : 'Perfil visible para socios en la bolsa de empleo' }}</span>
           </label>
           <AppAlert v-if="editorError">{{ editorError }}</AppAlert>
-          <section v-if="editing.id" class="profile-pdfs profile-pdfs--editor"><h4>PDFs de este perfil</h4><div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item"><span>{{ cv.nombreArchivo || `PDF versión ${cv.version}` }}</span><div class="profile-card-postulante__actions"><AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton><AppButton variant="secondary" :disabled="cv.activo" @click="activateCv(cv.id)">Activar</AppButton><AppButton variant="danger" @click="deleteCv(cv.id)">Eliminar</AppButton></div></div><div class="profile-pdfs__upload"><input type="file" accept=".pdf,application/pdf" @change="onFileChange"><AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">Subir PDF</AppButton><AppButton variant="secondary" @click="manualCvOpen = !manualCvOpen"><Wrench :size="15" /> Crear PDF manual</AppButton></div>
+          <section v-if="editing.id" class="profile-pdfs profile-pdfs--editor">
+            <h4>CV de este perfil</h4>
+            <p>Un único documento por perfil. Reemplazarlo actualiza también el CV de sus postulaciones vinculadas.</p>
+            <div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item">
+              <span>{{ cv.nombreArchivo || 'CV del perfil' }}</span>
+              <div class="profile-card-postulante__actions">
+                <AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
+                <AppButton variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
+              </div>
+            </div>
+            <div class="profile-pdfs__upload">
+              <input type="file" accept=".pdf,application/pdf" :disabled="uploading" @change="onFileChange">
+              <AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">{{ editingCvs.length ? 'Reemplazar CV' : 'Subir CV' }}</AppButton>
+              <AppButton variant="secondary" :disabled="uploading" @click="manualCvOpen = !manualCvOpen"><Wrench :size="15" /> {{ editingCvs.length ? 'Reemplazar por CV manual' : 'Crear CV manual' }}</AppButton>
+            </div>
             <section v-if="manualCvOpen" class="profile-manual-cv"><p>Agrega una referencia laboral o personal para poder generar el PDF.</p><label>Perfil profesional<textarea v-model="manualCv.summary" /></label><div class="profile-manual-cv__heading"><b>Experiencia laboral</b><button type="button" @click="addManualEntry('experiences')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.experiences" :key="`experience-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" placeholder="Cargo | Empresa"><input v-model="entry.from" type="month"><input v-model="entry.to" type="month"><textarea v-model="entry.detail" placeholder="Responsabilidades y logros" /><button type="button" @click="removeEntry('experiences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Formación académica</b><button type="button" @click="addManualEntry('education')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.education" :key="`education-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" placeholder="Título | Institución"><input v-model="entry.from" type="month"><input v-model="entry.to" type="month"><textarea v-model="entry.detail" placeholder="Detalle de la formación" /><button type="button" @click="removeEntry('education', index)"><Trash2 :size="14" /> Quitar</button></div><label>Habilidades técnicas<textarea v-model="manualCv.skills" /></label><label>Idiomas<textarea v-model="manualCv.languages" placeholder="Ej: Inglés - Intermedio" /></label><label>Cursos y certificaciones<textarea v-model="manualCv.certifications" /></label><div class="profile-manual-cv__heading"><b>Referencias laborales</b><button type="button" @click="addReference('workReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.workReferences" :key="`work-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" placeholder="Nombre"><input v-model="reference.role" placeholder="Cargo / relación"><input v-model="reference.phone" placeholder="Teléfono"><input v-model="reference.email" placeholder="Correo"><button type="button" @click="removeReference('workReferences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Referencias personales</b><button type="button" @click="addReference('personalReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.personalReferences" :key="`personal-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" placeholder="Nombre"><input v-model="reference.role" placeholder="Relación"><input v-model="reference.phone" placeholder="Teléfono"><input v-model="reference.email" placeholder="Correo"><button type="button" @click="removeReference('personalReferences', index)"><Trash2 :size="14" /> Quitar</button></div><AppButton :loading="uploading" @click="uploadManualCv">Generar y subir PDF</AppButton></section>
           </section>
         </div>

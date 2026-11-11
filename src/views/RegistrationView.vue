@@ -467,9 +467,7 @@ function cancelGoogleRegistration() {
 function onCvFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const selected = Array.from(input.files ?? []).filter((file) => file.type === 'application/pdf')
-  const existing = new Set(cvFiles.value.map((file) => `${file.name}-${file.size}-${file.lastModified}`))
-  const added = selected.filter((file) => !existing.has(`${file.name}-${file.size}-${file.lastModified}`))
-  cvFiles.value = [...cvFiles.value, ...added].slice(0, 5)
+  cvFiles.value = selected.slice(0, 1)
   input.value = ''
 }
 
@@ -783,9 +781,9 @@ async function complete() {
         <section v-if="cvMode === 'upload'" class="cv-option-panel" aria-labelledby="attach-cv-title">
           <h3 id="attach-cv-title"><Paperclip :size="18" aria-hidden="true" /> Adjuntar archivo de CV</h3>
           <div class="upload-placeholder">
-            <div><small>PDF, tamaño máximo de 5MB por archivo (hasta 5 CVs).</small></div>
-            <label class="upload-placeholder__action" for="cv-file-input">Elegir archivos</label>
-            <input id="cv-file-input" class="upload-placeholder__input" type="file" multiple accept=".pdf,application/pdf" @change="onCvFileChange">
+            <div><small>Un único CV por perfil, en formato PDF de hasta 5MB.</small></div>
+            <label class="upload-placeholder__action" for="cv-file-input">Elegir CV</label>
+            <input id="cv-file-input" class="upload-placeholder__input" type="file" accept=".pdf,application/pdf" @change="onCvFileChange">
           </div>
           <div v-if="cvFiles.length" class="upload-files">
             <div class="upload-files__header">
@@ -803,7 +801,7 @@ async function complete() {
 
         <section v-else-if="cvMode === 'manual'" class="experience-form" aria-labelledby="manual-cv-title">
           <h3 id="manual-cv-title"><BriefcaseBusiness :size="18" aria-hidden="true" /> Crear CV manualmente</h3>
-          <p class="experience-form__intro">Al completar el registro se generará un PDF y se guardará como tu CV activo.</p>
+          <p class="experience-form__intro">Al completar el registro se generará un PDF y se guardará como el único CV de este perfil.</p>
           <section class="manual-cv-section manual-cv-section--summary">
             <div class="manual-cv-section__heading">
               <h4><span class="manual-cv-section__icon manual-cv-section__icon--summary" aria-hidden="true"><UserRound :size="20" /></span> Perfil profesional</h4>

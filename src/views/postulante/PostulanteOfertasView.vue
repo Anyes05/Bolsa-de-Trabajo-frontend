@@ -26,13 +26,13 @@ const message = ref<string | null>(null)
 const messageTone = ref<'error' | 'success' | 'info' | 'warning'>('info')
 
 const eligibleProfiles = computed(() => profiles.value.filter((profile) =>
-  profile.visible && cvs.value.some((cv) => cv.perfilLaboralId === profile.id && cv.activo),
+  profile.visible && cvs.value.some((cv) => cv.perfilLaboralId === profile.id),
 ))
 const applicationByOffer = computed(() => new Map(applications.value.map((application) => [application.ofertaId, application])))
 const filteredOffers = computed(() => selectedSectorId.value
   ? offers.value.filter((offer) => offer.rubroId === selectedSectorId.value)
   : offers.value)
-const selectedProfileCv = computed(() => cvs.value.find((cv) => cv.perfilLaboralId === selectedProfileId.value && cv.activo) ?? null)
+const selectedProfileCv = computed(() => cvs.value.find((cv) => cv.perfilLaboralId === selectedProfileId.value) ?? null)
 
 async function load() {
   loading.value = true
@@ -61,7 +61,7 @@ async function load() {
 function openApplyModal(offer: JobOffer) {
   if (!eligibleProfiles.value.length) {
     messageTone.value = 'warning'
-    message.value = 'Para postularte necesitás al menos un perfil profesional visible con un CV activo. Crealo o activalo en «Mis Perfiles Profesionales».'
+    message.value = 'Para postularte necesitás al menos un perfil profesional visible con un CV. Podés subirlo o crearlo en «Mis Perfiles Profesionales».'
     return
   }
   selectedOffer.value = offer
@@ -201,7 +201,7 @@ onMounted(load)
         <header class="modal__header">
           <h3 id="apply-modal-title">Seleccionar Perfil</h3>
         </header>
-        <p class="modal__text">Para postularte a <b>{{ selectedOffer.titulo }}</b>, elige el perfil y su CV activo.</p>
+        <p class="modal__text">Para postularte a <b>{{ selectedOffer.titulo }}</b>, elige el perfil y su CV.</p>
 
         <div class="modal__options">
           <label
@@ -213,7 +213,7 @@ onMounted(load)
             <input v-model="selectedProfileId" type="radio" :value="profile.id">
             <div>
               <strong>{{ profile.nombre }}</strong>
-              <small>{{ profile.rubros.join(' · ') || 'Sin rubros indicados' }} · {{ cvs.find((cv) => cv.perfilLaboralId === profile.id && cv.activo)?.nombreArchivo || 'CV activo' }}</small>
+              <small>{{ profile.rubros.join(' · ') || 'Sin rubros indicados' }} · {{ cvs.find((cv) => cv.perfilLaboralId === profile.id)?.nombreArchivo || 'CV del perfil' }}</small>
             </div>
           </label>
         </div>

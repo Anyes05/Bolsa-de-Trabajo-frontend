@@ -89,7 +89,7 @@ onUnmounted(() => {
                 <FileText :size="18" />
               </span>
               <div>
-                <strong>{{ cv.fileName || 'CV asociado al perfil' }} <em v-if="cv.active">Activo</em></strong>
+                <strong>{{ cv.fileName || 'CV asociado al perfil' }}</strong>
                 <small>{{ cv.meta }}</small>
               </div>
             </div>
