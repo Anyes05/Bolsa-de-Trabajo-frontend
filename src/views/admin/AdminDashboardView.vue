@@ -8,6 +8,7 @@ import { cajaExcelService } from '../../services/cajaExcelService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
+import { cajaExportRangeError } from '../../utils/cajaExportRange'
 
 type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
@@ -23,6 +24,9 @@ const exportMode = ref<'TODOS' | 'SELECCIONADOS'>('TODOS')
 const exportSearch = ref('')
 const exportSelectedIds = ref<number[]>([])
 const exportError = ref('')
+const exportFrom = ref('')
+const exportTo = ref('')
+const exportRangeError = computed(() => cajaExportRangeError({ desde: exportFrom.value, hasta: exportTo.value }))
 const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
@@ -160,6 +164,8 @@ async function loadResumen() {
 }
 
 function openExcelExport() {
+  exportFrom.value = ''
+  exportTo.value = ''
   exportStates.value = ['AL_DIA', 'MOROSO', 'INACTIVO']
   exportMode.value = 'TODOS'
   exportSearch.value = ''
@@ -181,10 +187,14 @@ function toggleExportVisible() {
 
 async function downloadExcel() {
   if (exporting.value || busy.value || !exportCompanies.value.length) return
+  if (exportRangeError.value) {
+    exportError.value = exportRangeError.value
+    return
+  }
   exporting.value = true
   exportError.value = ''
   try {
-    await cajaExcelService.download([...exportCompanies.value])
+    await cajaExcelService.download([...exportCompanies.value], { desde: exportFrom.value, hasta: exportTo.value })
     exportOpen.value = false
   } catch (exception) {
     exportError.value = userFacingError(exception, 'descargar el Excel')
@@ -495,6 +505,15 @@ function paymentLabel(method: MetodoPago | null) {
         </header>
         <div class="cash-modal__body">
           <fieldset class="excel-options" :disabled="exporting">
+            <legend>Período de los movimientos</legend>
+            <div class="excel-date-range">
+              <label>Desde<input v-model="exportFrom" type="date" :max="exportTo || undefined" :aria-invalid="!!exportRangeError"></label>
+              <label>Hasta<input v-model="exportTo" type="date" :min="exportFrom || undefined" :aria-invalid="!!exportRangeError"></label>
+            </div>
+            <small>Ambas fechas se incluyen. Dejá los campos vacíos para exportar todo el historial. Los saldos y pendientes son actuales, no un cierre histórico del período.</small>
+            <AppAlert v-if="exportRangeError">{{ exportRangeError }}</AppAlert>
+          </fieldset>
+          <fieldset class="excel-options" :disabled="exporting">
             <legend>Estado de los socios</legend>
             <div class="excel-states">
               <label v-for="(label, state) in estadoMorosidadLabel" :key="state">
@@ -531,7 +550,7 @@ function paymentLabel(method: MetodoPago | null) {
           <span role="status">{{ exportCompanies.length }} socios seleccionados</span>
           <div>
             <button class="cash-history" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
-            <button class="cash-modal__confirm" type="button" :disabled="exporting || !exportCompanies.length" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
+            <button class="cash-modal__confirm" type="button" :disabled="exporting || !exportCompanies.length || !!exportRangeError" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
           </div>
         </footer>
       </section>
@@ -811,6 +830,10 @@ function paymentLabel(method: MetodoPago | null) {
 </template>
 
 <style scoped>
+.excel-date-range { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.excel-date-range label { display: grid; gap: 6px; min-width: 0; }
+.excel-date-range input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid #cfd9d3; border-radius: 8px; padding: 10px 12px; background: #fff; color: #24352b; font: inherit; }
+.excel-date-range input:focus-visible { outline: 2px solid #078844; outline-offset: 2px; }
 .excel-modal { width: min(100%, 640px); }
 .excel-options { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
 .excel-options legend { margin-bottom: 10px; color: #34473b; font-size: 0.95rem; font-weight: 700; }

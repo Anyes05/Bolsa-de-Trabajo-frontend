@@ -1,6 +1,7 @@
 import { cajaService } from './cajaService'
 import { estadoMorosidadLabel } from './socioService'
 import type { CuentaCaja } from './types'
+import { cajaExportRangeError, filterCajaExportMovements, type CajaExportRange } from '../utils/cajaExportRange'
 
 type TotalesMes = {
   cuotas: number
@@ -21,7 +22,9 @@ function estadoDelMes(totales: TotalesMes) {
 }
 
 export const cajaExcelService = {
-  async download(cuentas: CuentaCaja[]) {
+  async download(cuentas: CuentaCaja[], range: CajaExportRange = {}) {
+    const rangeError = cajaExportRangeError(range)
+    if (rangeError) throw new Error(rangeError)
     const { default: ExcelJS } = await import('exceljs')
     const fechaReporte = new Intl.DateTimeFormat('sv-SE', {
       timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -31,6 +34,10 @@ export const cajaExcelService = {
     workbook.creator = 'CCISJ'
     workbook.created = new Date()
     workbook.subject = 'Control de caja en pesos uruguayos. Pendientes al momento de la descarga; los cargos cubiertos incluyen saldo a favor.'
+    const periodo = range.desde || range.hasta
+      ? `Movimientos desde ${range.desde || 'el inicio'} hasta ${range.hasta || 'la fecha de descarga'} (inclusive). Saldos y pendientes actuales; no son un cierre histórico.`
+      : ''
+    if (periodo) workbook.subject += ` ${periodo}`
 
     const resumen = workbook.addWorksheet('Resumen')
     resumen.columns = [
@@ -60,9 +67,17 @@ export const cajaExcelService = {
     ]
     const encabezadosMensuales: number[] = []
     const filasSocioMensuales: number[] = []
+    if (periodo) {
+      const filaPeriodo = mensual.addRow([periodo])
+      mensual.mergeCells(filaPeriodo.number, 1, filaPeriodo.number, 5)
+      filaPeriodo.height = 48
+      filaPeriodo.getCell(1).alignment = { wrapText: true, vertical: 'middle' }
+      filasSocioMensuales.push(filaPeriodo.number)
+    }
 
     for (const cuenta of cuentas) {
       const historial = await cajaService.getHistorial(cuenta.socioId)
+      const movimientos = filterCajaExportMovements(historial.movimientos, range)
       const socio = {
         socio: historial.razonSocial,
         identificador: historial.bps ?? '',
@@ -74,7 +89,7 @@ export const cajaExcelService = {
         ? `Cédula: ${historial.cedula}`
         : `BPS: ${historial.bps || '-'}`
       const meses = new Map<string, TotalesMes>()
-      for (const movimiento of historial.movimientos) {
+      for (const movimiento of movimientos) {
         const mes = movimiento.fecha.slice(0, 7)
         const totales = meses.get(mes) ?? totalesVacios()
         const monto = Math.round(movimiento.monto * 100)
@@ -110,7 +125,8 @@ export const cajaExcelService = {
       const encabezado = mensual.addRow(['Fecha', 'Mes', 'Debe (UYU)', 'Haber (UYU)', 'Saldo (UYU)'])
       encabezadosMensuales.push(encabezado.number)
 
-      for (const movimiento of historial.movimientos) {
+      if (!movimientos.length && periodo) mensual.addRow(['Sin movimientos en el período seleccionado'])
+      for (const movimiento of movimientos) {
         const esPago = movimiento.tipo === 'PAGO'
         mensual.addRow([
           new Date(`${movimiento.fecha.slice(0, 10)}T00:00:00Z`),
@@ -174,7 +190,9 @@ export const cajaExcelService = {
     const url = URL.createObjectURL(blob)
     const enlace = document.createElement('a')
     enlace.href = url
-    enlace.download = `control-caja-${fechaReporte}.xlsx`
+    enlace.download = range.desde || range.hasta
+      ? `control-caja-${range.desde || 'inicio'}-a-${range.hasta || fechaReporte}.xlsx`
+      : `control-caja-${fechaReporte}.xlsx`
     document.body.appendChild(enlace)
     enlace.click()
     enlace.remove()
