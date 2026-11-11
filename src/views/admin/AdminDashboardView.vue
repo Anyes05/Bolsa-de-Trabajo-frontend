@@ -82,7 +82,7 @@ const companies = computed(() => {
   const term = query.value.trim().toLowerCase()
   return (resumen.value?.cuentas ?? []).filter((company) => {
     const matchesFilter = filter.value === 'TODOS'
-      || (filter.value === 'DEUDA' && company.estadoMorosidad === 'MOROSO')
+      || (filter.value === 'DEUDA' && company.saldo > 0)
       || (filter.value !== 'DEUDA' && company.estadoMorosidad === filter.value)
     const matchesQuery = !term || [company.razonSocial, company.rut, company.cedula, company.nombreRubro, company.telefono]
       .some((value) => (value ?? '').toLowerCase().includes(term))
@@ -90,8 +90,8 @@ const companies = computed(() => {
   })
 })
 
-const canCharge = computed(() => selectedCompany.value?.estadoMorosidad !== 'INACTIVO'
-  && !!chargeHistory.value && !chargeLoading.value && validAmount(receivedAmount.value))
+const canCharge = computed(() => !!selectedCompany.value && !!chargeHistory.value
+  && canChargeCompany(chargeHistory.value) && !chargeLoading.value && validAmount(receivedAmount.value))
 const exportEligible = computed(() => (resumen.value?.cuentas ?? [])
   .filter((company) => exportStates.value.includes(company.estadoMorosidad)))
 const exportCandidates = computed(() => {
@@ -247,6 +247,10 @@ function clearHistoryDates() {
 
 async function confirmCharge() {
   if (!selectedCompany.value || chargeBusy.value || chargeLoading.value) return
+  if (!chargeHistory.value || !canChargeCompany(chargeHistory.value)) {
+    chargeError.value = 'No hay una cuenta disponible para cobrar o el socio inactivo ya no tiene deuda pendiente. Actualizá el estado de cuenta.'
+    return
+  }
   if (!validAmount(receivedAmount.value)) {
     chargeError.value = 'Ingrese un monto recibido mayor a cero, con hasta dos decimales.'
     return
@@ -416,8 +420,8 @@ function formatDate(value: string | null | undefined) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function canChargeCompany(company: CuentaCaja) {
-  return company.estadoMorosidad !== 'INACTIVO'
+function canChargeCompany(company: Pick<CuentaCaja, 'estadoMorosidad' | 'saldo'>) {
+  return company.estadoMorosidad !== 'INACTIVO' || company.saldo > 0
 }
 
 function paymentLabel(method: MetodoPago | null) {
@@ -486,7 +490,7 @@ function paymentLabel(method: MetodoPago | null) {
                 <button v-if="canChargeCompany(company)" class="cash-charge" type="button" @click="openCharge(company)">
                   <Plus :size="12" /> Cobro
                 </button>
-                <button v-if="canChargeCompany(company)" class="cash-history" type="button" @click="openExpense(company)">
+                <button v-if="company.estadoMorosidad !== 'INACTIVO'" class="cash-history" type="button" @click="openExpense(company)">
                   <Plus :size="12" /> Reintegro
                 </button>
                 <button class="cash-history" type="button" @click="openHistory(company)">Historial</button>
@@ -561,7 +565,11 @@ function paymentLabel(method: MetodoPago | null) {
         <header class="cash-modal__header"><div><h2 id="cash-modal-title">Registrar Cobro</h2><p>{{ selectedCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="chargeBusy || chargeLoading" @click="closeCharge"><X :size="18" /></button></header>
         <div class="cash-modal__body">
           <p v-if="chargeLoading" role="status">Cargando estado de cuenta...</p>
-          <dl v-if="chargeHistory" class="account-summary">
+          <template v-if="chargeHistory?.estadoMorosidad === 'INACTIVO'">
+            <AppAlert tone="info">Este cobro se aplica a la deuda pendiente. El socio seguirá inactivo y no se reanudará su suscripción.</AppAlert>
+            <dl class="account-summary"><div><dt>Deuda pendiente total</dt><dd>{{ formatMoney(Math.max(0, chargeHistory.saldo)) }}</dd></div></dl>
+          </template>
+          <dl v-else-if="chargeHistory" class="account-summary">
             <div>
               <dt>Reintegro de este mes</dt>
               <dd>{{ !chargeTotals.tieneReintegros ? 'Sin reintegros' : chargeTotals.reintegros === 0 ? 'Pagado' : formatMoney(chargeTotals.reintegros) }}</dd>
