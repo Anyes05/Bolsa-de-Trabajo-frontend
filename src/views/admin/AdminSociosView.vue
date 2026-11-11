@@ -15,12 +15,14 @@ import {
 } from '../../services/socioService'
 import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
 import { sociosExcelService } from '../../services/sociosExcelService'
+import { isCampoFicticio, labelsCamposFicticios } from '../../utils/camposFicticios'
 import { userFacingError } from '../../utils/userMessage'
 
 const socios = ref<SocioRecord[]>([])
 const router = useRouter()
 const rubros = ref<RubroOption[]>([])
 const query = ref('')
+const onlyIncomplete = ref(false)
 const error = ref('')
 const busy = ref(false)
 const exporting = ref(false)
@@ -43,7 +45,10 @@ const editBusy = ref(false)
 const resetBusy = ref(false)
 const resetHint = ref('')
 const generatedPassword = ref('')
+const accessBusy = ref(false)
 const editForm = reactive({
+  bps: '',
+  emailUsuario: '',
   razonSocial: '',
   rut: '',
   telefono: '',
@@ -60,15 +65,20 @@ const editForm = reactive({
 
 const filtered = computed(() => {
   const term = query.value.trim().toLowerCase()
-  if (!term) return socios.value
-  return socios.value.filter((socio) => [
-    socio.razonSocial,
-    socio.cedula,
-    socio.rut,
-    socio.nombreRubro,
-    socio.emailUsuario,
-    socio.emailContacto,
-  ].some((value) => (value ?? '').toLowerCase().includes(term)))
+  return socios.value.filter((socio) => {
+    const incomplete = (socio.camposFicticios?.length ?? 0) > 0 || socio.accesoHabilitado === false
+    if (onlyIncomplete.value && !incomplete) return false
+    if (!term) return true
+    return [
+      socio.razonSocial,
+      socio.cedula,
+      socio.bps,
+      socio.rut,
+      socio.nombreRubro,
+      socio.emailUsuario,
+      socio.emailContacto,
+    ].some((value) => (value ?? '').toLowerCase().includes(term))
+  })
 })
 
 onMounted(async () => {
@@ -104,6 +114,8 @@ function openEdit(socio: SocioRecord) {
   editError.value = ''
   resetHint.value = ''
   generatedPassword.value = ''
+  editForm.bps = socio.bps ?? ''
+  editForm.emailUsuario = socio.emailUsuario ?? ''
   editForm.razonSocial = socio.razonSocial ?? ''
   editForm.rut = socio.rut ?? ''
   editForm.telefono = socio.telefono ?? ''
@@ -143,6 +155,8 @@ async function saveEdit() {
   editError.value = ''
   try {
     const updated = await socioService.updateSocio(editing.value.id, {
+      bps: isCampoFicticio(editing.value.camposFicticios, 'bps') ? editForm.bps.replace(/\D/g, '') : undefined,
+      emailUsuario: isCampoFicticio(editing.value.camposFicticios, 'emailUsuario') ? emptyToNull(editForm.emailUsuario) : undefined,
       razonSocial: editForm.razonSocial.trim(),
       rut: editForm.rut.replace(/\D/g, ''),
       telefono: emptyToNull(editForm.telefono),
@@ -179,6 +193,29 @@ async function toggleActive(socio: SocioRecord) {
   }
 }
 
+function fieldHint(campo: string) {
+  return editing.value && isCampoFicticio(editing.value.camposFicticios, campo)
+}
+
+async function habilitarAcceso() {
+  if (!editing.value) return
+  accessBusy.value = true
+  editError.value = ''
+  resetHint.value = ''
+  try {
+    const updated = await socioService.habilitarAcceso(editing.value.id)
+    replaceSocio(updated)
+    editing.value = updated
+    generatedPassword.value = updated.passwordProvisional ?? ''
+    resetHint.value = updated.credencialesEnvioMensaje
+      || 'Acceso habilitado. Comunicá la clave provisional al socio.'
+  } catch (exception) {
+    editError.value = userFacingError(exception, 'habilitar el acceso del socio')
+  } finally {
+    accessBusy.value = false
+  }
+}
+
 async function resetClave() {
   if (!editing.value) return
   resetBusy.value = true
@@ -205,6 +242,9 @@ async function resetClave() {
       <button class="cash-download" type="button" :disabled="busy || exporting || !socios.length" @click="downloadExcel">
         <Download :size="16" /> {{ exporting ? 'Descargando...' : 'Descargar Excel' }}
       </button>
+      <RouterLink class="company-button company-button--outline" to="/admin/socios/importacion">
+        Carga masiva
+      </RouterLink>
       <RouterLink class="company-button company-button--primary" to="/admin/socios/nueva">
         <Plus :size="16" /> Nuevo Socio
       </RouterLink>
@@ -214,6 +254,10 @@ async function resetClave() {
       <label class="company-search">
         <Search :size="17" />
         <input v-model="query" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro...">
+      </label>
+      <label class="company-incomplete-filter">
+        <input v-model="onlyIncomplete" type="checkbox">
+        Solo datos incompletos
       </label>
       <span>{{ filtered.length }} de {{ socios.length }} socios listados</span>
     </section>
@@ -250,6 +294,8 @@ async function resetClave() {
                   <div class="company-table__name">
                     <strong>{{ socio.razonSocial }}</strong>
                     <small>{{ adminIdentificadorLabel(socio) }}</small>
+                    <span v-if="(socio.camposFicticios?.length ?? 0) > 0" class="socio-incomplete">Datos incompletos</span>
+                    <span v-if="socio.importadoMasivo && socio.accesoHabilitado === false" class="socio-no-access">Sin acceso</span>
                     <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
                     <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
                   </div>
@@ -292,38 +338,51 @@ async function resetClave() {
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
           <h2 id="edit-socio-title">Editar socio</h2>
-          <p>El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
+          <p v-if="!editing.importadoMasivo">El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
+          <p v-else>Los campos en amarillo son datos provisionales de la carga masiva. Reemplazalos por el dato real.</p>
+          <p v-if="labelsCamposFicticios(editing.camposFicticios).length" class="socio-ficticios-list">
+            Provisionales: {{ labelsCamposFicticios(editing.camposFicticios).join(', ') }}
+          </p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
           <label class="new-company-form__wide">Razón social *
             <input v-model="editForm.razonSocial" required>
           </label>
-          <label>Identificador de acceso
-            <input :value="adminIdentificadorLabel(editing)" readonly>
-            <small>Se define solo en el alta: BPS o cédula, no ambos.</small>
+          <label :class="{ 'field-ficticio': fieldHint('bps') }">Identificador de acceso
+            <input v-if="fieldHint('bps')" v-model="editForm.bps" inputmode="numeric" placeholder="BPS real (mín. 9 dígitos)">
+            <input v-else :value="adminIdentificadorLabel(editing)" readonly>
+            <small v-if="fieldHint('bps')">Dato provisional. Completá el BPS real.</small>
+            <small v-else>Se define solo en el alta: BPS o cédula, no ambos.</small>
           </label>
-          <label>RUT o cédula *
+          <label :class="{ 'field-ficticio': fieldHint('rut') }">RUT o cédula *
             <input v-model="editForm.rut" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
-            <small>Si no tiene RUT, va la cédula.</small>
+            <small v-if="fieldHint('rut')">Dato provisional. Completá el RUT o cédula real.</small>
+            <small v-else>Si no tiene RUT, va la cédula.</small>
           </label>
-          <label>Teléfono *
+          <label :class="{ 'field-ficticio': fieldHint('telefono') }">Teléfono *
             <input v-model="editForm.telefono" required>
+            <small v-if="fieldHint('telefono')">Dato provisional. Completá el teléfono real.</small>
           </label>
-          <label>Email de cuenta
-            <input :value="editing.emailUsuario || ''" type="email" readonly>
-            <small>Con este correo se registró el usuario.</small>
+          <label :class="{ 'field-ficticio': fieldHint('emailUsuario') }">Email de cuenta
+            <input v-if="fieldHint('emailUsuario')" v-model="editForm.emailUsuario" type="email" placeholder="cuenta@empresa.com">
+            <input v-else :value="editing.emailUsuario || ''" type="email" readonly>
+            <small v-if="fieldHint('emailUsuario')">Dato provisional. Completá el email real de la cuenta.</small>
+            <small v-else>Con este correo se registró el usuario.</small>
           </label>
-          <label>Email de contacto
+          <label :class="{ 'field-ficticio': fieldHint('emailContacto') }">Email de contacto
             <input v-model="editForm.emailContacto" type="email" placeholder="contacto@empresa.com">
-            <small>Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
+            <small v-if="fieldHint('emailContacto')">Dato provisional. Completá el email de contacto real.</small>
+            <small v-else>Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
           </label>
-          <label>Fecha de alta en el CCISJ
+          <label :class="{ 'field-ficticio': fieldHint('fechaAlta') }">Fecha de alta en el CCISJ
             <input v-model="editForm.fechaAlta" type="date">
+            <small v-if="fieldHint('fechaAlta')">Fecha provisional. Completá la fecha de afiliación real.</small>
           </label>
-          <label>Fecha de aniversario *
+          <label :class="{ 'field-ficticio': fieldHint('fechaAniversario') }">Fecha de aniversario *
             <input v-model="editForm.fechaAniversario" type="date" required>
+            <small v-if="fieldHint('fechaAniversario')">Fecha provisional (vino vacía en el Excel).</small>
           </label>
-          <label>Rubro *
+          <label :class="{ 'field-ficticio': fieldHint('rubro') }">Rubro *
             <select v-model="editForm.rubroId" class="new-company-select" required>
               <option value="" disabled>Seleccionar rubro</option>
               <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
@@ -336,13 +395,14 @@ async function resetClave() {
               <option value="INACTIVO">Inactivo</option>
             </select>
           </label>
-          <label>Calle *
+          <label :class="{ 'field-ficticio': fieldHint('calle') }">Calle *
             <input v-model="editForm.calle" required>
+            <small v-if="fieldHint('calle')">Dato provisional. Completá la dirección real.</small>
           </label>
-          <label>Nro puerta
+          <label :class="{ 'field-ficticio': fieldHint('numero') }">Nro puerta
             <input v-model="editForm.numero">
           </label>
-          <label class="new-company-form__wide">Localidad / Zona *
+          <label class="new-company-form__wide" :class="{ 'field-ficticio': fieldHint('localidad') }">Localidad / Zona *
             <select v-model="editForm.localidad" class="new-company-select" required>
               <option value="" disabled>Seleccionar localidad</option>
               <option v-for="localidad in localidadOptions" :key="localidad" :value="localidad">{{ localidad }}</option>
@@ -352,6 +412,13 @@ async function resetClave() {
             <input v-model="editForm.esDirectivo" type="checkbox">
             Es directivo
           </label>
+          <fieldset v-if="editing.accesoHabilitado === false" class="new-company-form__wide socio-reset-clave">
+            <legend>Habilitar acceso</legend>
+            <p>Cuando BPS y email de cuenta sean reales, habilitá el ingreso y se envían las credenciales.</p>
+            <button class="company-edit" type="button" :disabled="accessBusy" @click="habilitarAcceso">
+              {{ accessBusy ? 'Habilitando...' : 'Habilitar acceso y enviar clave' }}
+            </button>
+          </fieldset>
           <fieldset class="new-company-form__wide socio-reset-clave">
             <legend>Restablecer clave provisional</legend>
             <p>Se genera una clave temporal a partir de la razón social. El socio debe cambiarla dentro de las 24 horas desde que se le envía o se restablece; si vence, hay que generar una nueva.</p>
@@ -420,5 +487,47 @@ async function resetClave() {
 
 .socio-reset-clave .company-edit {
   justify-self: start;
+}
+
+.socio-incomplete,
+.socio-no-access {
+  display: inline-block;
+  margin-top: 4px;
+  margin-right: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.socio-incomplete {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.socio-no-access {
+  background: #fff0f0;
+  color: #ad2c31;
+}
+
+.company-incomplete-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #445249;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field-ficticio input,
+.field-ficticio select {
+  border-color: #ca8a04 !important;
+  background: #fffbeb;
+}
+
+.socio-ficticios-list {
+  margin: 8px 0 0;
+  color: #854d0e;
+  font-size: 13px;
 }
 </style>

@@ -38,6 +38,9 @@ export type SocioRecord = {
   passwordProvisional?: string | null
   credencialesEnviadas?: boolean | null
   credencialesEnvioMensaje?: string | null
+  camposFicticios?: string[]
+  importadoMasivo?: boolean
+  accesoHabilitado?: boolean
 }
 
 export type SocioCreatePayload = {
@@ -64,6 +67,8 @@ export type CredencialesEnviadas = {
 }
 
 export type SocioUpdatePayload = {
+  bps?: string | null
+  emailUsuario?: string | null
   razonSocial: string
   rut: string
   telefono?: string | null

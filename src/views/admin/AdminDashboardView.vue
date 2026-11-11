@@ -7,10 +7,9 @@ import { cajaService } from '../../services/cajaService'
 import { cajaExcelService } from '../../services/cajaExcelService'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
+import { matchesCajaFilter, matchesCajaQuery, nextCajaFilterFromMetric, type CajaFilter } from '../../utils/cajaFilters'
 import { userFacingError } from '../../utils/userMessage'
 import { cajaExportRangeError } from '../../utils/cajaExportRange'
-
-type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
 const resumen = ref<CajaResumen | null>(null)
 const query = ref('')
@@ -75,19 +74,12 @@ const metrics = computed(() => [
 ])
 
 function applyMetricFilter(next: CajaFilter) {
-  filter.value = filter.value === next && next !== 'TODOS' ? 'TODOS' : next
+  filter.value = nextCajaFilterFromMetric(filter.value, next)
 }
 
 const companies = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  return (resumen.value?.cuentas ?? []).filter((company) => {
-    const matchesFilter = filter.value === 'TODOS'
-      || (filter.value === 'DEUDA' && company.saldo > 0)
-      || (filter.value !== 'DEUDA' && company.estadoMorosidad === filter.value)
-    const matchesQuery = !term || [company.razonSocial, company.rut, company.cedula, company.nombreRubro, company.telefono]
-      .some((value) => (value ?? '').toLowerCase().includes(term))
-    return matchesFilter && matchesQuery
-  })
+  return (resumen.value?.cuentas ?? []).filter((company) =>
+    matchesCajaFilter(company, filter.value) && matchesCajaQuery(company, query.value))
 })
 
 const canCharge = computed(() => !!selectedCompany.value && !!chargeHistory.value

@@ -60,6 +60,61 @@ export const socioService = {
       method: 'POST',
     })
   },
+
+  habilitarAcceso(id: number) {
+    return request<SocioRecord>(`/admin/socios/${id}/habilitar-acceso`, {
+      method: 'POST',
+    })
+  },
+
+  previewImportacion(file: File) {
+    const body = new FormData()
+    body.append('file', file)
+    return request<ImportacionPreview>('/admin/socios/importacion/preview', { method: 'POST', body })
+  },
+
+  confirmarImportacion(file: File) {
+    const body = new FormData()
+    body.append('file', file)
+    return request<ImportacionResultado>('/admin/socios/importacion', { method: 'POST', body })
+  },
+}
+
+export type ImportacionFila = {
+  filaExcel: number
+  estado: 'IMPORTABLE' | 'DUPLICADO' | 'ERROR' | string
+  motivo: string | null
+  razonSocial: string | null
+  bps: string | null
+  rut: string | null
+  telefono: string | null
+  email: string | null
+  calle: string | null
+  numero: string | null
+  localidad: string | null
+  rubro: string | null
+  fechaAlta: string | null
+  fechaAniversario: string | null
+  camposFicticios: string[]
+}
+
+export type ImportacionResumen = {
+  total: number
+  importables: number
+  conFicticios: number
+  duplicados: number
+  errores: number
+  creados: number
+}
+
+export type ImportacionPreview = {
+  resumen: ImportacionResumen
+  filas: ImportacionFila[]
+}
+
+export type ImportacionResultado = {
+  resumen: ImportacionResumen
+  omitidas: ImportacionFila[]
 }
 
 export type SocioSubscriptionEntry = {
