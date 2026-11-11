@@ -100,6 +100,12 @@ const router = createRouter({
       meta: { requiresAuth: true, roles: ['ADMIN'] },
     },
     {
+      path: '/admin/socios/historial',
+      name: 'admin-socios-historial',
+      component: () => import('../views/admin/AdminSociosHistoryView.vue'),
+      meta: { requiresAuth: true, roles: ['ADMIN'] },
+    },
+    {
       path: '/admin/rubros',
       name: 'admin-rubros',
       component: AdminRubrosView,

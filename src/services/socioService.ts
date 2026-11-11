@@ -34,10 +34,19 @@ export const socioService = {
     })
   },
 
-  activateSocio(id: number) {
+  activateSocio(id: number, fecha: string) {
     return request<SocioRecord>(`/admin/socios/${id}/activar`, {
       method: 'POST',
+      body: JSON.stringify({ fecha }),
     })
+  },
+
+  subscriptionHistory(id: number) {
+    return request<SocioSubscriptionEntry[]>(`/admin/socios/${id}/historial-suscripcion`)
+  },
+
+  cancelReentry(id: number) {
+    return request<void>(`/admin/socios/${id}/reingreso-programado`, { method: 'DELETE' })
   },
 
   resetClaveProvisional(id: number) {
@@ -51,6 +60,15 @@ export const socioService = {
       method: 'POST',
     })
   },
+}
+
+export type SocioSubscriptionEntry = {
+  id: number
+  tipo: 'ALTA' | 'BAJA' | 'REINGRESO' | 'REINGRESO_PROGRAMADO'
+  fecha: string
+  estado: 'REGISTRADO' | 'PENDIENTE' | 'APLICADO' | 'CANCELADO'
+  registradoAt: string
+  origen: 'SISTEMA' | 'MIGRACION'
 }
 
 export const estadoMorosidadLabel: Record<EstadoMorosidad, string> = {

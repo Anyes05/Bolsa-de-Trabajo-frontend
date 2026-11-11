@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Download, Pencil, Plus, Search } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import ProfileAvatar from '../../components/ProfileAvatar.vue'
@@ -17,6 +18,7 @@ import { sociosExcelService } from '../../services/sociosExcelService'
 import { userFacingError } from '../../utils/userMessage'
 
 const socios = ref<SocioRecord[]>([])
+const router = useRouter()
 const rubros = ref<RubroOption[]>([])
 const query = ref('')
 const error = ref('')
@@ -164,11 +166,13 @@ async function saveEdit() {
 }
 
 async function toggleActive(socio: SocioRecord) {
+  if (!socio.activo) {
+    await router.push({ name: 'admin-socios-historial', query: { socio: socio.id } })
+    return
+  }
   error.value = ''
   try {
-    const updated = socio.activo
-      ? await socioService.deleteSocio(socio.id)
-      : await socioService.activateSocio(socio.id)
+    const updated = await socioService.deleteSocio(socio.id)
     replaceSocio(updated)
   } catch (exception) {
     error.value = userFacingError(exception, 'actualizar el estado del socio')
