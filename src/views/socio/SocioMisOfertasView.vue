@@ -149,6 +149,7 @@ function displayStatus(status: JobOffer['estado']) {
             <span>{{ offer.fechaCierre || 'Indefinida' }}</span>
           </p>
           <p class="socio-offer-card__text">{{ offer.descripcion }}</p>
+          <p v-if="offer.mostrarNombreEmpresa === false" class="socio-offer-card__meta">Nombre de la empresa reservado para postulantes.</p>
           <RouterLink class="socio-offer-card__apps" :to="{ name: 'socio-oferta-postulaciones', params: { offerId: offer.id } }">
             {{ applicationsLabel(offer.postulaciones) }}
           </RouterLink>

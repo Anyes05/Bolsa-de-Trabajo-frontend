@@ -325,6 +325,7 @@ export type ContractType = 'EFECTIVO' | 'TEMPORARIA' | 'ZAFRA' | 'PASANTIA'
 
 export type JobOffer = {
   id: number
+  mostrarNombreEmpresa: boolean
   socioId: number
   socioNombre: string
   rubroId: number

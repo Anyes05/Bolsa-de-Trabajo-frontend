@@ -4581,6 +4581,13 @@ button:disabled {
   padding: 0 14px;
 }
 
+.offer-form__visibility-help {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
 .offer-form__actions {
   position: sticky;
   bottom: 0;

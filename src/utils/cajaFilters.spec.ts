@@ -29,10 +29,17 @@ describe('matchesCajaFilter', () => {
   const moroso = cuenta({ socioId: 2, razonSocial: 'Moroso SA', estadoMorosidad: 'MOROSO', saldo: 5200 })
   const inactivo = cuenta({ socioId: 3, razonSocial: 'Baja SA', estadoMorosidad: 'INACTIVO', saldo: 1000 })
 
-  it('Con deuda solo incluye MOROSO', () => {
-    expect(matchesCajaFilter(alDia, 'DEUDA')).toBe(false)
+  it('Con deuda incluye todo saldo pendiente, incluso de socios inactivos', () => {
+    expect(matchesCajaFilter(alDia, 'DEUDA')).toBe(true)
     expect(matchesCajaFilter(moroso, 'DEUDA')).toBe(true)
-    expect(matchesCajaFilter(inactivo, 'DEUDA')).toBe(false)
+    expect(matchesCajaFilter(inactivo, 'DEUDA')).toBe(true)
+  })
+
+  it('Con deuda excluye saldos cero o a favor en cualquier estado', () => {
+    for (const company of [alDia, moroso, inactivo]) {
+      expect(matchesCajaFilter({ ...company, saldo: 0 }, 'DEUDA')).toBe(false)
+      expect(matchesCajaFilter({ ...company, saldo: -100 }, 'DEUDA')).toBe(false)
+    }
   })
 
   it('Todos incluye cualquier estado', () => {

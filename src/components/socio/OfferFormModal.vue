@@ -28,6 +28,7 @@ const form = reactive({
   vacantes: 1,
   fechaCierre: '',
   fechaModo: 'INDEFINIDA' as 'INDEFINIDA' | 'FECHA',
+  mostrarNombreEmpresa: true,
 })
 
 watch(() => props.offer, (offer) => {
@@ -45,6 +46,7 @@ watch(() => props.offer, (offer) => {
     vacantes: offer?.vacantes ?? 1,
     fechaCierre: offer?.fechaCierre ?? '',
     fechaModo: offer?.fechaCierre ? 'FECHA' : 'INDEFINIDA',
+    mostrarNombreEmpresa: offer?.mostrarNombreEmpresa ?? true,
   })
 }, { immediate: true })
 
@@ -69,6 +71,7 @@ function submit() {
     disponibilidadHoraria: form.disponibilidadHoraria,
     vacantes: form.vacantes,
     fechaCierre: form.fechaModo === 'FECHA' ? form.fechaCierre : null,
+    mostrarNombreEmpresa: form.mostrarNombreEmpresa,
   })
 }
 </script>
@@ -96,6 +99,14 @@ function submit() {
         <label>Tipo de contrato<select v-model="form.tipoContrato"><option value="">No especificado</option><option value="EFECTIVO">Efectivo</option><option value="TEMPORARIA">Temporaria</option><option value="ZAFRA">Zafra</option><option value="PASANTIA">Pasantía</option></select></label>
         <label>Vacantes *<input v-model.number="form.vacantes" type="number" min="1" required></label>
         <label>Rango salarial<input v-model="form.salario" maxlength="120" placeholder="Ej. $28.000 – $32.000"></label>
+        <fieldset class="offer-form__wide offer-form__closing">
+          <legend>Visibilidad de la empresa</legend>
+          <label class="offer-form__radio">
+            <input v-model="form.mostrarNombreEmpresa" type="checkbox" aria-describedby="offer-company-visibility-help">
+            <span>Mostrar el nombre de la empresa a los postulantes</span>
+          </label>
+          <p id="offer-company-visibility-help" class="offer-form__visibility-help">Si desmarcás esta opción, aparecerá «Empresa reservada» en las ofertas y en Mis postulaciones. Las notificaciones y los correos al postulante seguirán mostrando el nombre real de la empresa.</p>
+        </fieldset>
         <fieldset class="offer-form__wide offer-form__closing">
           <legend>Vigencia de la oferta *</legend>
           <div class="offer-form__radios">
