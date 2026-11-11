@@ -82,7 +82,7 @@ export const socioService = {
 
 export type ImportacionFila = {
   filaExcel: number
-  estado: 'IMPORTABLE' | 'DUPLICADO' | 'ERROR' | string
+  estado: 'IMPORTABLE' | 'INACTIVO' | 'DUPLICADO' | 'ERROR' | string
   motivo: string | null
   razonSocial: string | null
   bps: string | null
@@ -96,6 +96,7 @@ export type ImportacionFila = {
   fechaAlta: string | null
   fechaAniversario: string | null
   camposFicticios: string[]
+  inactivo?: boolean
 }
 
 export type ImportacionResumen = {
@@ -104,6 +105,7 @@ export type ImportacionResumen = {
   conFicticios: number
   duplicados: number
   errores: number
+  inactivos?: number
   creados: number
 }
 

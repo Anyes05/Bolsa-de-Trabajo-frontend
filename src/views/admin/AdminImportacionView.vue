@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileSpreadsheet, Upload } from 'lucide-vue-next'
+import { FileSpreadsheet, Upload, X } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
@@ -7,6 +7,7 @@ import { socioService, type ImportacionFila, type ImportacionPreview, type Impor
 import { labelsCamposFicticios } from '../../utils/camposFicticios'
 import { userFacingError } from '../../utils/userMessage'
 
+const fileInput = ref<HTMLInputElement | null>(null)
 const file = ref<File | null>(null)
 const preview = ref<ImportacionPreview | null>(null)
 const resultado = ref<ImportacionResultado | null>(null)
@@ -15,6 +16,7 @@ const busy = ref(false)
 const importing = ref(false)
 
 const canImport = computed(() => Boolean(file.value && preview.value && preview.value.resumen.importables > 0 && !busy.value && !importing.value))
+const canCancel = computed(() => Boolean((file.value || preview.value) && !busy.value && !importing.value && !resultado.value))
 
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
@@ -24,14 +26,25 @@ function onFileChange(event: Event) {
   error.value = ''
 }
 
+function cancelarSubida() {
+  if (busy.value || importing.value) return
+  file.value = null
+  preview.value = null
+  resultado.value = null
+  error.value = ''
+  if (fileInput.value) fileInput.value.value = ''
+}
+
 function estadoTone(estado: string) {
   if (estado === 'IMPORTABLE') return 'green'
   if (estado === 'DUPLICADO') return 'yellow'
+  if (estado === 'INACTIVO') return 'red'
   return 'red'
 }
 
 function estadoLabel(estado: string) {
   if (estado === 'IMPORTABLE') return 'Se va a importar'
+  if (estado === 'INACTIVO') return 'Inactivo'
   if (estado === 'DUPLICADO') return 'Duplicado'
   return 'Error'
 }
@@ -84,16 +97,22 @@ function ficticios(fila: ImportacionFila) {
         <p>
           La primera fila tiene que ser el encabezado (razón social, dirección, celular, localidad, giro, mail, RUT, BPS, inicio, fecha de afiliación).
           WhatsApp, lista de difusión, mes y número se ignoran. Los campos vacíos se completan con datos provisionales bien marcados.
+          Las celdas o filas en rojo del Excel son socios inactivos: se importan igual, pero quedan dados de baja.
         </p>
       </div>
       <label class="import-file">
         <FileSpreadsheet :size="18" />
-        <input type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" @change="onFileChange">
+        <input ref="fileInput" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" @change="onFileChange">
         <span>{{ file ? file.name : 'Elegir archivo .xlsx' }}</span>
       </label>
-      <button class="fee-save" type="button" :disabled="!file || busy" @click="runPreview">
-        <Upload :size="16" /> {{ busy ? 'Leyendo...' : 'Previsualizar' }}
-      </button>
+      <div class="import-actions">
+        <button class="fee-save" type="button" :disabled="!file || busy || importing" @click="runPreview">
+          <Upload :size="16" /> {{ busy ? 'Leyendo...' : 'Previsualizar' }}
+        </button>
+        <button v-if="canCancel" class="import-cancel" type="button" @click="cancelarSubida">
+          <X :size="16" /> Cancelar subida
+        </button>
+      </div>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -101,13 +120,18 @@ function ficticios(fila: ImportacionFila) {
     <section v-if="preview" class="fee-panel">
       <div class="fee-current__intro">
         <h2>2. Previsualización</h2>
-        <p>Revisá qué se va a crear. Los duplicados y las filas sin razón social no se importan.</p>
+        <p>
+          Revisá qué se va a crear. Los duplicados y las filas sin razón social no se importan.
+          Las etiquetas amarillas son los campos que no venían en el Excel y se van a completar con datos provisionales.
+          El estado rojo <strong>Inactivo</strong> es un socio pintado en rojo en el Excel: se crea, pero no puede entrar al sistema.
+        </p>
       </div>
       <div class="import-stats">
         <article><strong>{{ preview.resumen.total }}</strong><span>Filas</span></article>
         <article><strong>{{ preview.resumen.importables }}</strong><span>A importar</span></article>
         <article><strong>{{ preview.resumen.conFicticios }}</strong><span>Con datos provisionales</span></article>
         <article><strong>{{ preview.resumen.duplicados }}</strong><span>Duplicados</span></article>
+        <article><strong>{{ preview.resumen.inactivos ?? 0 }}</strong><span>Inactivos</span></article>
         <article><strong>{{ preview.resumen.errores }}</strong><span>Errores</span></article>
       </div>
       <div class="cash-table-wrap">
@@ -119,7 +143,7 @@ function ficticios(fila: ImportacionFila) {
               <th>Razón social</th>
               <th>BPS</th>
               <th>RUT</th>
-              <th>Datos provisionales</th>
+              <th>Campos provisionales</th>
               <th>Motivo</th>
             </tr>
           </thead>
@@ -145,18 +169,29 @@ function ficticios(fila: ImportacionFila) {
           </tbody>
         </table>
       </div>
-      <button class="fee-save" type="button" :disabled="!canImport" @click="confirmar">
-        {{ importing ? 'Importando...' : `Confirmar importación (${preview.resumen.importables})` }}
-      </button>
+      <div class="import-actions">
+        <button class="fee-save" type="button" :disabled="!canImport" @click="confirmar">
+          {{ importing ? 'Importando...' : `Confirmar importación (${preview.resumen.importables})` }}
+        </button>
+        <button v-if="!resultado" class="import-cancel" type="button" :disabled="busy || importing" @click="cancelarSubida">
+          <X :size="16" /> Cancelar subida
+        </button>
+      </div>
     </section>
 
     <section v-if="resultado" class="fee-panel">
       <div class="fee-current__intro">
         <h2>3. Resultado</h2>
         <p>
-          Se crearon <strong>{{ resultado.resumen.creados }}</strong> socios.
-          Quedan visibles en Gestión de Socios y en Caja, sin acceso al sistema hasta que completes BPS y email reales y habilites el ingreso.
+          Se crearon <strong>{{ resultado.resumen.creados }}</strong> socios
+          <template v-if="resultado.resumen.inactivos"> ({{ resultado.resumen.inactivos }} inactivos)</template>.
+          Quedan visibles en Gestión de Socios y en Caja. Los inactivos no pueden entrar; el resto tampoco hasta que completes BPS y email reales y habilites el ingreso.
         </p>
+      </div>
+      <div class="import-actions">
+        <button class="import-cancel" type="button" @click="cancelarSubida">
+          <X :size="16" /> Nueva carga
+        </button>
       </div>
     </section>
   </AdminShell>
@@ -182,7 +217,7 @@ function ficticios(fila: ImportacionFila) {
 
 .import-stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
   margin: 16px 0 20px;
 }
@@ -220,8 +255,38 @@ function ficticios(fila: ImportacionFila) {
   font-weight: 700;
 }
 
-.fee-save {
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 16px;
+  align-items: center;
+}
+
+.fee-save {
+  margin-top: 0;
+}
+
+.import-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid #c9d4cc;
+  border-radius: 10px;
+  background: #fff;
+  color: #445249;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.import-cancel:hover:not(:disabled) {
+  background: #f4f7f5;
+}
+
+.import-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 @media (max-width: 800px) {
