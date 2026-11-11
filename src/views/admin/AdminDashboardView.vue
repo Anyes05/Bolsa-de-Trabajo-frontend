@@ -436,7 +436,7 @@ function paymentLabel(method: MetodoPago | null) {
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input v-model="query" placeholder="Buscar socio, RUT, cédula o rubro..."></label>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro..."></label>
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
@@ -510,7 +510,7 @@ function paymentLabel(method: MetodoPago | null) {
           </fieldset>
           <fieldset v-if="exportMode === 'SELECCIONADOS'" class="excel-options" :disabled="exporting">
             <legend>Seleccionar socios</legend>
-            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar socio, RUT, cédula o rubro..." aria-label="Buscar socios para exportar"></label>
+            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar por razón social, RUT / Cédula o rubro..." aria-label="Buscar socios para exportar"></label>
             <label class="excel-select-all">
               <input type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
               Seleccionar todos los resultados ({{ exportCandidates.length }})
