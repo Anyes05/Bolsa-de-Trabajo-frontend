@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
+import PasswordInput from '../../components/PasswordInput.vue'
+import { authService } from '../../services/authService'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
 import { localidadesConActual } from '../../data/localidades'
 import { postulanteService } from '../../services/postulanteService'
 import type { PersonalProfile } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
 import { userFacingError } from '../../utils/userMessage'
+import { isValidPassword, PASSWORD_HINT } from '../../utils/password'
 
 const auth = useAuthStore()
 const profile = ref<PersonalProfile | null>(null)
@@ -16,6 +19,39 @@ const saving = ref(false)
 const uploadingPhoto = ref(false)
 const message = ref<string | null>(null)
 const messageTone = ref<'success' | 'error'>('success')
+const password = reactive({ current: '', next: '', repeat: '' })
+const passwordBusy = ref(false)
+const passwordError = ref('')
+const passwordMessage = ref('')
+const passwordsMatch = computed(() => password.next === password.repeat)
+const canUpdatePassword = computed(() => password.current.length > 0
+  && isValidPassword(password.next) && passwordsMatch.value && password.next !== password.current)
+
+async function updatePassword() {
+  if (passwordBusy.value) return
+  passwordError.value = ''
+  passwordMessage.value = ''
+  if (!canUpdatePassword.value) {
+    passwordError.value = 'Completá la contraseña actual y una nueva válida, diferente a la actual. Ambas contraseñas nuevas deben coincidir.'
+    return
+  }
+  passwordBusy.value = true
+  try {
+    const session = await authService.changePassword({
+      currentPassword: password.current,
+      newPassword: password.next,
+    })
+    auth.setSession(session)
+    password.current = ''
+    password.next = ''
+    password.repeat = ''
+    passwordMessage.value = 'Tu contraseña se actualizó correctamente.'
+  } catch (cause) {
+    passwordError.value = userFacingError(cause, 'actualizar la contraseña')
+  } finally {
+    passwordBusy.value = false
+  }
+}
 
 async function load() {
   loading.value = true
@@ -112,6 +148,25 @@ onMounted(load)
           </select>
         </label>
         <footer><AppButton :loading="saving" type="submit">Guardar datos personales</AppButton></footer>
+      </form>
+      <form class="personal-profile__form" aria-labelledby="applicant-password-title" @submit.prevent="updatePassword">
+        <h3 id="applicant-password-title">Cambiar contraseña</h3>
+        <p>Para cambiarla necesitás tu contraseña actual. Si creaste tu cuenta solo con Google y no tenés una contraseña local, seguí ingresando con Google.</p>
+        <label for="applicant-current-password">Contraseña actual *</label>
+        <PasswordInput id="applicant-current-password" v-model="password.current" autocomplete="current-password" required :disabled="passwordBusy" />
+        <label for="applicant-new-password">Nueva contraseña *</label>
+        <PasswordInput id="applicant-new-password" v-model="password.next" autocomplete="new-password" required :minlength="8" :disabled="passwordBusy" />
+        <small>{{ PASSWORD_HINT }}</small>
+        <label for="applicant-repeat-password">Repetir contraseña *</label>
+        <PasswordInput id="applicant-repeat-password" v-model="password.repeat" autocomplete="new-password" required :disabled="passwordBusy" />
+        <small v-if="password.repeat && !passwordsMatch">Las contraseñas no coinciden.</small>
+        <AppAlert v-if="passwordError" tone="error">{{ passwordError }}</AppAlert>
+        <AppAlert v-if="passwordMessage" tone="success">{{ passwordMessage }}</AppAlert>
+        <footer>
+          <AppButton type="submit" :disabled="!canUpdatePassword" :loading="passwordBusy">
+            {{ passwordBusy ? 'Actualizando...' : 'Actualizar contraseña' }}
+          </AppButton>
+        </footer>
       </form>
     </section>
   </PostulanteShell>
