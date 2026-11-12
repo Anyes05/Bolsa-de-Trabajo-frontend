@@ -2,6 +2,8 @@
 
 Fecha de referencia: 11/11/2026.
 
+Corrección CI posterior al merge (11/11/2026): resueltos marcadores de conflicto en `package.json`, conservando tanto ESLint como Playwright y todos los scripts de testing; lockfile sincronizado con npm. Una repetición de un workflow sobre el commit anterior no incorpora esta corrección: debe ejecutarse sobre el commit que la publique.
+
 ## Ubicación y alcance
 
 El [plan principal de testing está en backend](https://github.com/Anyes05/Bolsa-de-Trabajo-backend/blob/master/testing.md): contiene la pirámide, fases, integración/API, PostgreSQL, GreenMail, matriz E2E, UAT y criterios de cierre.
