@@ -127,3 +127,11 @@ El frontend no se considera validado solo porque compila: deben pasar los recorr
 Las funciones no implementadas se mantienen como brechas abiertas hasta desarrollarlas o aprobar un cambio de alcance; no se afirma cumplimiento total de RF/RNF por probar únicamente lo existente.
 
 Playwright y el workflow ya están incorporados para el smoke público descrito. El resto de casillas se cierra únicamente con evidencia de la capacidad correspondiente; configurar el runner no completa por sí solo todos los E2E ni todos los RF/RNF.
+
+## Evidencia adicional RF-05 — 11/11/2026
+
+- En Caja → Historial se mantiene el saldo operativo y se agrega **Historial contable inmutable**, independiente del filtro de fechas operativo. Muestra emisiones/anulaciones, vínculo al original, importe firmado, autor, fecha técnica, motivo y snapshot con fecha de negocio.
+- Permite anular cuotas con motivo obligatorio (máximo 1000 caracteres), conservando el original. El backend rechaza cuentas con pagos o cuotas con reintegros vinculados; pagos aplicados no se editan/borran. Tras anular se recargan historial y resumen de Caja.
+- Verificado: `npm test -- --run src\services\cajaService.spec.ts src\utils\cajaFilters.spec.ts` (**11 tests**, 0 fallos) y `npm run build` (TypeScript/Vite correcto; persiste aviso de chunks grandes).
+- Pendiente de prueba visual/E2E de este nuevo panel: carga/error/reintento, formulario, rechazo de conciliación, actualización de saldo y navegación entre socios. Los tests del cliente verifican ruta de consulta, POST con motivo y propagación del conflicto; no acreditan interacción DOM ni compliance universal.
+- Límite: los datos migrados muestran autor `MIGRACION`, sin atribuirles un autor histórico desconocido. La protección depende de triggers y permisos de PostgreSQL, no es invulnerable ante propietarios/superusuarios que los alteren. No se ejecutó ni desplegó contra producción.

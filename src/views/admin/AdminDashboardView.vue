@@ -2,6 +2,7 @@
 import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Pencil, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
+import HistorialContable from '../../components/admin/HistorialContable.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { cajaService } from '../../services/cajaService'
 import { cajaExcelService } from '../../services/cajaExcelService'
@@ -29,6 +30,7 @@ const exportRangeError = computed(() => cajaExportRangeError({ desde: exportFrom
 const selectedCompany = ref<CuentaCaja | null>(null)
 const selectedHistory = ref<HistorialCaja | null>(null)
 const historyBusy = ref(false)
+let historyRevision = 0
 const historyError = ref('')
 const historyFrom = ref('')
 const historyTo = ref('')
@@ -214,22 +216,38 @@ async function openCharge(company: CuentaCaja) {
 }
 
 async function openHistory(company: CuentaCaja) {
+  const revision = ++historyRevision
   selectedHistory.value = null
   historyError.value = ''
   clearHistoryDates()
   historyBusy.value = true
   try {
-    selectedHistory.value = await cajaService.getHistorial(company.socioId)
+    const history = await cajaService.getHistorial(company.socioId)
+    if (revision === historyRevision) selectedHistory.value = history
   } catch (exception) {
-    historyError.value = userFacingError(exception, 'cargar el historial')
+    if (revision === historyRevision) historyError.value = userFacingError(exception, 'cargar el historial')
   } finally {
-    historyBusy.value = false
+    if (revision === historyRevision) historyBusy.value = false
   }
 }
 
 function closeHistory() {
+  historyRevision++
+  historyBusy.value = false
   selectedHistory.value = null
   historyError.value = ''
+}
+
+async function refreshAfterAnnulment() {
+  const id = selectedHistory.value?.socioId
+  if (!id) return
+  try {
+    const history = await cajaService.getHistorial(id)
+    if (selectedHistory.value?.socioId === id) selectedHistory.value = history
+    await loadResumen()
+  } catch (exception) {
+    historyError.value = userFacingError(exception, 'actualizar el saldo después de la anulación')
+  }
 }
 
 function clearHistoryDates() {
@@ -660,9 +678,10 @@ function paymentLabel(method: MetodoPago | null) {
             <p v-if="!historyMovements.length && !historyRangeInvalid" class="company-empty">
               {{ selectedHistory.movimientos.length ? 'No hay movimientos en el rango seleccionado.' : 'No hay movimientos registrados.' }}
             </p>
+            <HistorialContable :socio-id="selectedHistory.socioId" @actualizado="refreshAfterAnnulment" />
           </div>
         </template>
-        <footer class="history-modal__footer"><span>La bitacora refleja las cuotas y cobros registrados.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
+        <footer class="history-modal__footer"><span>Saldo operativo y registro contable con originales y anulaciones.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
     </div>
 
