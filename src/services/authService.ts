@@ -35,6 +35,10 @@ export const authService = {
     })
   },
 
+  logout() {
+    return request<void>('/auth/logout', { method: 'POST' })
+  },
+
   changePassword(payload: ChangePasswordPayload) {
     return request<AuthResponse>('/auth/change-password', {
       method: 'POST',

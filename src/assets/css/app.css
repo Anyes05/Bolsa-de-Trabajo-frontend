@@ -2153,7 +2153,8 @@ button:disabled {
 
 .socio-directory__toolbar {
   display: grid;
-  grid-template-columns: 1fr 180px;
+  grid-template-columns: 1fr 180px auto;
+  align-items: center;
   gap: 12px;
 }
 
@@ -2174,6 +2175,13 @@ button:disabled {
   border: 0;
   background: transparent;
   color: #27272a;
+}
+
+.socio-directory__count {
+  color: #5d6879;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .socio-directory__filter select {
@@ -2768,6 +2776,113 @@ button:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.socio-profile__mail {
+  display: grid;
+  gap: 12px;
+}
+
+.socio-profile__mail-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.socio-profile__mail-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: #087c42;
+  background: #eaf5ee;
+}
+
+.socio-profile__mail h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.socio-profile__mail-heading p {
+  margin: 4px 0 0;
+  color: #0b7a40;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.socio-profile__mail--muted {
+  border-color: #e4dcc6;
+  background: #fffdf8;
+}
+
+.socio-profile__mail--muted .socio-profile__mail-icon {
+  color: #886322;
+  background: #f7eed8;
+}
+
+.socio-profile__mail--muted .socio-profile__mail-heading p {
+  color: #886322;
+}
+
+.socio-profile__mail-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: #3f4754;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.socio-profile__switch {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid #bdcfc3;
+  border-radius: 20px;
+  background: #dce7df;
+  cursor: pointer;
+}
+
+.socio-profile__switch span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #163c2933;
+  transition: transform .18s;
+}
+
+.socio-profile__switch[aria-checked="true"] {
+  background: #078844;
+  border-color: #078844;
+}
+
+.socio-profile__switch[aria-checked="true"] span {
+  transform: translateX(20px);
+}
+
+.socio-profile__switch:focus-visible {
+  outline: 2px solid #078844;
+  outline-offset: 3px;
+}
+
+.socio-profile__switch:disabled {
+  cursor: wait;
+  opacity: .6;
+}
+
+.socio-profile__mail-help {
+  margin: 0;
+  color: #7b8493;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .socio-profile__card .app-button {

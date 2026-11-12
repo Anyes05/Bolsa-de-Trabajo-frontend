@@ -4,7 +4,6 @@ import { computed, onMounted, ref } from 'vue'
 import AppButton from '../../components/AppButton.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
-import { mockCompany } from '../../data/mockSocioBolsa'
 import { offerService } from '../../services/offerService'
 import type { JobOffer, JobOfferPayload, RubroOption } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
@@ -105,9 +104,6 @@ function displayStatus(status: JobOffer['estado']) {
     active-nav="ofertas"
     title="Gestión de Ofertas Laborales"
     :subtitle="subtitle"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
   >
     <template #header-actions>
       <AppButton type="button" @click="openCreate">

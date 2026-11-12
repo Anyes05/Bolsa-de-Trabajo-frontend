@@ -21,6 +21,12 @@ export function userFacingError(error: unknown, action: string): string {
       && !/^acceso denegado$/i.test(detail),
     )
 
+    if (error.status === 429) {
+      return hasUsefulDetail
+        ? detail!
+        : `No se pudo ${action}: hay demasiados intentos. Esperá unos minutos e intentá de nuevo.`
+    }
+
     if (isLogin) {
       if (error.status === 401) {
         return 'Usuario o contraseña incorrectos. Revisá tus datos e intentá nuevamente.'

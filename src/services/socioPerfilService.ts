@@ -24,6 +24,13 @@ export const socioPerfilService = {
     })
   },
 
+  updateCorreos(silenciarCorreos: boolean) {
+    return request<SocioRecord>('/socio/perfil/correos', {
+      method: 'PUT',
+      body: JSON.stringify({ silenciarCorreos }),
+    })
+  },
+
   listRubros() {
     return request<RubroOption[]>('/socio/perfil/rubros')
   },

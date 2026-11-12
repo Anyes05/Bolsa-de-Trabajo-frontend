@@ -6,7 +6,7 @@ import AppButton from '../../components/AppButton.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
-import { mockCompany, type MockApplicantProfile } from '../../data/mockSocioBolsa'
+import { type MockApplicantProfile } from '../../data/mockSocioBolsa'
 import { offerService } from '../../services/offerService'
 import { socioApplicationsService } from '../../services/socioApplicationsService'
 import type { ApplicantApplication, JobOffer, ReceivedApplication } from '../../services/types'
@@ -127,9 +127,6 @@ onMounted(load)
     active-nav="ofertas"
     :title="`Postulaciones — ${offer.titulo}`"
     :subtitle="subtitle"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
   >
     <template #header-actions>
       <AppButton variant="secondary" type="button" @click="router.push({ name: 'socio-mis-ofertas' })">
@@ -193,9 +190,6 @@ onMounted(load)
     active-nav="ofertas"
     title="Postulaciones"
     :subtitle="loading ? 'Cargando postulaciones...' : error || 'Oferta no encontrada'"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
   >
     <template #header-actions>
       <AppButton variant="secondary" type="button" @click="router.push({ name: 'socio-mis-ofertas' })">

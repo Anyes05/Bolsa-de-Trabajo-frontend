@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, Check, FileText, GraduationCap, Languages, Lightbulb, Paperclip, Plus, Trash2, UserRound, UsersRound, Wrench } from 'lucide-vue-next'
 import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
@@ -390,35 +390,12 @@ function validateStep(current: number) {
   return true
 }
 
+const acceptedTerms = ref(false)
 const checkingAvailability = ref(false)
 
 async function next() {
   if (checkingAvailability.value) return
   if (!validateStep(step.value)) return
-  if (step.value === 1 || (step.value === 2 && googleRegistration.pending)) {
-    checkingAvailability.value = true
-    const email = form.email
-    const identityCard = form.identityCard
-    try {
-      const availability = await authService.registrationAvailability(email.trim(), identityCard)
-      if (email !== form.email || identityCard !== form.identityCard) return
-      if (availability.emailExists) {
-        fieldErrors.email = 'Ya existe una cuenta con este correo. Inicia sesión o utiliza otro.'
-      }
-      if (availability.identityCardExists) {
-        fieldErrors.identityCard = 'Esta cédula ya está registrada.'
-      }
-      if (availability.emailExists || availability.identityCardExists) {
-        error.value = 'Revisa los datos señalados antes de continuar.'
-        return
-      }
-    } catch {
-      error.value = 'No pudimos verificar tus datos. Intenta continuar nuevamente.'
-      return
-    } finally {
-      checkingAvailability.value = false
-    }
-  }
   step.value += 1
 }
 
@@ -546,10 +523,15 @@ async function complete() {
       return
     }
     const manualSummary = cvMode.value === 'manual' ? manualProfileSummary() : null
+    if (!acceptedTerms.value) {
+      error.value = 'Para crear la cuenta tenés que aceptar los términos y condiciones.'
+      return
+    }
     const payload = {
       ...form,
       ...(manualSummary ?? {}),
       sectors: chosen.value,
+      acceptedTerms: true,
     }
     const session = googleRegistration.pending
       ? await authService.googleRegister({
@@ -564,6 +546,7 @@ async function complete() {
         hasVehicle: payload.hasVehicle,
         latestJob: payload.latestJob,
         experienceDescription: payload.experienceDescription,
+        acceptedTerms: true,
       })
       : await authService.registerApplicant(payload)
     auth.setSession(session)
@@ -907,6 +890,11 @@ async function complete() {
       <AppAlert v-if="error">{{ error }}</AppAlert>
       <AppAlert v-if="success" tone="success">{{ success }}</AppAlert>
 
+      <label v-if="step === 3 && !registered" class="registration-terms">
+        <input v-model="acceptedTerms" type="checkbox">
+        <span>Acepto los <RouterLink to="/terminos" target="_blank">términos y condiciones</RouterLink> del CCISJ.</span>
+      </label>
+
       <footer class="registration-card__actions">
         <AppButton v-if="step > (googleRegistration.pending ? 2 : 1)" variant="secondary" @click="previous">
           <ArrowLeft :size="14" aria-hidden="true" /> Anterior
@@ -927,4 +915,6 @@ async function complete() {
 <style scoped>
 .registration-google { display: grid; gap: 16px; margin-bottom: 24px; }
 .registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #e8f5ee; color: #087b48; }
+.registration-terms { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; color: #445249; font-size: 0.95rem; }
+.registration-terms a { color: #08775f; }
 </style>

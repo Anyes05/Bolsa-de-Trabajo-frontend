@@ -84,7 +84,7 @@ function statusLabel(value: EstadoMorosidad) {
             <Landmark :size="18" aria-hidden="true" />
             Comisión Directiva – Vista restringida
           </h2>
-          <p>Como miembro directivo puedes ver el directorio de socios activos del CCISJ.</p>
+          <p>Como miembro directivo puedes ver el directorio de todos los socios del CCISJ, incluidos los inactivos.</p>
         </div>
         <span>Solo directivos</span>
       </div>
@@ -102,6 +102,9 @@ function statusLabel(value: EstadoMorosidad) {
             </option>
           </select>
         </label>
+        <span class="socio-directory__count">
+          {{ filtered.length }} de {{ members.length }} socios
+        </span>
       </div>
 
       <AppAlert v-if="error">{{ error }}</AppAlert>

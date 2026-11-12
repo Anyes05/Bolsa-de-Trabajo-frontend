@@ -10,14 +10,18 @@ import { userFacingError } from '../../utils/userMessage'
 import { useAuthStore } from '../../stores/auth'
 import { useSocioNotificationsStore } from '../../stores/socioNotifications'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   title: string
   subtitle: string
-  companyName: string
-  companyInitials: string
-  companyRole: string
+  companyName?: string
+  companyInitials?: string
+  companyRole?: string
   activeNav?: 'bolsa' | 'ofertas' | 'directorio' | 'notificaciones' | 'perfil'
-}>()
+}>(), {
+  companyName: '',
+  companyInitials: 'S',
+  companyRole: 'SOCIO',
+})
 
 const auth = useAuthStore()
 const notifications = useSocioNotificationsStore()

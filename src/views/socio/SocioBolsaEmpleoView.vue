@@ -8,7 +8,6 @@ import ApplicantContactModal from '../../components/socio/ApplicantContactModal.
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import {
-  mockCompany,
   type MockApplicantProfile,
   type SortOption,
 } from '../../data/mockSocioBolsa'
@@ -176,9 +175,6 @@ onMounted(loadProfiles)
     active-nav="bolsa"
     title="Bolsa de Empleo Digital"
     subtitle="Explora perfiles laborales listos para incorporarse"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
   >
     <div class="bolsa bolsa--shared-filters">
       <ApplicantFilters

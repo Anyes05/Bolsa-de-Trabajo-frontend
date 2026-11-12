@@ -41,6 +41,7 @@ export type SocioRecord = {
   camposFicticios?: string[]
   importadoMasivo?: boolean
   accesoHabilitado?: boolean
+  silenciarCorreos?: boolean
 }
 
 export type SocioCreatePayload = {
@@ -222,6 +223,7 @@ export type RegisterApplicantPayload = {
   hasVehicle: boolean
   latestJob: string
   experienceDescription: string
+  acceptedTerms: boolean
 }
 
 export type GoogleCredential = { credential: string; nonce: string }

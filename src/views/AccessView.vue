@@ -186,6 +186,7 @@ async function signInGoogle(credential: GoogleCredential) {
         >
           ¿No tienes cuenta? Crear postulante
         </RouterLink>
+        <RouterLink class="login-form__register-link" to="/terminos">Términos y condiciones</RouterLink>
         <AppButton type="submit" :loading="busy">
           {{ busy ? 'Ingresando...' : 'Ingresar' }}
           <ArrowRight :size="15" aria-hidden="true" />

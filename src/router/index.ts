@@ -34,6 +34,11 @@ const router = createRouter({
       meta: { guestOnly: true },
     },
     {
+      path: '/terminos',
+      name: 'terminos',
+      component: () => import('../views/TerminosView.vue'),
+    },
+    {
       path: '/sesion',
       name: 'session',
       component: SessionView,

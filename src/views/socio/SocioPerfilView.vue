@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Camera } from 'lucide-vue-next'
+import { Camera, Mail } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
@@ -29,6 +29,10 @@ const passwordHint = ref('')
 const passwordError = ref('')
 const photoError = ref('')
 const uploadingPhoto = ref(false)
+const mailBusy = ref(false)
+const mailHint = ref('')
+const mailError = ref('')
+const silenciarCorreos = ref(false)
 
 const form = reactive({
   razonSocial: '',
@@ -91,6 +95,7 @@ function applyPerfil(perfil: SocioRecord) {
   form.localidad = perfil.localidad ?? ''
   form.rubroId = perfil.rubroId != null ? String(perfil.rubroId) : ''
   form.fechaAniversario = perfil.fechaAniversario?.slice(0, 10) ?? ''
+  silenciarCorreos.value = perfil.silenciarCorreos === true
 }
 
 function emptyToNull(value: string) {
@@ -124,6 +129,24 @@ async function saveProfile() {
     error.value = userFacingError(exception, 'guardar el perfil')
   } finally {
     saving.value = false
+  }
+}
+
+async function toggleSilenciarCorreos() {
+  const next = !silenciarCorreos.value
+  mailBusy.value = true
+  mailError.value = ''
+  mailHint.value = ''
+  try {
+    const updated = await socioPerfilService.updateCorreos(next)
+    applyPerfil(updated)
+    mailHint.value = next
+      ? 'No te enviaremos más comunicados ni saludos de aniversario por correo.'
+      : 'Volviste a activar los correos de comunicados y aniversarios.'
+  } catch (exception) {
+    mailError.value = userFacingError(exception, 'actualizar la preferencia de correos')
+  } finally {
+    mailBusy.value = false
   }
 }
 
@@ -303,6 +326,40 @@ function logout() {
             {{ saving ? 'Guardando...' : 'Guardar cambios' }}
           </AppButton>
         </form>
+
+        <section class="socio-profile__card socio-profile__mail" :class="{ 'socio-profile__mail--muted': silenciarCorreos }">
+          <div class="socio-profile__mail-heading">
+            <span class="socio-profile__mail-icon" aria-hidden="true">
+              <Mail :size="18" />
+            </span>
+            <div>
+              <h3>Correos del CCISJ</h3>
+              <p>{{ silenciarCorreos ? 'Correos silenciados' : 'Recibís comunicados y aniversarios por correo' }}</p>
+            </div>
+          </div>
+          <div class="socio-profile__mail-control">
+            <span id="silenciar-correos-label">Silenciar correos</span>
+            <button
+              type="button"
+              class="socio-profile__switch"
+              role="switch"
+              aria-labelledby="silenciar-correos-label"
+              aria-describedby="silenciar-correos-help"
+              :aria-checked="silenciarCorreos"
+              :disabled="mailBusy"
+              @click="toggleSilenciarCorreos"
+            >
+              <span />
+            </button>
+          </div>
+          <p id="silenciar-correos-help" class="socio-profile__mail-help">
+            Si silenciás los correos, no te enviaremos comunicados ni saludos de aniversario.
+            Seguirás viéndolos en la campana de notificaciones. Las credenciales de acceso se envían igual.
+          </p>
+          <p v-if="mailBusy" class="socio-profile__hint" role="status">Guardando preferencia...</p>
+          <p v-else-if="mailHint" class="socio-profile__hint" role="status">{{ mailHint }}</p>
+          <AppAlert v-if="mailError">{{ mailError }}</AppAlert>
+        </section>
 
         <form class="socio-profile__card" @submit.prevent="updatePassword">
           <h3>Cambiar contraseña</h3>

@@ -4,7 +4,6 @@ import { onMounted } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
-import { mockCompany } from '../../data/mockSocioBolsa'
 import { useSocioNotificationsStore, type SocioNotificationItem } from '../../stores/socioNotifications'
 
 const notifications = useSocioNotificationsStore()
@@ -23,9 +22,6 @@ function openNotice(item: SocioNotificationItem) {
     active-nav="notificaciones"
     title="Notificaciones"
     subtitle="Novedades y alertas del CCISJ"
-    :company-name="mockCompany.name"
-    :company-initials="mockCompany.initials"
-    :company-role="mockCompany.roleLabel"
   >
     <template #header-actions>
       <AppButton variant="secondary" type="button" :disabled="!notifications.unreadCount" @click="notifications.markAllRead()">

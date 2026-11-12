@@ -144,7 +144,14 @@ export const useAuthStore = defineStore('auth', () => {
     persist()
   }
 
-  function logout() {
+  async function logout() {
+    try {
+      if (token.value) {
+        await authService.logout()
+      }
+    } catch {
+      // Aunque el servidor no responda, se limpia la sesión local.
+    }
     setPhotoUrl(null)
     token.value = null
     email.value = null
