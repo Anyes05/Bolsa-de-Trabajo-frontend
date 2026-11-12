@@ -9,7 +9,13 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+<<<<<<< HEAD
     "lint": "eslint src --ext .ts,.vue"
+=======
+    "test:node": "node --test tests/*.test.mjs",
+    "test:ui": "playwright test",
+    "test:ci": "npm test -- --reporter=default --reporter=junit --outputFile=test-results/vitest.xml && npm run test:node && npm run build"
+>>>>>>> 8e6507c3156c34703159b8c4f375074730759562
   },
   "dependencies": {
     "@vitejs/plugin-vue": "5.2.4",
@@ -22,9 +28,13 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@eslint/js": "^9.39.1",
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.5.1",
+=======
+    "@playwright/test": "^1.56.1",
+>>>>>>> 8e6507c3156c34703159b8c4f375074730759562
     "typescript": "~5.6.3",
     "typescript-eslint": "^8.46.2",
     "vitest": "^3.2.7",

@@ -15,7 +15,11 @@ env:
   EC2_SECURITY_GROUP_ID: sg-07b88f147aef90a12
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   push-image:
+    needs: test
     runs-on: ubuntu-latest
     env:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
