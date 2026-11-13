@@ -64,7 +64,7 @@ test('downloaded workbook contains only inclusive-range movements and keeps curr
     for (const column of [6, 9]) {
       const header = unfiltered.getWorksheet('Resumen').getRow(1).getCell(column)
       assert.equal(header.font.color.argb, 'FFFFFFFF')
-      assert.doesNotMatch(header.numFmt, /\[Green\]/)
+      assert.equal(header.numFmt ?? 'General', 'General')
     }
     const monthlySheet = unfiltered.getWorksheet('Por mes')
     for (const rowNumber of [1, 2]) {
@@ -74,7 +74,7 @@ test('downloaded workbook contains only inclusive-range movements and keeps curr
     }
     const saldoHeader = monthlySheet.getRow(3).getCell(5)
     assert.equal(saldoHeader.font.color.argb, 'FFFFFFFF')
-    assert.doesNotMatch(saldoHeader.numFmt, /\[Green\]/)
+    assert.equal(saldoHeader.numFmt ?? 'General', 'General')
     await assert.rejects(exports.cajaExcelService.download(accounts, { desde: '2026-12-01', hasta: '2026-11-01' }))
     assert.equal(requests, 2, 'invalid range must not fetch or download')
     for (const balance of [-125.50, 80, 0]) {

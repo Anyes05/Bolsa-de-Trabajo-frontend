@@ -178,10 +178,15 @@ export const cajaExcelService = {
         })
       })
     }
+    resumen.getRow(1).eachCell((celda) => {
+      celda.numFmt = 'General'
+      celda.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+    })
     for (const filaNumero of encabezadosMensuales) {
       const fila = mensual.getRow(filaNumero)
       fila.height = 24
       fila.eachCell((celda) => {
+        celda.numFmt = 'General'
         celda.font = { bold: true, color: { argb: 'FFFFFFFF' } }
         celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF08775F' } }
         celda.alignment = { vertical: 'middle', wrapText: true }
