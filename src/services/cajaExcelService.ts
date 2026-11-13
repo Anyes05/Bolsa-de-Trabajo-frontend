@@ -116,11 +116,11 @@ export const cajaExcelService = {
 
       const bpsRow = mensual.addRow([identificadorSocio])
       mensual.mergeCells(bpsRow.number, 1, bpsRow.number, 5)
-      bpsRow.font = { bold: true, size: 12, color: { argb: 'FF08775F' } }
+      bpsRow.font = { bold: true, size: 12, color: { argb: 'FF000000' } }
       filasSocioMensuales.push(bpsRow.number)
       const socioRow = mensual.addRow([historial.razonSocial])
       mensual.mergeCells(socioRow.number, 1, socioRow.number, 5)
-      socioRow.font = { bold: true }
+      socioRow.font = { bold: true, color: { argb: 'FF000000' } }
       filasSocioMensuales.push(socioRow.number)
       const encabezado = mensual.addRow(['Fecha', 'Mes', 'Debe (UYU)', 'Haber (UYU)', 'Saldo (UYU)'])
       encabezadosMensuales.push(encabezado.number)
@@ -154,23 +154,23 @@ export const cajaExcelService = {
         })
         hoja.columns.forEach((columna) => {
           if (columnasMonetarias.has(columna.key ?? '')) {
-            columna.numFmt = columna.key === 'saldo' || columna.key === 'favor'
-              ? formatoSaldo
-              : '"$" #,##0.00;[Red]-"$" #,##0.00'
+            columna.numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
           }
         })
       } else {
         mensual.getColumn(1).numFmt = 'dd/mm/yyyy'
         for (const columna of [3, 4, 5]) {
-          mensual.getColumn(columna).numFmt = columna === 5
-            ? formatoSaldo
-            : '"$" #,##0.00;[Red]-"$" #,##0.00'
+          mensual.getColumn(columna).numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
         }
       }
       hoja.eachRow((fila, indice) => {
         if (hoja === resumen && indice === 1) return
         if (hoja === mensual && (encabezadosMensuales.includes(indice) || filasSocioMensuales.includes(indice))) return
-        fila.eachCell((celda) => {
+        fila.eachCell((celda, columna) => {
+          if (typeof celda.value === 'number'
+              && (hoja === resumen ? columna === 6 || columna === 9 : columna === 5)) {
+            celda.numFmt = formatoSaldo
+          }
           celda.alignment = { vertical: 'middle' }
           if (indice % 2 === 0) {
             celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F7F5' } }
