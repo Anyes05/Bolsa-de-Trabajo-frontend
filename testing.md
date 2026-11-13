@@ -36,6 +36,8 @@ SAST/DAST y Playwright/GreenMail requieren implementación de infraestructura: s
 
 ### Automatización e IA
 
+Excel de Caja: las columnas de saldo de Resumen y Por mes muestran crédito positivo con `+` verde, deuda negativa con `-` rojo y cero sin signo ni color. La columna Saldo a favor usa el mismo formato. La inversión de signo se limita al Excel; no cambia saldos de API, deudas ni pagos. La prueba [cajaExcelService.test.mjs](tests/cajaExcelService.test.mjs) comprueba valores numéricos y formatos después de descargar y reabrir el archivo.
+
 Cambio RF-18 (11/11/2026): build aprobado y dos pruebas Playwright (escritorio/móvil) en [applicant-password.ui.spec.ts](e2e/applicant-password.ui.spec.ts). Comprueban validación/coincidencia, error de contraseña actual, limpieza tras éxito y renovación de sesión. La API está simulada: estas pruebas verifican UI/contrato, no persistencia real de la clave en BD.
 
 Priorizar pruebas repetibles y evidencia generada por CI. La IA puede ayudar a derivar casos del RF, generar pruebas/fixtures, interpretar errores y corregir código, con revisión del equipo y respetando las reglas académicas aplicables. No sustituir ejecución real por una explicación de la IA ni adaptar el resultado esperado para aprobar un incumplimiento.

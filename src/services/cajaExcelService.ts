@@ -33,7 +33,7 @@ export const cajaExcelService = {
     const workbook = new ExcelJS.Workbook()
     workbook.creator = 'CCISJ'
     workbook.created = new Date()
-    workbook.subject = 'Control de caja en pesos uruguayos. Pendientes al momento de la descarga; los cargos cubiertos incluyen saldo a favor.'
+    workbook.subject = 'Control de caja en pesos uruguayos. Saldos: positivo (+) a favor del socio, negativo (-) deuda y cero sin signo. Pendientes al momento de la descarga; los cargos cubiertos incluyen saldo a favor.'
     const periodo = range.desde || range.hasta
       ? `Movimientos desde ${range.desde || 'el inicio'} hasta ${range.hasta || 'la fecha de descarga'} (inclusive). Saldos y pendientes actuales; no son un cierre histórico.`
       : ''
@@ -107,7 +107,7 @@ export const cajaExcelService = {
 
       const actual = meses.get(mesActual) ?? totalesVacios()
       resumen.addRow({
-        ...socio, saldo: historial.saldo, deuda: Math.max(historial.saldo, 0),
+        ...socio, saldo: historial.saldo === 0 ? 0 : -historial.saldo, deuda: Math.max(historial.saldo, 0),
         vencida: historial.deudaVencida, favor: Math.max(-historial.saldo, 0), mes: mesActual,
         total: (actual.cuotas + actual.reintegros) / 100,
         cubierto: (actual.cuotas + actual.reintegros - actual.pendiente) / 100,
@@ -133,7 +133,7 @@ export const cajaExcelService = {
           movimiento.fecha.slice(0, 7),
           esPago ? 0 : movimiento.monto,
           esPago ? movimiento.monto : 0,
-          movimiento.saldoResultante,
+          movimiento.saldoResultante === 0 ? 0 : -movimiento.saldoResultante,
         ])
       }
       mensual.addRow([])
@@ -141,6 +141,7 @@ export const cajaExcelService = {
     }
 
     const columnasMonetarias = new Set(['saldo', 'deuda', 'vencida', 'favor', 'total', 'cubierto', 'pendiente'])
+    const formatoSaldo = '[Green]+"$" #,##0.00;[Red]-"$" #,##0.00;"$" #,##0.00'
     for (const hoja of workbook.worksheets) {
       if (hoja === resumen) {
         hoja.views = [{ state: 'frozen', ySplit: 1 }]
@@ -153,13 +154,17 @@ export const cajaExcelService = {
         })
         hoja.columns.forEach((columna) => {
           if (columnasMonetarias.has(columna.key ?? '')) {
-            columna.numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
+            columna.numFmt = columna.key === 'saldo' || columna.key === 'favor'
+              ? formatoSaldo
+              : '"$" #,##0.00;[Red]-"$" #,##0.00'
           }
         })
       } else {
         mensual.getColumn(1).numFmt = 'dd/mm/yyyy'
         for (const columna of [3, 4, 5]) {
-          mensual.getColumn(columna).numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
+          mensual.getColumn(columna).numFmt = columna === 5
+            ? formatoSaldo
+            : '"$" #,##0.00;[Red]-"$" #,##0.00'
         }
       }
       hoja.eachRow((fila, indice) => {

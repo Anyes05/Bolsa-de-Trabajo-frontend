@@ -51,7 +51,8 @@ test('downloaded workbook contains only inclusive-range movements and keeps curr
       if (row.getCell(1).value instanceof Date) dates.push(row.getCell(1).value.toISOString().slice(0, 10))
     })
     assert.deepEqual(dates, ['2026-11-01', '2026-11-30'])
-    assert.equal(workbook.getWorksheet('Resumen').getRow(2).getCell(6).value, 900)
+    assert.equal(workbook.getWorksheet('Resumen').getRow(2).getCell(6).value, -900)
+    assert.equal(workbook.getWorksheet('Resumen').getRow(2).getCell(7).value, 900)
     assert.match(detail.getRow(1).getCell(1).value, /no son un cierre histórico/)
     assert.equal(filename, 'control-caja-2026-11-01-a-2026-11-30.xlsx')
     await exports.cajaExcelService.download(accounts)
@@ -62,6 +63,28 @@ test('downloaded workbook contains only inclusive-range movements and keeps curr
     assert.equal(rows, 4)
     await assert.rejects(exports.cajaExcelService.download(accounts, { desde: '2026-12-01', hasta: '2026-11-01' }))
     assert.equal(requests, 2, 'invalid range must not fetch or download')
+    for (const balance of [-125.50, 80, 0]) {
+      history.saldo = balance
+      history.movimientos = [
+        { fecha: '2026-11-01', tipo: 'CUOTA', monto: 100, pendiente: 0, saldoResultante: balance },
+      ]
+      await exports.cajaExcelService.download(accounts)
+      const signed = new ExcelJS.Workbook()
+      await signed.xlsx.load(await blob.arrayBuffer())
+      const summary = signed.getWorksheet('Resumen').getRow(2)
+      const monthly = signed.getWorksheet('Por mes').getRow(4)
+      const expected = balance === 0 ? 0 : -balance
+      assert.equal(summary.getCell(6).value, expected)
+      assert.equal(monthly.getCell(5).value, expected)
+      assert.equal(summary.getCell(7).value, Math.max(balance, 0))
+      assert.equal(summary.getCell(9).value, Math.max(-balance, 0))
+      for (const cell of [summary.getCell(6), summary.getCell(9), monthly.getCell(5)]) {
+        const [positive, negative, zero] = cell.numFmt.split(';')
+        assert.equal(positive, '[Green]+"$" #,##0.00')
+        assert.equal(negative, '[Red]-"$" #,##0.00')
+        assert.equal(zero, '"$" #,##0.00')
+      }
+    }
   } finally {
     globalThis.document = previousDocument
     globalThis.window = previousWindow
