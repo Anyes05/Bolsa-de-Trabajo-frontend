@@ -2,6 +2,23 @@
 
 Fecha de referencia: 11/11/2026.
 
+## Cobertura Vitest
+
+El frontend genera cobertura V8 durante `npm run test:coverage` y en
+`npm run test:ci`. El reporte incluye los archivos TypeScript y Vue de `src`;
+solo se excluyen las propias pruebas y la declaración ambiental de Vite. No se
+excluyen vistas, componentes o servicios para aumentar artificialmente el
+porcentaje.
+
+CI publica el artifact `frontend-vitest-coverage`, que contiene HTML, LCOV,
+resumen JSON y Cobertura XML. Para navegar el reporte visual hay que descargar
+y extraer el artifact completo, y luego abrir `index.html`.
+
+Vitest solo mide el código ejecutado por sus pruebas. Las pruebas separadas de
+Node y Playwright siguen aportando evidencia funcional, pero sus ejecuciones no
+se suman al porcentaje de Vitest. No se promedian los porcentajes de frontend y
+backend ni se interpreta cobertura como cumplimiento automático de requisitos.
+
 Corrección CI posterior al merge (11/11/2026): resueltos marcadores de conflicto en `package.json`, conservando tanto ESLint como Playwright y todos los scripts de testing; lockfile sincronizado con npm. Una repetición de un workflow sobre el commit anterior no incorpora esta corrección: debe ejecutarse sobre el commit que la publique.
 
 ## Ubicación y alcance
