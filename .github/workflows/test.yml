@@ -15,13 +15,6 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Generate coverage lockfile
-        run: npm install --package-lock-only --ignore-scripts
-      - name: Publish generated lockfile
-        uses: actions/upload-artifact@v5
-        with:
-          name: frontend-generated-lockfile
-          path: package-lock.json
       - name: Install
         run: npm ci
       - name: Tests and production build

@@ -19,6 +19,14 @@ Node y Playwright siguen aportando evidencia funcional, pero sus ejecuciones no
 se suman al porcentaje de Vitest. No se promedian los porcentajes de frontend y
 backend ni se interpreta cobertura como cumplimiento automático de requisitos.
 
+Primera medición verificada en
+[CI del PR de cobertura](https://github.com/Anyes05/Bolsa-de-Trabajo-frontend/actions/runs/44941353543)
+el 21/11/2026: tests, build y Playwright aprobados. Vitest informó **173 de
+9220 líneas (1,87%)**, **24 de 127 funciones (18,89%)** y **73 de 162 ramas
+(45,06%)**. El bajo porcentaje de líneas refleja que el reporte incluye todas
+las vistas y componentes Vue, aunque todavía no tengan pruebas Vitest. Esta es
+la base real para priorizar flujos; no se corrige excluyendo archivos.
+
 Corrección CI posterior al merge (11/11/2026): resueltos marcadores de conflicto en `package.json`, conservando tanto ESLint como Playwright y todos los scripts de testing; lockfile sincronizado con npm. Una repetición de un workflow sobre el commit anterior no incorpora esta corrección: debe ejecutarse sobre el commit que la publique.
 
 ## Ubicación y alcance
