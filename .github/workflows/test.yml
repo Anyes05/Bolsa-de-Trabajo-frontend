@@ -10,8 +10,8 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -23,7 +23,14 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Public UI smoke (not full-stack E2E)
         run: npm run test:ui
-      - uses: actions/upload-artifact@v4
+      - name: Publish frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: frontend-vitest-coverage
+          path: coverage/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: frontend-test-reports
