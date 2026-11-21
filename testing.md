@@ -27,7 +27,25 @@ el 21/11/2026: tests, build y Playwright aprobados. Vitest informó **173 de
 las vistas y componentes Vue, aunque todavía no tengan pruebas Vitest. Esta es
 la base real para priorizar flujos; no se corrige excluyendo archivos.
 
-Corrección CI posterior al merge (11/11/2026): resueltos marcadores de conflicto en `package.json`, conservando tanto ESLint como Playwright y todos los scripts de testing; lockfile sincronizado con npm. Una repetición de un workflow sobre el commit anterior no incorpora esta corrección: debe ejecutarse sobre el commit que la publique.
+ en `package.json`, conservando tanto ESLint como Playwright y todos los scripts de testing; lockfile sincronizado con npm. Una repetición de un workflow sobre el commit anterior no incorpora esta corrección: debe ejecutarse sobre el commit que la publique.
+
+### Medición local ampliada (21/11/2026)
+
+`npm run test:ci` aprobado: **51 pruebas Vitest**, **27 pruebas Node**,
+sin fallos ni omisiones, y build TypeScript/Vite exitoso.
+V8 informa **618 de 11800 líneas (5,23%)**, **49 de 165 funciones (29,69%)**
+y **255 de 366 ramas (69,67%)**. El reporte conserva todo el alcance de `src`;
+las vistas y componentes siguen sin ejecución Vitest en este lote.
+
+Nuevas pruebas de [sesión](src/stores/auth.spec.ts) y
+[notificaciones](src/stores/notifications.spec.ts): restauración por rol,
+persistencia, contraseña provisional, deduplicación de solicitudes, respuestas
+tardías tras cambiar sesión, fotos concurrentes, lectura de avisos, nuevos
+avisos durante lectura masiva, popup bloqueante y recuperación de errores.
+Cobertura de líneas: sesión **97%**, notificaciones de postulante **100%** y
+notificaciones de socio **98,76%**. Los mocks verifican comportamiento local,
+no integración real con backend. Las ramas globales no sustituyen el bajo
+porcentaje de líneas: todavía falta cubrir la interfaz Vue.
 
 ## Ubicación y alcance
 
