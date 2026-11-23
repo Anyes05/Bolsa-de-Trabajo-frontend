@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { Car, Download, FileText, Mail, MapPin, Phone } from 'lucide-vue-next'
+import { Car, Download, FileText, MapPin, Phone } from 'lucide-vue-next'
 import AppButton from '../AppButton.vue'
 import { availabilityLabel, type MockApplicantProfile } from '../../data/mockSocioBolsa'
 import type { SocioProfileCv } from '../../services/types'
@@ -118,10 +118,6 @@ onUnmounted(() => {
 
       <footer class="profile-modal__actions">
         <AppButton variant="secondary" type="button" @click="emit('close')">Cerrar</AppButton>
-        <AppButton variant="primary" type="button">
-          <Mail :size="14" aria-hidden="true" />
-          Solicitar Contacto
-        </AppButton>
       </footer>
     </section>
   </dialog>

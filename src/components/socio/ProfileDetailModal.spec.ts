@@ -108,9 +108,9 @@ describe('modal de detalle de perfil', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }))
     await wrapper.find('.profile-modal__backdrop').trigger('click')
     await wrapper.find('.profile-modal__actions button').trigger('click')
-    // "Solicitar Contacto" no tiene acción asociada.
-    await wrapper.findAll('.profile-modal__actions button')[1]!.trigger('click')
     expect(wrapper.emitted('close')).toHaveLength(3)
+    // El contacto se hace desde "Contactar" en la tarjeta: el modal solo tiene "Cerrar".
+    expect(wrapper.findAll('.profile-modal__actions button').map((b) => b.text())).toEqual(['Cerrar'])
 
     const quitar = vi.spyOn(window, 'removeEventListener')
     wrapper.unmount()
