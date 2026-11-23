@@ -1,9 +1,16 @@
 import { request } from './http'
+import { buildQuery, type Page } from './pagination'
 import type { ActiveSocioOption, JobOffer, JobOfferPayload, OfferStatus, RubroOption } from './types'
 
 export const offerService = {
-  list() {
-    return request<JobOffer[]>('/ofertas')
+  /** Búsqueda (título, socio, rubro), estado y paginación resueltos en el servidor. */
+  list(params: { q?: string; estado?: OfferStatus | null; page?: number; size?: number } = {}) {
+    return request<Page<JobOffer>>(`/ofertas${buildQuery(params)}`)
+  },
+
+  /** Una oferta por id (el socio solo puede obtener las propias). */
+  get(id: number) {
+    return request<JobOffer>(`/ofertas/${id}`)
   },
 
   listActiveSocios() {

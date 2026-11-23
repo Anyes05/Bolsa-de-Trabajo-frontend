@@ -1,9 +1,16 @@
 import { request } from './http'
+import { buildQuery, type Page } from './pagination'
 import type { CredencialesEnviadas, EstadoMorosidad, RubroOption, SocioCreatePayload, SocioRecord, SocioUpdatePayload } from './types'
 
 export const socioService = {
+  /** Padrón completo: solo para la exportación a Excel. Los listados usan {@link pageSocios}. */
   getSocios() {
     return request<SocioRecord[]>('/admin/socios')
+  },
+
+  /** Listado con búsqueda, filtro de incompletos y paginación resueltos en el servidor. */
+  pageSocios(params: { q?: string; incompletos?: boolean; page?: number; size?: number } = {}) {
+    return request<Page<SocioRecord>>(`/admin/socios/pagina${buildQuery({ ...params, incompletos: params.incompletos || undefined })}`)
   },
 
   getSocioById(id: number) {

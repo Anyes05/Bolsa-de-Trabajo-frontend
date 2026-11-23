@@ -5,12 +5,15 @@ import { CalendarDays, History, Search } from 'lucide-vue-next'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
+import { useServerList } from '../../composables/useServerList'
+import { ApiRequestError } from '../../services/http'
+import { emptyPage, type Page } from '../../services/pagination'
 import { socioService, type SocioSubscriptionEntry } from '../../services/socioService'
 import type { SocioRecord } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 
 const route = useRoute()
-const socios = ref<SocioRecord[]>([])
 const query = ref('')
 const selected = ref<SocioRecord | null>(null)
 const entries = ref<SocioSubscriptionEntry[]>([])
@@ -24,10 +27,14 @@ const fecha = ref('')
 let detailRevision = 0
 const labels = { ALTA: 'Alta inicial', BAJA: 'Baja', REINGRESO: 'Reingreso', REINGRESO_PROGRAMADO: 'Reingreso programado' }
 const states = { REGISTRADO: 'Registrado', PENDIENTE: 'Pendiente', APLICADO: 'Aplicado', CANCELADO: 'Cancelado' }
-const filtered = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  return socios.value.filter(s => [s.razonSocial, s.rut, s.cedula].some(v => (v || '').toLowerCase().includes(term)))
+// Búsqueda y paginación de socios: las resuelve el backend.
+const listado = useServerList<Page<SocioRecord>>({
+  fetch: (page) => socioService.pageSocios({ q: query.value, page }),
+  search: query,
+  initial: emptyPage(),
+  onError: (cause) => { error.value = userFacingError(cause, 'cargar el historial de socios') },
 })
+const filtered = computed(() => listado.data.value.content)
 const pending = computed(() => entries.value.find(e => e.estado === 'PENDIENTE'))
 const minimum = computed(() => entries.value.filter(e => ['ALTA', 'BAJA', 'REINGRESO'].includes(e.tipo)).map(e => e.fecha).sort().at(-1))
 const invalidDate = computed(() => !!fecha.value && !!minimum.value && fecha.value < minimum.value)
@@ -38,9 +45,17 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    socios.value = await socioService.getSocios()
     const id = Number(route.query.socio)
-    const socio = socios.value.find(s => s.id === id)
+    // El socio preseleccionado se pide por id: puede no estar en la primera página.
+    const [, socio] = await Promise.all([
+      listado.load(0),
+      Number.isInteger(id) && id > 0
+        ? socioService.getSocioById(id).catch((cause: unknown) => {
+          if (cause instanceof ApiRequestError && cause.status === 404) return null
+          throw cause
+        })
+        : null,
+    ])
     if (socio) await select(socio)
   } catch (cause) {
     error.value = userFacingError(cause, 'cargar el historial de socios')
@@ -74,7 +89,8 @@ async function resume() {
   success.value = ''
   try {
     const updated = await socioService.activateSocio(id, fecha.value)
-    socios.value = socios.value.map(s => s.id === id ? updated : s)
+    const current = listado.data.value
+    listado.data.value = { ...current, content: current.content.map(s => s.id === id ? updated : s) }
     selected.value = updated
     entries.value = await socioService.subscriptionHistory(id)
     success.value = updated.activo ? 'Suscripción reanudada correctamente.' : 'Reingreso programado. El socio seguirá inactivo hasta la fecha elegida.'
@@ -115,8 +131,16 @@ onMounted(load)
             <span><strong>{{ socio.razonSocial }}</strong><small>{{ socio.rut || socio.cedula || 'Sin RUT / Cédula' }}</small></span>
             <span class="subscription-badge" :class="{ 'subscription-badge--inactive': !socio.activo }">{{ socio.activo ? 'Activo' : 'Inactivo' }}</span>
           </button>
-          <p v-if="!filtered.length" class="subscription-empty">No hay socios que coincidan con la búsqueda.</p>
+          <p v-if="!filtered.length && !listado.loading.value" class="subscription-empty">No hay socios que coincidan con la búsqueda.</p>
         </div>
+        <PaginationBar
+          :page="listado.page.value"
+          :total-pages="listado.data.value.totalPages"
+          :total-elements="listado.data.value.totalElements"
+          :loading="listado.loading.value"
+          label="Paginación de socios"
+          @change="listado.goTo"
+        />
       </section>
       <section class="subscription-panel subscription-detail" aria-live="polite">
         <template v-if="selected">

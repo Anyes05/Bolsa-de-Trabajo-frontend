@@ -1,22 +1,17 @@
-import { computed, ref, type Ref } from 'vue'
-import type { MockApplicantProfile } from '../data/mockSocioBolsa'
+import { computed, ref } from 'vue'
+import type { ApplicantFilterParams } from '../services/pagination'
 
-export function useApplicantFilters(profiles: Readonly<Ref<MockApplicantProfile[]>>) {
+/**
+ * Estado de los filtros de la bolsa de postulantes. No filtra: arma los parámetros que se envían
+ * al servidor, que es quien busca, filtra y pagina.
+ */
+export function useApplicantFilters() {
   const search = ref('')
   const selectedSector = ref('')
   const selectedAvailability = ref('')
-  const selectedLicense = ref('')
-  const sectorOptions = computed(() => [...new Set(profiles.value.flatMap((profile) => profile.sectors))]
-    .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
-  const availabilityOptions = computed(() => [...new Set(profiles.value.map((profile) => profile.availability))]
-    .filter(Boolean).sort((first, second) => first.localeCompare(second, 'es')))
+  const selectedLicense = ref<'' | 'yes' | 'no'>('')
   const hasFilters = computed(() => !!search.value || !!selectedSector.value
     || !!selectedAvailability.value || !!selectedLicense.value)
-
-  function hasLicense(license: string) {
-    return !['', 'no', 'sin libreta', 'no tiene', 'no tiene libreta', 'no informada']
-      .includes(license.trim().toLocaleLowerCase('es'))
-  }
 
   function clearFilters() {
     search.value = ''
@@ -25,20 +20,19 @@ export function useApplicantFilters(profiles: Readonly<Ref<MockApplicantProfile[
     selectedLicense.value = ''
   }
 
-  const filteredProfiles = computed(() => {
-    const term = search.value.trim().toLocaleLowerCase('es')
-    return profiles.value.filter((profile) => {
-      const matches = !term || [profile.fullName, profile.email, profile.phone || '', profile.identityCard, profile.profileName]
-        .some((value) => value.toLocaleLowerCase('es').includes(term))
-      return matches
-        && (!selectedSector.value || profile.sectors.includes(selectedSector.value))
-        && (!selectedAvailability.value || profile.availability === selectedAvailability.value)
-        && (!selectedLicense.value || hasLicense(profile.license) === (selectedLicense.value === 'yes'))
-    })
-  })
+  function params(): ApplicantFilterParams {
+    return {
+      q: search.value,
+      rubro: selectedSector.value,
+      disponibilidad: selectedAvailability.value,
+      libreta: selectedLicense.value,
+    }
+  }
 
   return {
     search, selectedSector, selectedAvailability, selectedLicense,
-    sectorOptions, availabilityOptions, hasFilters, clearFilters, filteredProfiles,
+    /** Filtros no textuales: recargan al instante. La búsqueda va con debounce. */
+    selectFilters: [selectedSector, selectedAvailability, selectedLicense],
+    hasFilters, clearFilters, params,
   }
 }

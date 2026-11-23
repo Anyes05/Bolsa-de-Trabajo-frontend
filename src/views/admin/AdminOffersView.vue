@@ -3,42 +3,53 @@ import { computed, onMounted, ref } from 'vue'
 import { Pencil, Pause, Play, Plus, Search, X } from 'lucide-vue-next'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
+import { useServerList } from '../../composables/useServerList'
 import { offerService } from '../../services/offerService'
+import { emptyPage, type Page } from '../../services/pagination'
 import type { ActiveSocioOption, JobOffer, JobOfferPayload } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 
-const offers = ref<JobOffer[]>([])
 const sectors = ref<{ id: number; nombreRubro: string }[]>([])
 const socios = ref<ActiveSocioOption[]>([])
-const loading = ref(false)
+const catalogLoading = ref(false)
 const error = ref('')
 const modalOpen = ref(false)
 const selectedOffer = ref<JobOffer | null>(null)
 const search = ref('')
 const statusFilter = ref('TODAS')
 
-const filteredOffers = computed(() => offers.value.filter((offer) => {
-  const matchesSearch = `${offer.titulo} ${offer.socioNombre} ${offer.rubro}`.toLowerCase().includes(search.value.toLowerCase())
-  return matchesSearch && (statusFilter.value === 'TODAS' || offer.estado === statusFilter.value)
-}))
+// Búsqueda, estado y paginación: los resuelve el backend.
+const listado = useServerList<Page<JobOffer>>({
+  fetch: (page) => offerService.list({
+    q: search.value,
+    estado: statusFilter.value === 'TODAS' ? null : statusFilter.value as JobOffer['estado'],
+    page,
+  }),
+  filters: [statusFilter],
+  search,
+  initial: emptyPage(),
+  onError: (cause) => { error.value = userFacingError(cause, 'cargar las ofertas') },
+})
+const filteredOffers = computed(() => listado.data.value.content)
+const loading = computed(() => catalogLoading.value || (listado.loading.value && !filteredOffers.value.length))
 
 async function loadData() {
-  loading.value = true
+  catalogLoading.value = true
   error.value = ''
   try {
-    const [offerList, sectorList, partnerList] = await Promise.all([
-      offerService.list(),
+    const [sectorList, partnerList] = await Promise.all([
       offerService.listRubros(),
       offerService.listActiveSocios(),
+      listado.load(),
     ])
-    offers.value = offerList
     sectors.value = sectorList
     socios.value = partnerList
   } catch (cause) {
     error.value = userFacingError(cause, 'cargar las ofertas')
   } finally {
-    loading.value = false
+    catalogLoading.value = false
   }
 }
 
@@ -152,6 +163,14 @@ onMounted(loadData)
         </aside>
       </article>
     </section>
+    <PaginationBar
+      :page="listado.page.value"
+      :total-pages="listado.data.value.totalPages"
+      :total-elements="listado.data.value.totalElements"
+      :loading="listado.loading.value"
+      label="Paginación de ofertas"
+      @change="listado.goTo"
+    />
 
     <OfferFormModal
       v-if="modalOpen"

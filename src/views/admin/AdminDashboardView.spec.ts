@@ -3,13 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
 import { DOMWrapper, flushPromises, mount, VueWrapper } from '@vue/test-utils'
 import AdminDashboardView from './AdminDashboardView.vue'
-import { cajaService } from '../../services/cajaService'
+import { SEARCH_DEBOUNCE_MS } from '../../composables/useServerList'
+import { cajaService, type CajaCuentasParams } from '../../services/cajaService'
 import { cajaExcelService } from '../../services/cajaExcelService'
-import type { CajaResumen, CuentaCaja, HistorialCaja, MovimientoCaja, ReintegroProgramado } from '../../services/types'
+import type { Page } from '../../services/pagination'
+import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MovimientoCaja, ReintegroProgramado } from '../../services/types'
 
 vi.mock('../../services/cajaService', () => ({
   cajaService: {
-    getResumen: vi.fn(), getHistorial: vi.fn(), registrarCobro: vi.fn(), registrarReintegro: vi.fn(),
+    getResumen: vi.fn(), listarCuentas: vi.fn(), cuentasExportacion: vi.fn(), getHistorial: vi.fn(),
+    registrarCobro: vi.fn(), registrarReintegro: vi.fn(),
     actualizarProgramado: vi.fn(), eliminarProgramado: vi.fn(), historialContable: vi.fn(), anularCuota: vi.fn(),
   },
 }))
@@ -66,7 +69,32 @@ const cuentas = [
 ]
 
 function resumen(lista: CuentaCaja[] = cuentas): CajaResumen {
-  return { totalSocios: lista.length, alDia: 2, pendiente: 1, inactivos: 2, cuentas: lista }
+  return { totalSocios: lista.length, alDia: 2, pendiente: 1, inactivos: 2 }
+}
+
+// Doble del backend: la vista no filtra, solo envía parámetros; esto reproduce la respuesta del servidor.
+const norm = (value: string | null | undefined) => (value ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+function servidorBusca(c: CuentaCaja, q = '') {
+  const term = norm(q.trim())
+  return !term || [c.razonSocial, c.rut, c.cedula, c.bps, c.nombreRubro, c.telefono].some((v) => norm(v).includes(term))
+}
+function servidorCuentas(params: CajaCuentasParams = {}): Page<CuentaCaja> {
+  const filtro = params.filtro ?? 'TODOS'
+  const size = params.size ?? 20
+  const page = params.page ?? 0
+  const filtradas = cuentas.filter((c) => servidorBusca(c, params.q)
+    && (filtro === 'TODOS' || (filtro === 'DEUDA' ? c.saldo > 0 : c.estadoMorosidad === filtro)))
+  return {
+    content: filtradas.slice(page * size, page * size + size), page, size,
+    totalElements: filtradas.length, totalPages: Math.ceil(filtradas.length / size),
+  }
+}
+function servidorExportacion(estados: readonly EstadoMorosidad[], q = '') {
+  return cuentas.filter((c) => estados.includes(c.estadoMorosidad) && servidorBusca(c, q))
+}
+const esperarBusqueda = async () => {
+  await new Promise((resolve) => setTimeout(resolve, SEARCH_DEBOUNCE_MS + 20))
+  await flushPromises()
 }
 
 function deferred<T>() {
@@ -127,6 +155,8 @@ describe('control de caja del administrador', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(2025, 2, 15, 12, 0, 0))
     vi.resetAllMocks()
+    vi.mocked(cajaService.listarCuentas).mockImplementation(async (params) => servidorCuentas(params))
+    vi.mocked(cajaService.cuentasExportacion).mockImplementation(async (estados, q) => servidorExportacion(estados, q))
   })
 
   afterEach(() => vi.useRealTimers())
@@ -157,29 +187,86 @@ describe('control de caja del administrador', () => {
       expect(fila(wrapper, 'Alfa SA').findAll('button').map((b) => b.text().trim())).toEqual(['Cobro', 'Reintegro', 'Historial'])
     })
 
-    it('filtra por métricas, botones de filtro y búsqueda de texto', async () => {
+    it('pide al servidor la primera página sin filtros al cargar', async () => {
+      await montar()
+      expect(cajaService.listarCuentas).toHaveBeenCalledWith({ q: '', filtro: 'TODOS', page: 0 })
+    })
+
+    it('envía métricas, botones de filtro y búsqueda al servidor (no filtra en el navegador)', async () => {
       const wrapper = await montar()
       const metricas = wrapper.findAll('.cash-metric')
 
       await metricas[2]!.trigger('click')
+      await flushPromises()
       expect(metricas[2]!.attributes('aria-pressed')).toBe('true')
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'DEUDA', page: 0 })
       expect(wrapper.findAll('tbody tr').map((tr) => tr.findAll('td')[1]!.text())).toEqual(['Beta SRL', 'Delta'])
 
       // Click en la métrica activa vuelve a "Todos".
       await metricas[2]!.trigger('click')
+      await flushPromises()
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'TODOS', page: 0 })
       expect(wrapper.findAll('tbody tr')).toHaveLength(5)
 
       await boton(wrapper, 'Inactivo').trigger('click')
+      await flushPromises()
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'INACTIVO', page: 0 })
       expect(wrapper.findAll('tbody tr')).toHaveLength(2)
       expect(boton(wrapper, 'Inactivo').classes()).toContain('cash-filter--active')
 
       await boton(wrapper, 'Todos').trigger('click')
+      await flushPromises()
       await wrapper.find('.cash-search input').setValue('ferre')
+      await esperarBusqueda()
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: 'ferre', filtro: 'TODOS', page: 0 })
       expect(wrapper.findAll('tbody tr')).toHaveLength(1)
 
       await wrapper.find('.cash-search input').setValue('no existe')
+      await esperarBusqueda()
       expect(wrapper.find('table').exists()).toBe(false)
       expect(wrapper.text()).toContain('No hay socios para mostrar.')
+    })
+
+    it('agrupa la escritura con debounce: una sola petición por búsqueda', async () => {
+      const wrapper = await montar()
+      vi.mocked(cajaService.listarCuentas).mockClear()
+      const input = wrapper.find('.cash-search input')
+      await input.setValue('a')
+      await input.setValue('al')
+      await input.setValue('alf')
+      expect(cajaService.listarCuentas).not.toHaveBeenCalled()
+      await esperarBusqueda()
+      expect(cajaService.listarCuentas).toHaveBeenCalledTimes(1)
+      expect(cajaService.listarCuentas).toHaveBeenCalledWith({ q: 'alf', filtro: 'TODOS', page: 0 })
+    })
+
+    it('descarta respuestas viejas para que una búsqueda lenta no pise a la nueva', async () => {
+      const wrapper = await montar()
+      const lenta = deferred<Page<CuentaCaja>>()
+      vi.mocked(cajaService.listarCuentas).mockReturnValueOnce(lenta.promise)
+      await boton(wrapper, 'Inactivo').trigger('click')
+      await boton(wrapper, 'Al dia').trigger('click')
+      await flushPromises()
+      lenta.resolve(servidorCuentas({ filtro: 'INACTIVO' }))
+      await flushPromises()
+      expect(wrapper.findAll('tbody tr').map((tr) => tr.findAll('td')[1]!.text())).toEqual(['Alfa SA', 'Epsilon'])
+    })
+
+    it('pagina en el servidor y vuelve a la primera página al cambiar el filtro', async () => {
+      vi.mocked(cajaService.listarCuentas).mockImplementation(async (params) => servidorCuentas({ ...params, size: 2 }))
+      const wrapper = await montar()
+      expect(wrapper.findAll('tbody tr')).toHaveLength(2)
+      expect(wrapper.find('.pagination-bar').text()).toContain('Página 1 de 3 · 5 resultados')
+
+      await wrapper.find('button[aria-label="Página siguiente"]').trigger('click')
+      await flushPromises()
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'TODOS', page: 1 })
+      expect(wrapper.findAll('tbody tr').map((tr) => tr.findAll('td')[1]!.text())).toEqual(['Gamma', 'Delta'])
+
+      await boton(wrapper, 'Inactivo').trigger('click')
+      await flushPromises()
+      expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'INACTIVO', page: 0 })
+      expect(wrapper.find('.pagination-bar').exists()).toBe(false)
     })
 
     it('muestra el estado de carga y el error del resumen', async () => {
@@ -203,6 +290,7 @@ describe('control de caja del administrador', () => {
     async function abrirExportacion() {
       const wrapper = await montar()
       await wrapper.find('.cash-download').trigger('click')
+      await flushPromises()
       return wrapper
     }
 
@@ -215,9 +303,12 @@ describe('control de caja del administrador', () => {
       const wrapper = await abrirExportacion()
       expect(modalExcel(wrapper).exists()).toBe(true)
       expect(contador(wrapper)).toBe('5 socios seleccionados')
+      expect(cajaService.cuentasExportacion).toHaveBeenCalledWith(['AL_DIA', 'MOROSO', 'INACTIVO'])
 
       const estados = wrapper.findAll('.excel-states input')
       await estados[2]!.setValue(false)
+      await flushPromises()
+      expect(cajaService.cuentasExportacion).toHaveBeenLastCalledWith(['AL_DIA', 'MOROSO'])
       expect(contador(wrapper)).toBe('3 socios seleccionados')
 
       await boton(modalExcel(wrapper), 'Descargar Excel').trigger('click')
@@ -232,6 +323,7 @@ describe('control de caja del administrador', () => {
     it('avisa cuando no hay estados elegidos y deshabilita la descarga', async () => {
       const wrapper = await abrirExportacion()
       for (const estado of wrapper.findAll('.excel-states input')) await estado.setValue(false)
+      await flushPromises()
       expect(wrapper.text()).toContain('Selecciona al menos un estado.')
       expect(contador(wrapper)).toBe('0 socios seleccionados')
       const descargar = boton(modalExcel(wrapper), 'Descargar Excel')
@@ -262,16 +354,20 @@ describe('control de caja del administrador', () => {
       await todos.trigger('change')
       expect(contador(wrapper)).toBe('0 socios seleccionados')
 
-      // La búsqueda contempla RUT, cédula y rubro.
+      // La búsqueda la resuelve el servidor (RUT, cédula, rubro...).
       const buscador = wrapper.find('input[aria-label="Buscar socios para exportar"]')
       await buscador.setValue('211111')
+      await esperarBusqueda()
+      expect(cajaService.cuentasExportacion).toHaveBeenLastCalledWith(['AL_DIA', 'MOROSO', 'INACTIVO'], '211111')
       expect(wrapper.findAll('.excel-company')).toHaveLength(1)
       await buscador.setValue('4.444')
+      await esperarBusqueda()
       expect(wrapper.findAll('.excel-company').map((c) => c.find('strong').text())).toEqual(['Beta SRL'])
       await wrapper.find('.excel-select-all input').trigger('change')
       expect(contador(wrapper)).toBe('1 socios seleccionados')
 
       await buscador.setValue('zzz')
+      await esperarBusqueda()
       expect(wrapper.text()).toContain('No hay socios que coincidan con los estados y la búsqueda.')
       expect(wrapper.find('.excel-select-all input').attributes('disabled')).toBeDefined()
 
@@ -329,6 +425,7 @@ describe('control de caja del administrador', () => {
       expect(modalExcel(wrapper).exists()).toBe(false)
 
       await wrapper.find('.cash-download').trigger('click')
+      await flushPromises()
       expect((wrapper.find('input[value="TODOS"]').element as HTMLInputElement).checked).toBe(true)
       await wrapper.find('.cash-modal-layer').trigger('keydown', { key: 'Escape' })
       expect(modalExcel(wrapper).exists()).toBe(false)

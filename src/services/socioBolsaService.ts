@@ -1,4 +1,5 @@
 import { request } from './http'
+import { buildQuery, type ApplicantFilterParams, type ApplicantGroupPage } from './pagination'
 import type { ApplicantProfileCard, SocioCvLink, SocioProfileCv } from './types'
 
 export type ContactApplication = {
@@ -8,10 +9,12 @@ export type ContactApplication = {
   perfilNombre: string
 }
 
+export type BolsaOrden = 'RECIENTES' | 'NOMBRE'
+
 export const socioBolsaService = {
-  searchProfiles(rubro?: string) {
-    const query = rubro ? `?rubro=${encodeURIComponent(rubro)}` : ''
-    return request<ApplicantProfileCard[]>(`/socio/bolsa${query}`)
+  /** Búsqueda, filtros, orden y paginación (por postulante) resueltos en el servidor. */
+  searchProfiles(params: ApplicantFilterParams & { orden?: BolsaOrden } = {}) {
+    return request<ApplicantGroupPage<ApplicantProfileCard>>(`/socio/bolsa${buildQuery(params)}`)
   },
 
   listProfileCvs(profileId: number) {

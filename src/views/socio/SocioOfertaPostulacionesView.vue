@@ -7,6 +7,7 @@ import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import { type MockApplicantProfile } from '../../data/mockSocioBolsa'
+import { ApiRequestError } from '../../services/http'
 import { offerService } from '../../services/offerService'
 import { socioApplicationsService } from '../../services/socioApplicationsService'
 import type { ApplicantApplication, JobOffer, ReceivedApplication } from '../../services/types'
@@ -82,11 +83,15 @@ async function load() {
   error.value = null
   try {
     const id = Number(offerId.value)
-    const [offers, received] = await Promise.all([
-      offerService.list(),
+    const [loadedOffer, received] = await Promise.all([
+      // 404: no existe o no es del socio (el backend no distingue, para no filtrar ofertas ajenas).
+      offerService.get(id).catch((cause: unknown) => {
+        if (cause instanceof ApiRequestError && cause.status === 404) return null
+        throw cause
+      }),
       socioApplicationsService.list(id),
     ])
-    offer.value = offers.find((candidate) => candidate.id === id) ?? null
+    offer.value = loadedOffer
     applications.value = received
   } catch (cause) {
     error.value = userFacingError(cause, 'cargar las postulaciones')

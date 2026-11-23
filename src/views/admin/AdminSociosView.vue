@@ -6,6 +6,9 @@ import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import ProfileAvatar from '../../components/ProfileAvatar.vue'
 import PasswordInput from '../../components/PasswordInput.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
+import { useServerList } from '../../composables/useServerList'
+import { emptyPage, type Page } from '../../services/pagination'
 import { localidadesConActual } from '../../data/localidades'
 import {
   estadoMorosidadLabel,
@@ -18,21 +21,32 @@ import { sociosExcelService } from '../../services/sociosExcelService'
 import { isCampoFicticio, labelsCamposFicticios } from '../../utils/camposFicticios'
 import { userFacingError } from '../../utils/userMessage'
 
-const socios = ref<SocioRecord[]>([])
 const router = useRouter()
 const rubros = ref<RubroOption[]>([])
 const query = ref('')
 const onlyIncomplete = ref(false)
 const error = ref('')
-const busy = ref(false)
+const catalogBusy = ref(false)
 const exporting = ref(false)
 
+// Búsqueda, filtro de incompletos y paginación: los resuelve el backend.
+const listado = useServerList<Page<SocioRecord>>({
+  fetch: (page) => socioService.pageSocios({ q: query.value, incompletos: onlyIncomplete.value, page }),
+  filters: [onlyIncomplete],
+  search: query,
+  initial: emptyPage(),
+  onError: (exception) => { error.value = userFacingError(exception, 'cargar el listado de socios') },
+})
+const socios = computed(() => listado.data.value.content)
+const busy = computed(() => catalogBusy.value || listado.loading.value)
+
 async function downloadExcel() {
-  if (busy.value || exporting.value || !socios.value.length) return
+  if (busy.value || exporting.value || !listado.data.value.totalElements) return
   exporting.value = true
   error.value = ''
   try {
-    await sociosExcelService.download([...socios.value])
+    // La exportación es una operación masiva: pide el padrón completo en el momento de descargar.
+    await sociosExcelService.download(await socioService.getSocios())
   } catch (exception) {
     error.value = userFacingError(exception, 'descargar el Excel de socios')
   } finally {
@@ -63,35 +77,16 @@ const editForm = reactive({
   estadoMorosidad: 'AL_DIA' as EstadoMorosidad,
 })
 
-const filtered = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  return socios.value.filter((socio) => {
-    const incomplete = (socio.camposFicticios?.length ?? 0) > 0 || socio.accesoHabilitado === false
-    if (onlyIncomplete.value && !incomplete) return false
-    if (!term) return true
-    return [
-      socio.razonSocial,
-      socio.cedula,
-      socio.bps,
-      socio.rut,
-      socio.nombreRubro,
-      socio.emailUsuario,
-      socio.emailContacto,
-    ].some((value) => (value ?? '').toLowerCase().includes(term))
-  })
-})
-
 onMounted(async () => {
-  busy.value = true
+  catalogBusy.value = true
   error.value = ''
   try {
-    const [items, catalog] = await Promise.all([socioService.getSocios(), socioService.getRubros()])
-    socios.value = items
+    const [catalog] = await Promise.all([socioService.getRubros(), listado.load(0)])
     rubros.value = catalog
   } catch (exception) {
     error.value = userFacingError(exception, 'cargar el listado de socios')
   } finally {
-    busy.value = false
+    catalogBusy.value = false
   }
 })
 
@@ -137,7 +132,8 @@ function closeEdit() {
 }
 
 function replaceSocio(updated: SocioRecord) {
-  socios.value = socios.value.map((item) => (item.id === updated.id ? updated : item))
+  const current = listado.data.value
+  listado.data.value = { ...current, content: current.content.map((item) => (item.id === updated.id ? updated : item)) }
 }
 
 async function saveEdit() {
@@ -239,7 +235,7 @@ async function resetClave() {
 <template>
   <AdminShell active="socios" title="Gestión de Socios" subtitle="Listado general y altas del padrón">
     <div class="company-actions">
-      <button class="cash-download" type="button" :disabled="busy || exporting || !socios.length" @click="downloadExcel">
+      <button class="cash-download" type="button" :disabled="busy || exporting || !listado.data.value.totalElements" @click="downloadExcel">
         <Download :size="16" /> {{ exporting ? 'Descargando...' : 'Descargar Excel' }}
       </button>
       <RouterLink class="company-button company-button--outline" to="/admin/socios/importacion">
@@ -259,14 +255,14 @@ async function resetClave() {
         <input v-model="onlyIncomplete" type="checkbox">
         Solo datos incompletos
       </label>
-      <span>{{ filtered.length }} de {{ socios.length }} socios listados</span>
+      <span>{{ listado.data.value.totalElements }} socios listados</span>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
-    <p v-else-if="busy" class="company-empty">Cargando socios...</p>
-    <p v-else-if="!filtered.length" class="company-empty">No hay socios para mostrar.</p>
+    <p v-else-if="busy && !socios.length" class="company-empty">Cargando socios...</p>
+    <p v-else-if="!socios.length" class="company-empty">No hay socios para mostrar.</p>
 
-    <section v-else class="company-table-card">
+    <section v-else class="company-table-card" :aria-busy="busy">
       <div class="company-table-wrap">
         <table class="company-table">
           <thead>
@@ -283,7 +279,7 @@ async function resetClave() {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="socio in filtered" :key="socio.id">
+            <tr v-for="socio in socios" :key="socio.id">
               <td>
                 <div class="company-table__identity">
                   <ProfileAvatar
@@ -331,6 +327,14 @@ async function resetClave() {
           </tbody>
         </table>
       </div>
+      <PaginationBar
+        :page="listado.page.value"
+        :total-pages="listado.data.value.totalPages"
+        :total-elements="listado.data.value.totalElements"
+        :loading="busy"
+        label="Paginación de socios"
+        @change="listado.goTo"
+      />
     </section>
 
     <div v-if="editing" class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="edit-socio-title">

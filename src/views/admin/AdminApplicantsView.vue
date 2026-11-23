@@ -1,27 +1,45 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import ApplicantFilters from '../../components/ApplicantFilters.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { useApplicantFilters } from '../../composables/useApplicantFilters'
+import { useServerList } from '../../composables/useServerList'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
 import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
-import { adminApplicantService } from '../../services/adminApplicantService'
+import { adminApplicantService, type AdminApplicantEstado, type AdminApplicantPage } from '../../services/adminApplicantService'
+import { emptyApplicantPage } from '../../services/pagination'
 import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
-type EstadoFiltro = 'TODOS' | 'ACTIVO' | 'INACTIVO'
-
-const applicantProfiles = ref<AdminApplicantProfile[]>([])
 const selectedProfile = ref<MockApplicantProfile | null>(null)
 const selectedCvs = ref<SocioProfileCv[]>([])
 const expandedApplicantId = ref<number | null>(null)
-const estadoFiltro = ref<EstadoFiltro>('TODOS')
-const loading = ref(false)
+const estadoFiltro = ref<AdminApplicantEstado>('TODOS')
 const loadingCvs = ref(false)
 const error = ref<string | null>(null)
+
+const {
+  search, selectedSector, selectedAvailability, selectedLicense, selectFilters, hasFilters, clearFilters, params,
+} = useApplicantFilters()
+
+// Búsqueda, filtros, estado y paginación (por postulante): los resuelve el backend.
+const listado = useServerList<AdminApplicantPage>({
+  fetch: (page) => adminApplicantService.list({ ...params(), estado: estadoFiltro.value, page }),
+  filters: [...selectFilters, estadoFiltro],
+  search,
+  initial: { resultado: emptyApplicantPage(), activos: 0, inactivos: 0, totalPerfiles: 0 },
+  onError: (cause) => { error.value = userFacingError(cause, 'cargar los postulantes') },
+})
+const loading = computed(() => listado.loading.value && !listado.data.value.resultado.pagina.content.length)
+const sectorOptions = computed(() => listado.data.value.resultado.rubros)
+const availabilityOptions = computed(() => listado.data.value.resultado.disponibilidades)
+const activosCount = computed(() => listado.data.value.activos)
+const inactivosCount = computed(() => listado.data.value.inactivos)
+const totalPerfiles = computed(() => listado.data.value.totalPerfiles)
 
 function estadoDetalle(profile: AdminApplicantProfile) {
   if (!profile.cuentaActiva) return 'Cuenta de usuario desactivada'
@@ -45,16 +63,9 @@ function toDisplayProfile(profile: AdminApplicantProfile): MockApplicantProfile 
   }
 }
 
-async function loadProfiles() {
-  loading.value = true
+function loadProfiles() {
   error.value = null
-  try {
-    applicantProfiles.value = await adminApplicantService.list()
-  } catch (cause) {
-    error.value = userFacingError(cause, 'cargar los postulantes')
-  } finally {
-    loading.value = false
-  }
+  return listado.load(0)
 }
 
 async function openProfile(profile: MockApplicantProfile) {
@@ -79,60 +90,23 @@ async function downloadCv(profileId: string, cvId?: number) {
   }
 }
 
-const displayProfiles = computed(() => applicantProfiles.value.map(toDisplayProfile))
-const {
-  search, selectedSector, selectedAvailability, selectedLicense,
-  sectorOptions, availabilityOptions, hasFilters, clearFilters, filteredProfiles,
-} = useApplicantFilters(displayProfiles)
-
-const estadoByApplicant = computed(() => {
-  const map = new Map<number, { estado: 'ACTIVO' | 'INACTIVO'; detalle: string; busquedaPausada: boolean }>()
-  for (const profile of applicantProfiles.value) {
-    if (!map.has(profile.applicantId)) {
-      map.set(profile.applicantId, {
-        estado: profile.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO',
-        detalle: estadoDetalle(profile),
-        busquedaPausada: profile.cuentaActiva && profile.busquedaPausada,
-      })
+// Los grupos ya vienen filtrados y paginados por el servidor; aquí solo se adaptan para la tarjeta.
+const applicants = computed(() => listado.data.value.resultado.pagina.content
+  .filter((group) => group.profiles.length > 0)
+  .map((group) => {
+    const first = group.profiles[0]!
+    return {
+      id: group.applicantId,
+      fullName: first.fullName,
+      email: first.email,
+      phone: first.phone || '',
+      initials: first.initials,
+      profiles: group.profiles.map(toDisplayProfile),
+      estado: first.estado === 'ACTIVO' ? 'ACTIVO' as const : 'INACTIVO' as const,
+      estadoDetalle: estadoDetalle(first),
+      busquedaPausada: first.cuentaActiva && first.busquedaPausada,
     }
-  }
-  return map
-})
-
-const applicants = computed(() => {
-  type Group = {
-    id: number
-    fullName: string
-    email: string
-    phone: string
-    initials: string
-    profiles: MockApplicantProfile[]
-    estado: 'ACTIVO' | 'INACTIVO'
-    estadoDetalle: string
-    busquedaPausada: boolean
-  }
-  const groups = new Map<number, Group>()
-  filteredProfiles.value.forEach((profile) => {
-    const meta = estadoByApplicant.value.get(profile.applicantId)
-    const estado = meta?.estado ?? 'ACTIVO'
-    if (estadoFiltro.value !== 'TODOS' && estado !== estadoFiltro.value) return
-    const group = groups.get(profile.applicantId)
-    if (group) group.profiles.push(profile)
-    else groups.set(profile.applicantId, {
-      id: profile.applicantId, fullName: profile.fullName, email: profile.email, phone: profile.phone || '',
-      initials: profile.initials, profiles: [profile],
-      estado,
-      estadoDetalle: meta?.detalle || '',
-      busquedaPausada: meta?.busquedaPausada ?? false,
-    })
-  })
-  return [...groups.values()]
-})
-
-const activosCount = computed(() =>
-  [...estadoByApplicant.value.values()].filter((item) => item.estado === 'ACTIVO').length)
-const inactivosCount = computed(() =>
-  [...estadoByApplicant.value.values()].filter((item) => item.estado === 'INACTIVO').length)
+  }))
 
 onMounted(loadProfiles)
 </script>
@@ -141,7 +115,7 @@ onMounted(loadProfiles)
   <AdminShell
     active="postulantes"
     title="Postulantes Registrados"
-    :subtitle="`${activosCount} activos · ${inactivosCount} inactivos · ${applicantProfiles.length} perfiles`"
+    :subtitle="`${activosCount} activos · ${inactivosCount} inactivos · ${totalPerfiles} perfiles`"
   >
     <ApplicantFilters
       v-model:search="search"
@@ -195,6 +169,14 @@ onMounted(loadProfiles)
       />
     </section>
     <p v-else class="bolsa__empty">No hay postulantes que coincidan con la búsqueda y los filtros.</p>
+    <PaginationBar
+      :page="listado.page.value"
+      :total-pages="listado.data.value.resultado.pagina.totalPages"
+      :total-elements="listado.data.value.resultado.pagina.totalElements"
+      :loading="listado.loading.value"
+      label="Paginación de postulantes"
+      @change="listado.goTo"
+    />
     <ProfileDetailModal
       v-if="selectedProfile"
       :profile="selectedProfile"

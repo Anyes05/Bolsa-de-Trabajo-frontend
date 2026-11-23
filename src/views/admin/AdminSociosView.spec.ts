@@ -7,6 +7,8 @@ import { socioService } from '../../services/socioService'
 import { sociosExcelService } from '../../services/sociosExcelService'
 import { ApiRequestError } from '../../services/http'
 import type { SocioRecord } from '../../services/types'
+import type { Page } from '../../services/pagination'
+import { pageOf, waitForSearch } from '../../test/pages'
 
 const push = vi.fn()
 
@@ -20,7 +22,7 @@ vi.mock('../../services/socioService', async (importOriginal) => {
   return {
     ...original,
     socioService: {
-      getSocios: vi.fn(), getRubros: vi.fn(), updateSocio: vi.fn(), deleteSocio: vi.fn(),
+      getSocios: vi.fn(), pageSocios: vi.fn(), getRubros: vi.fn(), updateSocio: vi.fn(), deleteSocio: vi.fn(),
       habilitarAcceso: vi.fn(), resetClaveProvisional: vi.fn(),
     },
   }
@@ -63,8 +65,20 @@ function deferred<T>() {
 
 type Wrapper = VueWrapper<InstanceType<typeof AdminSociosView>>
 
+// Doble del backend (SocioService.pageSocios): busca e identifica incompletos en el servidor.
+function servidor(lista: SocioRecord[]) {
+  vi.mocked(socioService.pageSocios).mockImplementation(async ({ q = '', incompletos = false } = {}) => {
+    const term = q.trim().toLowerCase()
+    return pageOf(lista.filter((s) => (!incompletos || (s.camposFicticios?.length ?? 0) > 0 || s.accesoHabilitado === false)
+      && (!term || [s.razonSocial, s.cedula, s.bps, s.rut, s.nombreRubro, s.emailUsuario, s.emailContacto]
+        .some((v) => (v ?? '').toLowerCase().includes(term)))))
+  })
+  // La exportación pide el padrón completo al servidor.
+  vi.mocked(socioService.getSocios).mockResolvedValue([...lista])
+}
+
 async function montar(lista: SocioRecord[]) {
-  vi.mocked(socioService.getSocios).mockResolvedValueOnce(lista)
+  servidor(lista)
   vi.mocked(socioService.getRubros).mockResolvedValueOnce(rubros)
   const wrapper = mount(AdminSociosView, {
     global: { stubs: { AdminShell: AdminShellStub, RouterLink: RouterLinkStub } },
@@ -115,15 +129,15 @@ describe('gestión de socios del administrador', () => {
 
   describe('carga y listado', () => {
     it('muestra el aviso de carga mientras llegan los datos', async () => {
-      const socios = deferred<SocioRecord[]>()
-      vi.mocked(socioService.getSocios).mockReturnValueOnce(socios.promise)
+      const socios = deferred<Page<SocioRecord>>()
+      vi.mocked(socioService.pageSocios).mockReturnValueOnce(socios.promise)
       vi.mocked(socioService.getRubros).mockResolvedValueOnce(rubros)
       const wrapper = mount(AdminSociosView, {
         global: { stubs: { AdminShell: AdminShellStub, RouterLink: RouterLinkStub } },
       })
       await nextTick()
       expect(wrapper.text()).toContain('Cargando socios...')
-      socios.resolve([])
+      socios.resolve(pageOf([]))
       await flushPromises()
       expect(wrapper.text()).toContain('No hay socios para mostrar.')
       expect(wrapper.find('[data-active]').attributes('data-active')).toBe('socios')
@@ -131,7 +145,7 @@ describe('gestión de socios del administrador', () => {
     })
 
     it('informa si falla la carga del listado', async () => {
-      vi.mocked(socioService.getSocios).mockRejectedValueOnce(errorApi('Servidor caído'))
+      vi.mocked(socioService.pageSocios).mockRejectedValueOnce(errorApi('Servidor caído'))
       vi.mocked(socioService.getRubros).mockResolvedValueOnce(rubros)
       const wrapper = mount(AdminSociosView, {
         global: { stubs: { AdminShell: AdminShellStub, RouterLink: RouterLinkStub } },
@@ -154,7 +168,8 @@ describe('gestión de socios del administrador', () => {
         socio(3, { razonSocial: 'Gamma', estadoMorosidad: 'INACTIVO', fechaAlta: 'sin-fecha', accesoHabilitado: false }),
       ])
 
-      expect(wrapper.text()).toContain('3 de 3 socios listados')
+      expect(wrapper.text()).toContain('3 socios listados')
+      expect(socioService.pageSocios).toHaveBeenCalledWith({ q: '', incompletos: false, page: 0 })
       expect(wrapper.find('a[href="/admin/socios/importacion"]').text()).toBe('Carga masiva')
       expect(wrapper.find('a[href="/admin/socios/nueva"]').text()).toContain('Nuevo Socio')
 
@@ -198,20 +213,28 @@ describe('gestión de socios del administrador', () => {
 
       const buscador = wrapper.find('input[aria-label^="Buscar socios"]')
       await buscador.setValue('  INDUSTRIA ')
+      await waitForSearch()
+      expect(socioService.pageSocios).toHaveBeenLastCalledWith({ q: '  INDUSTRIA ', incompletos: false, page: 0 })
       expect(wrapper.findAll('tbody tr')).toHaveLength(1)
-      expect(wrapper.text()).toContain('1 de 3 socios listados')
+      expect(wrapper.text()).toContain('1 socios listados')
 
       await buscador.setValue('ventas@')
+      await waitForSearch()
       expect(wrapper.findAll('tbody tr').map((tr) => tr.find('strong').text())).toEqual(['Gamma'])
 
       await buscador.setValue('nadie')
+      await waitForSearch()
       expect(wrapper.text()).toContain('No hay socios para mostrar.')
 
       await buscador.setValue('')
+      await waitForSearch()
       await wrapper.find('input[type="checkbox"]').setValue(true)
+      await flushPromises()
+      expect(socioService.pageSocios).toHaveBeenLastCalledWith({ q: '', incompletos: true, page: 0 })
       expect(wrapper.findAll('tbody tr').map((tr) => tr.find('strong').text())).toEqual(['Alfa', 'Beta'])
 
       await buscador.setValue('alfa')
+      await waitForSearch()
       expect(wrapper.findAll('tbody tr').map((tr) => tr.find('strong').text())).toEqual(['Alfa'])
     })
   })
@@ -224,7 +247,10 @@ describe('gestión de socios del administrador', () => {
       vi.mocked(sociosExcelService.download).mockReturnValueOnce(descarga.promise)
 
       await boton(wrapper, 'Descargar Excel').trigger('click')
+      await flushPromises()
       expect(wrapper.text()).toContain('Descargando...')
+      // La exportación es masiva: pide el padrón completo al servidor, no usa solo la página visible.
+      expect(socioService.getSocios).toHaveBeenCalledTimes(1)
       const enviados = vi.mocked(sociosExcelService.download).mock.calls[0][0]
       expect(enviados).toEqual(lista)
       expect(enviados).not.toBe(lista)
@@ -251,15 +277,15 @@ describe('gestión de socios del administrador', () => {
     })
 
     it('no descarga mientras el listado sigue cargando', async () => {
-      const socios = deferred<SocioRecord[]>()
-      vi.mocked(socioService.getSocios).mockReturnValueOnce(socios.promise)
+      const socios = deferred<Page<SocioRecord>>()
+      vi.mocked(socioService.pageSocios).mockReturnValueOnce(socios.promise)
       vi.mocked(socioService.getRubros).mockResolvedValueOnce(rubros)
       const wrapper = mount(AdminSociosView, {
         global: { stubs: { AdminShell: AdminShellStub, RouterLink: RouterLinkStub } },
       }) as Wrapper
       await clickForzado(boton(wrapper, 'Descargar Excel'))
       expect(sociosExcelService.download).not.toHaveBeenCalled()
-      socios.resolve([])
+      socios.resolve(pageOf([]))
       await flushPromises()
     })
   })

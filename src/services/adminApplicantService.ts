@@ -1,9 +1,20 @@
 import { request } from './http'
+import { buildQuery, type ApplicantFilterParams, type ApplicantGroupPage } from './pagination'
 import type { AdminApplicantProfile, SocioCvLink, SocioProfileCv } from './types'
 
+export type AdminApplicantEstado = 'TODOS' | 'ACTIVO' | 'INACTIVO'
+
+export type AdminApplicantPage = {
+  resultado: ApplicantGroupPage<AdminApplicantProfile>
+  activos: number
+  inactivos: number
+  totalPerfiles: number
+}
+
 export const adminApplicantService = {
-  list() {
-    return request<AdminApplicantProfile[]>('/admin/postulantes')
+  /** Búsqueda, filtros, estado en bolsa y paginación (por postulante) resueltos en el servidor. */
+  list(params: ApplicantFilterParams & { estado?: AdminApplicantEstado } = {}) {
+    return request<AdminApplicantPage>(`/admin/postulantes${buildQuery(params)}`)
   },
 
   listProfileCvs(profileId: number) {

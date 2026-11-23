@@ -6,6 +6,8 @@ import AdminSociosHistoryView from './AdminSociosHistoryView.vue'
 import { socioService, type SocioSubscriptionEntry } from '../../services/socioService'
 import { ApiRequestError } from '../../services/http'
 import type { SocioRecord } from '../../services/types'
+import type { Page } from '../../services/pagination'
+import { pageOf, waitForSearch } from '../../test/pages'
 
 const ruta = reactive<{ query: Record<string, string> }>({ query: {} })
 
@@ -15,7 +17,9 @@ vi.mock('vue-router', async (importOriginal) => ({
 }))
 
 vi.mock('../../services/socioService', () => ({
-  socioService: { getSocios: vi.fn(), subscriptionHistory: vi.fn(), activateSocio: vi.fn(), cancelReentry: vi.fn() },
+  socioService: {
+    pageSocios: vi.fn(), getSocioById: vi.fn(), subscriptionHistory: vi.fn(), activateSocio: vi.fn(), cancelReentry: vi.fn(),
+  },
 }))
 
 // El layout administrativo se reemplaza por un contenedor que solo renderiza el contenido.
@@ -54,8 +58,21 @@ function montarSinEsperar() {
   return mount(AdminSociosHistoryView, { global: { stubs: { AdminShell: AdminShellStub } } }) as Wrapper
 }
 
+// Doble del backend: búsqueda paginada (razón social, RUT, cédula...) y consulta por id (404 si no existe).
+function servidor(lista: SocioRecord[]) {
+  vi.mocked(socioService.pageSocios).mockImplementation(async ({ q = '' } = {}) => {
+    const term = q.trim().toLowerCase()
+    return pageOf(lista.filter((s) => !term || [s.razonSocial, s.rut, s.cedula].some((v) => (v ?? '').toLowerCase().includes(term))))
+  })
+  vi.mocked(socioService.getSocioById).mockImplementation(async (id) => {
+    const found = lista.find((s) => s.id === id)
+    if (!found) throw new ApiRequestError(404, `/admin/socios/${id}`, null, 'Socio no encontrado')
+    return found
+  })
+}
+
 async function montar(lista: SocioRecord[]) {
-  vi.mocked(socioService.getSocios).mockResolvedValueOnce(lista)
+  servidor(lista)
   const wrapper = montarSinEsperar()
   await flushPromises()
   return wrapper
@@ -96,19 +113,21 @@ describe('historial de suscripción de socios', () => {
 
   describe('listado de socios', () => {
     it('muestra la carga, el listado y el estado vacío del detalle', async () => {
-      const pedido = deferred<SocioRecord[]>()
-      vi.mocked(socioService.getSocios).mockReturnValueOnce(pedido.promise)
+      const pedido = deferred<Page<SocioRecord>>()
+      vi.mocked(socioService.pageSocios).mockReturnValueOnce(pedido.promise)
       const wrapper = montarSinEsperar()
       await nextTick()
       expect(wrapper.find('[role="status"]').text()).toBe('Cargando socios...')
       expect(wrapper.find('[data-active]').attributes('data-active')).toBe('socios-historial')
 
-      pedido.resolve([
+      pedido.resolve(pageOf([
         socio(1, { razonSocial: 'Alfa' }),
         socio(2, { razonSocial: 'Beta', rut: null, cedula: '12345678', activo: false }),
         socio(3, { razonSocial: 'Gamma', rut: null, cedula: null }),
-      ])
+      ]))
       await flushPromises()
+      expect(socioService.pageSocios).toHaveBeenCalledWith({ q: '', page: 0 })
+      expect(socioService.getSocioById).not.toHaveBeenCalled()
 
       const botones = wrapper.findAll('.subscription-company')
       expect(botones).toHaveLength(3)
@@ -122,7 +141,7 @@ describe('historial de suscripción de socios', () => {
       expect(socioService.subscriptionHistory).not.toHaveBeenCalled()
     })
 
-    it('filtra por razón social, RUT o cédula', async () => {
+    it('envía la búsqueda al servidor', async () => {
       const wrapper = await montar([
         socio(1, { razonSocial: 'Alfa' }),
         socio(2, { razonSocial: 'Beta', rut: null, cedula: '12345678' }),
@@ -130,23 +149,27 @@ describe('historial de suscripción de socios', () => {
       const buscador = wrapper.find('input[aria-label="Buscar socio para ver historial"]')
 
       await buscador.setValue(' ALFA ')
+      await waitForSearch()
+      expect(socioService.pageSocios).toHaveBeenLastCalledWith({ q: ' ALFA ', page: 0 })
       expect(wrapper.findAll('.subscription-company').map((b) => b.find('strong').text())).toEqual(['Alfa'])
 
       await buscador.setValue('345')
+      await waitForSearch()
       expect(wrapper.findAll('.subscription-company').map((b) => b.find('strong').text())).toEqual(['Beta'])
 
       await buscador.setValue('zzz')
+      await waitForSearch()
       expect(wrapper.findAll('.subscription-company')).toHaveLength(0)
       expect(wrapper.text()).toContain('No hay socios que coincidan con la búsqueda.')
     })
 
     it('informa el error de carga y permite reintentar', async () => {
-      vi.mocked(socioService.getSocios).mockRejectedValueOnce(errorApi('Sin conexión'))
+      vi.mocked(socioService.pageSocios).mockRejectedValueOnce(errorApi('Sin conexión'))
       const wrapper = montarSinEsperar()
       await flushPromises()
       expect(wrapper.text()).toContain('Sin conexión')
 
-      vi.mocked(socioService.getSocios).mockResolvedValueOnce([socio(1, { razonSocial: 'Alfa' })])
+      servidor([socio(1, { razonSocial: 'Alfa' })])
       await boton(wrapper, 'Reintentar').trigger('click')
       await flushPromises()
       expect(wrapper.text()).not.toContain('Sin conexión')
@@ -158,6 +181,8 @@ describe('historial de suscripción de socios', () => {
       vi.mocked(socioService.subscriptionHistory).mockResolvedValueOnce([entrada(1, 'ALTA', '2020-01-15')])
       const wrapper = await montar([socio(1, { razonSocial: 'Alfa' }), socio(2, { razonSocial: 'Beta' })])
 
+      // El preseleccionado se pide por id: puede no estar en la primera página.
+      expect(socioService.getSocioById).toHaveBeenCalledWith(2)
       expect(socioService.subscriptionHistory).toHaveBeenCalledWith(2)
       expect(detalle(wrapper).find('h2').text()).toBe('Beta')
       expect(socioBoton(wrapper, 'Beta').attributes('aria-pressed')).toBe('true')
@@ -170,6 +195,7 @@ describe('historial de suscripción de socios', () => {
       const wrapper = await montar([socio(1)])
       expect(socioService.subscriptionHistory).not.toHaveBeenCalled()
       expect(detalle(wrapper).text()).toContain('Historial de suscripción')
+      expect(wrapper.text()).not.toContain('Socio no encontrado')
     })
   })
 
