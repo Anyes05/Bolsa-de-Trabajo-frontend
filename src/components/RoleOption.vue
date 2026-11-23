@@ -17,7 +17,7 @@ defineProps<{
     </span>
     <strong class="role-option__text">
       {{ title }}
-      <small>{{ description }}</small>
+      <small class="role-option__text-note">{{ description }}</small>
     </strong>
     <ChevronRight aria-hidden="true" />
   </button>

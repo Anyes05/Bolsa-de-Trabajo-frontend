@@ -195,7 +195,7 @@ onMounted(loadProfiles)
           </h2>
           <label class="bolsa__sort">
             Ordenar por:
-            <select v-model="sortBy">
+            <select v-model="sortBy" class="bolsa__sort-select">
               <option value="updated">Última actualización</option>
               <option value="name">Nombre</option>
             </select>

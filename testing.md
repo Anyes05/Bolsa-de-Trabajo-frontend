@@ -215,3 +215,25 @@ tipos y queda en 0/0 líneas ejecutables.
 **60 pruebas Playwright**. Cobertura: **100% de líneas** y 98,53% de ramas.
 `tests/applicantFilters.test.mjs` se reescribió: el filtrado de postulantes ahora lo hace el backend,
 y el composable solo arma los parámetros.
+
+## Metodología BEM en el CSS — 23/11/2026
+
+Todo el CSS del frontend sigue BEM (`bloque__elemento--modificador`): sin estilos por etiqueta
+(`.bloque h2`) ni bloques anidados (`.bloque-a .bloque-b`). De 2384 selectores, 0 violan BEM; las 271
+reglas `#app h1`, `#app input`, etc. son la capa de estilos base global y quedan como excepción.
+
+- Se convirtieron unos 680 selectores: las etiquetas pasaron a elementos BEM
+  (`.brand-panel__copy h1` → `.brand-panel__copy-title`) y los bloques anidados a *mixes*
+  (`.login-form .app-button` → `.login-form__app-button`).
+- Se eliminaron 113 selectores muertos de pantallas que ya no existen.
+- `PasswordInput` (`input-class`) y `AppAlert` (`text-class`) reciben la clase de la vista que los usa,
+  para no estilizar su interior desde afuera.
+- En 19 clases se repite la propia clase (`.x.x`) para conservar la prioridad que tenía el selector
+  anidado original. No anida ni usa etiquetas.
+- Verificación: regresión visual de 36 pantallas y estados × claro/oscuro × escritorio/celular
+  (144 capturas) píxel a píxel contra el diseño anterior, más comparación de estilos computados
+  elemento por elemento. Sin diferencias, salvo dos intencionales:
+  - el registro, que suma el botón "Volver al inicio" y el botón de Google a ancho completo;
+  - el campo de contraseña en "Mi perfil", que ahora deja lugar al ícono del ojo (antes el texto
+    quedaba debajo).
+  `npm run test:ci` (639 Vitest, 27 Node, build), 60 E2E y 100% de líneas.

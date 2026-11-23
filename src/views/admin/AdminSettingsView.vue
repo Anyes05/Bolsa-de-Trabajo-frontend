@@ -60,15 +60,15 @@ onMounted(loadTariffs)
     <div class="fee-settings">
       <section class="fee-panel fee-current">
         <div class="fee-current__intro">
-          <h2>Monto de cuota</h2>
-          <p>Define el valor mensual de la cuota social. Las cuotas y los reintegros recurrentes activos se generan automáticamente cada mes, con horario de Uruguay.</p>
+          <h2 class="fee-current__heading">Monto de cuota</h2>
+          <p class="fee-current__intro-text">Define el valor mensual de la cuota social. Las cuotas y los reintegros recurrentes activos se generan automáticamente cada mes, con horario de Uruguay.</p>
         </div>
         <div class="fee-current__control">
           <label class="fee-input">
             <span>$</span>
-            <input v-model="amount" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente">
+            <input v-model="amount" class="fee-input__input" type="number" min="0.01" step="0.01" aria-label="Monto de cuota vigente">
           </label>
-          <button class="fee-save" type="button" :disabled="saving || loading" @click="saveAmount">
+          <button class="fee-save fee-panel__fee-save" type="button" :disabled="saving || loading" @click="saveAmount">
             <Save :size="16" /> {{ saving ? 'Guardando...' : 'Guardar monto' }}
           </button>
         </div>
@@ -78,14 +78,14 @@ onMounted(loadTariffs)
       </section>
 
       <section class="fee-panel fee-history">
-        <h2>Historial de tarifas</h2>
+        <h2 class="fee-history__heading">Historial de tarifas</h2>
         <div v-for="entry in history" :key="entry.id" class="fee-history__entry">
-          <span>$</span>
-          <div>
-            <strong>{{ formatMoney(entry.montoBase) }} / mes</strong>
-            <small>Año {{ entry.anio }}</small>
+          <span class="fee-history__entry-inline">$</span>
+          <div class="fee-history__entry-box">
+            <strong class="fee-history__entry-strong">{{ formatMoney(entry.montoBase) }} / mes</strong>
+            <small class="fee-history__entry-note">Año {{ entry.anio }}</small>
           </div>
-          <b v-if="entry.anio === year">Vigente</b>
+          <b v-if="entry.anio === year" class="fee-history__entry-bold">Vigente</b>
         </div>
       </section>
     </div>
@@ -99,15 +99,14 @@ onMounted(loadTariffs)
   margin: 0;
 }
 
-.fee-current__intro p,
+.fee-current__intro-text,
 .fee-warning,
-.fee-success,
-.fee-history__entry small {
+.fee-success,.fee-history__entry-note {
   font-size: 1rem;
   line-height: 1.5;
 }
 
-.fee-history__entry strong {
+.fee-history__entry-strong {
   font-size: 1.0625rem;
 }
 

@@ -105,6 +105,12 @@ describe('vista de registro de postulante', () => {
     return wrapper.find('h2').text()
   }
 
+  async function abrirReautenticacion() {
+    const detalle = wrapper.find<HTMLDetailsElement>('.registration-google__reauth')
+    detalle.element.open = true
+    await detalle.trigger('toggle')
+  }
+
   async function enviar() {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
@@ -170,6 +176,26 @@ describe('vista de registro de postulante', () => {
     wrapper?.unmount()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  describe('salida del registro', () => {
+    it('ofrece volver al inicio y navega a la pantalla de acceso sin pedir confirmación', async () => {
+      await montar()
+      await wrapper.find('#fullName').setValue('Ana a medias')
+      const volver = wrapper.find('a.registration__back')
+      expect(volver.text()).toBe('Volver al inicio')
+      expect(volver.attributes('href')).toBe('/')
+      expect(volver.find('.registration__back-icon').exists()).toBe(true)
+      await volver.trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.name).toBe('access')
+    })
+
+    it('también está disponible con un registro de Google pendiente', async () => {
+      await montar(registroGoogle)
+      expect(wrapper.find('.registration__toolbar').attributes('aria-label')).toBe('Salir del registro')
+      expect(wrapper.find('a.registration__back').exists()).toBe(true)
+    })
   })
 
   describe('paso 1: datos personales', () => {
@@ -334,6 +360,7 @@ describe('vista de registro de postulante', () => {
       expect(useAuthStore().isAuthenticated).toBe(true)
       expect(wrapper.find('h1').text()).toBe('Registro completado')
       expect(wrapper.find('.stepper').exists()).toBe(false)
+      expect(wrapper.find('.registration__back').exists()).toBe(false)
       expect(wrapper.find('.app-alert--success').text()).toContain('Tu cuenta de postulante se creó correctamente.')
       expect(document.activeElement?.id).toBe('register-done-title')
 
@@ -761,6 +788,7 @@ describe('vista de registro de postulante', () => {
     it('al reautenticar con otra cuenta de Google rechaza el cambio', async () => {
       vi.mocked(authService.googleAuthenticate).mockResolvedValue({ status: 'REGISTER', ...registroGoogle, email: 'otra@gmail.com' })
       await montar(registroGoogle)
+      await abrirReautenticacion()
       wrapper.findComponent(GoogleFalso).vm.$emit('credential', credencial)
       await flushPromises()
       expect(wrapper.text()).toContain('Usá la misma cuenta de Google para continuar este registro.')
@@ -771,10 +799,38 @@ describe('vista de registro de postulante', () => {
       vi.mocked(authService.googleAuthenticate).mockResolvedValue({ status: 'REGISTER', ...registroGoogle, registrationToken: 'nuevo-token' })
       await montar(registroGoogle)
       await wrapper.find('#google-fullName').setValue('Ana María')
+      await abrirReautenticacion()
       wrapper.findComponent(GoogleFalso).vm.$emit('credential', credencial)
       await flushPromises()
       expect(useGoogleRegistrationStore().pending?.registrationToken).toBe('nuevo-token')
       expect(wrapper.find<HTMLInputElement>('#google-fullName').element.value).toBe('Ana María')
+    })
+
+    it('la reautenticación con Google es un desplegable cerrado que monta el botón al abrirse', async () => {
+      await montar(registroGoogle)
+      const detalle = wrapper.find<HTMLDetailsElement>('.registration-google__reauth')
+      expect(detalle.element.open).toBe(false)
+      expect(detalle.classes()).not.toContain('registration-google__reauth--open')
+      expect(wrapper.find('.registration-google__reauth-summary').text()).toBe('Volver a autenticarme con Google si venció el registro')
+      expect(wrapper.find('.registration-google__reauth-icon').classes()).not.toContain('registration-google__reauth-icon--open')
+      expect(wrapper.findComponent(GoogleFalso).exists()).toBe(false)
+
+      await abrirReautenticacion()
+      expect(detalle.classes()).toContain('registration-google__reauth--open')
+      expect(wrapper.find('.registration-google__reauth-icon').classes()).toContain('registration-google__reauth-icon--open')
+      expect(wrapper.findComponent(GoogleFalso).props('text')).toBe('signup_with')
+
+      detalle.element.open = false
+      await detalle.trigger('toggle')
+      expect(detalle.classes()).not.toContain('registration-google__reauth--open')
+      expect(wrapper.findComponent(GoogleFalso).exists()).toBe(false)
+    })
+
+    it('el botón para abandonar Google es un botón secundario de la app', async () => {
+      await montar(registroGoogle)
+      const cancelar = boton('Usar otro correo o registrarme con contraseña')
+      expect(cancelar.classes()).toEqual(expect.arrayContaining(['app-button', 'app-button--secondary', 'registration-google__cancel']))
+      expect(cancelar.attributes('type')).toBe('button')
     })
 
     it('permite abandonar el registro con Google y volver al paso 1', async () => {

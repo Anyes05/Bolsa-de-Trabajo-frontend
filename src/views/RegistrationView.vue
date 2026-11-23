@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, Check, FileText, GraduationCap, Languages, Lightbulb, Paperclip, Plus, Trash2, UserRound, UsersRound, Wrench } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, Check, ChevronDown, FileText, GraduationCap, Languages, Lightbulb, Paperclip, Plus, Trash2, UserRound, UsersRound, Wrench } from 'lucide-vue-next'
 import { jsPDF } from 'jspdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
@@ -31,6 +31,7 @@ const busy = ref(false)
 const error = ref('')
 const success = ref('')
 const registered = ref(false)
+const reauthOpen = ref(false)
 watch([step, registered], async () => {
   await nextTick()
   stepHeading.value?.focus({ preventScroll: true })
@@ -599,27 +600,33 @@ async function complete() {
   <main class="registration">
     <header class="registration__header">
       <RouterLink class="registration__brand" to="/" aria-label="Volver al acceso">
-        <BrandLogo variant="white" />
+        <BrandLogo class="registration__brand-brand-logo" variant="white" />
       </RouterLink>
       <span class="registration__divider" aria-hidden="true"></span>
-      <h1>{{ registered ? 'Registro completado' : 'Registro de Postulante' }}</h1>
+      <h1 class="registration__header-title">{{ registered ? 'Registro completado' : 'Registro de Postulante' }}</h1>
       <WizardStepper v-if="!registered" :steps="wizardSteps" :current="step" />
     </header>
 
+    <nav v-if="!registered" class="registration__toolbar" aria-label="Salir del registro">
+      <RouterLink class="registration__back" :to="{ name: 'access' }">
+        <ArrowLeft class="registration__back-icon" :size="16" aria-hidden="true" /> Volver al inicio
+      </RouterLink>
+    </nav>
+
     <section v-if="registered" class="registration-card registration-success" aria-labelledby="register-done-title">
       <span class="registration-success__icon" aria-hidden="true"><Check :size="26" /></span>
-      <h2 id="register-done-title" ref="stepHeading" tabindex="-1">Registro completado</h2>
-      <p>Tu ficha de postulante ya está lista. Podés entrar a la plataforma o volver al inicio de sesión.</p>
-      <AppAlert tone="success">{{ success || 'Cuenta creada correctamente.' }}</AppAlert>
+      <h2 id="register-done-title" ref="stepHeading" class="registration-card__heading registration-success__heading" tabindex="-1">Registro completado</h2>
+      <p class="registration-success__text">Tu ficha de postulante ya está lista. Podés entrar a la plataforma o volver al inicio de sesión.</p>
+      <AppAlert class="registration-card__alert" tone="success">{{ success || 'Cuenta creada correctamente.' }}</AppAlert>
       <div class="registration-success__actions">
-        <AppButton type="button" @click="router.push({ name: 'postulante-bolsa-empleo' })">
+        <AppButton class="registration-success__actions-app-button" type="button" @click="router.push({ name: 'postulante-bolsa-empleo' })">
           Ir a ofertas de empleo
           <ArrowRight :size="16" aria-hidden="true" />
         </AppButton>
-        <AppButton variant="secondary" type="button" @click="router.push({ name: 'postulante-mi-perfil' })">
+        <AppButton class="registration-success__actions-app-button" variant="secondary" type="button" @click="router.push({ name: 'postulante-mi-perfil' })">
           Configurar mi perfil
         </AppButton>
-        <AppButton variant="ghost" type="button" @click="auth.logout(); router.push({ name: 'access' })">
+        <AppButton class="registration-success__actions-app-button" variant="ghost" type="button" @click="auth.logout(); router.push({ name: 'access' })">
           Volver al inicio de sesión
         </AppButton>
       </div>
@@ -627,30 +634,30 @@ async function complete() {
 
     <form v-else class="registration-card" @submit.prevent="step < 3 ? next() : complete()">
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
-        <h2 id="step-personal" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><UserRound :size="24" /></span> Datos Personales</h2>
-        <p>Completa la información básica para dar de alta tu ficha de postulante.</p>
+        <h2 id="step-personal" ref="stepHeading" class="registration-card__heading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><UserRound :size="24" /></span> Datos Personales</h2>
+        <p class="registration-card__step-text">Completa la información básica para dar de alta tu ficha de postulante.</p>
         <GoogleSignInButton text="signup_with" :disabled="busy" @credential="registerWithGoogle" />
         <div class="form-grid">
           <AppField id="fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
-            <input id="fullName" v-model="form.fullName" placeholder="Ingresa tu nombre y apellido" autocomplete="name" :aria-invalid="Boolean(fieldErrors.fullName)">
+            <input id="fullName" v-model="form.fullName" class="app-field__input" placeholder="Ingresa tu nombre y apellido" autocomplete="name" :aria-invalid="Boolean(fieldErrors.fullName)">
           </AppField>
           <AppField id="identityCard" label="Cédula de Identidad" required :error="fieldErrors.identityCard">
-            <input id="identityCard" v-model="form.identityCard" placeholder="Ej: 4.876.543-2" :aria-invalid="Boolean(fieldErrors.identityCard)">
+            <input id="identityCard" v-model="form.identityCard" class="app-field__input" placeholder="Ej: 4.876.543-2" :aria-invalid="Boolean(fieldErrors.identityCard)">
           </AppField>
           <AppField id="phone" label="Teléfono / Celular" required :error="fieldErrors.phone">
-            <input id="phone" v-model="form.phone" placeholder="Ej: 099 123 456" autocomplete="tel" :aria-invalid="Boolean(fieldErrors.phone)">
+            <input id="phone" v-model="form.phone" class="app-field__input" placeholder="Ej: 099 123 456" autocomplete="tel" :aria-invalid="Boolean(fieldErrors.phone)">
           </AppField>
           <AppField id="email" label="Gmail / Correo electrónico" required wide :error="fieldErrors.email">
-            <input id="email" v-model="form.email" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
+            <input id="email" v-model="form.email" class="app-field__input" type="email" placeholder="usuario@gmail.com" autocomplete="email" :aria-invalid="Boolean(fieldErrors.email)">
           </AppField>
           <AppField id="password" label="Escribe una contraseña" required :error="fieldErrors.password">
-            <PasswordInput id="password" v-model="form.password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+            <PasswordInput id="password" v-model="form.password" input-class="app-field__input" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
           </AppField>
           <AppField id="confirmPassword" label="Confirmar contraseña" required :error="fieldErrors.confirmPassword">
-            <PasswordInput id="confirmPassword" v-model="form.confirmPassword" placeholder="Repite tu contraseña" autocomplete="new-password" />
+            <PasswordInput id="confirmPassword" v-model="form.confirmPassword" input-class="app-field__input" placeholder="Repite tu contraseña" autocomplete="new-password" />
           </AppField>
           <AppField id="residenceArea" label="Zona de residencia" required wide :error="fieldErrors.residenceArea">
-            <select id="residenceArea" v-model="form.residenceArea">
+            <select id="residenceArea" v-model="form.residenceArea" class="app-field__select">
               <option v-for="area in residenceAreas" :key="area" :value="area">{{ area }}</option>
             </select>
           </AppField>
@@ -658,45 +665,65 @@ async function complete() {
       </section>
 
       <section v-else-if="step === 2" class="registration-card__step" aria-labelledby="step-profile">
-        <h2 id="step-profile" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><BriefcaseBusiness :size="24" /></span> Primer Perfil Laboral</h2>
-        <p>Configura las bases de tu primera postulación activa.</p>
+        <h2 id="step-profile" ref="stepHeading" class="registration-card__heading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><BriefcaseBusiness :size="24" /></span> Primer Perfil Laboral</h2>
+        <p class="registration-card__step-text">Configura las bases de tu primera postulación activa.</p>
         <section v-if="googleRegistration.pending" class="registration-google">
-          <AppAlert tone="info">Google completó tu nombre, correo y foto. Completá los datos restantes para continuar. No necesitás crear una contraseña.</AppAlert>
+          <AppAlert class="registration-card__alert" tone="info">Google completó tu nombre, correo y foto. Completá los datos restantes para continuar. No necesitás crear una contraseña.</AppAlert>
           <ProfileAvatar class="registration-google__avatar" :src="googleRegistration.pending.fotoUrl" :initials="form.fullName.slice(0, 1).toUpperCase()" />
           <div class="form-grid">
             <AppField id="google-fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
-              <input id="google-fullName" v-model="form.fullName" maxlength="160" autocomplete="name">
+              <input id="google-fullName" v-model="form.fullName" class="app-field__input" maxlength="160" autocomplete="name">
             </AppField>
             <AppField id="google-email" label="Correo de Google" wide :error="fieldErrors.email">
-              <input id="google-email" :value="form.email" type="email" readonly>
+              <input id="google-email" class="app-field__input" :value="form.email" type="email" readonly>
             </AppField>
             <AppField id="google-identityCard" label="Cédula de Identidad" required :error="fieldErrors.identityCard">
-              <input id="google-identityCard" v-model="form.identityCard" maxlength="30">
+              <input id="google-identityCard" v-model="form.identityCard" class="app-field__input" maxlength="30">
             </AppField>
             <AppField id="google-phone" label="Teléfono / Celular" required :error="fieldErrors.phone">
-              <input id="google-phone" v-model="form.phone" maxlength="40" autocomplete="tel">
+              <input id="google-phone" v-model="form.phone" class="app-field__input" maxlength="40" autocomplete="tel">
             </AppField>
             <AppField id="google-residenceArea" label="Zona de residencia" required wide :error="fieldErrors.residenceArea">
-              <select id="google-residenceArea" v-model="form.residenceArea">
+              <select id="google-residenceArea" v-model="form.residenceArea" class="app-field__select">
                 <option v-for="area in residenceAreas" :key="area" :value="area">{{ area }}</option>
               </select>
             </AppField>
           </div>
-          <details><summary>Volver a autenticarme con Google si venció el registro</summary><GoogleSignInButton text="signup_with" :disabled="busy" @credential="registerWithGoogle" /></details>
-          <button type="button" :disabled="busy" @click="cancelGoogleRegistration">Usar otro correo o registrarme con contraseña</button>
+          <details
+            class="registration-google__reauth"
+            :class="{ 'registration-google__reauth--open': reauthOpen }"
+            :open="reauthOpen"
+            @toggle="reauthOpen = ($event.target as HTMLDetailsElement).open"
+          >
+            <summary class="registration-google__reauth-summary">
+              <ChevronDown
+                class="registration-google__reauth-icon"
+                :class="{ 'registration-google__reauth-icon--open': reauthOpen }"
+                :size="18"
+                aria-hidden="true"
+              />
+              Volver a autenticarme con Google si venció el registro
+            </summary>
+            <div v-if="reauthOpen" class="registration-google__reauth-body">
+              <GoogleSignInButton text="signup_with" :disabled="busy" @credential="registerWithGoogle" />
+            </div>
+          </details>
+          <AppButton class="registration-google__cancel" variant="secondary" :disabled="busy" @click="cancelGoogleRegistration">
+            Usar otro correo o registrarme con contraseña
+          </AppButton>
         </section>
         <aside class="registration-card__notice">
           <Lightbulb :size="17" aria-hidden="true" />
           <div>
-            <b>Puedes tener varios perfiles laborales</b><br>
+            <b class="registration-card__notice-bold">Puedes tener varios perfiles laborales</b><br>
             Después podrás crear perfiles adicionales para distintos rubros.
           </div>
         </aside>
         <AppField id="profileName" label="Nombre de este perfil" required :error="fieldErrors.profileName">
-          <input id="profileName" v-model="form.profileName" placeholder="Ej: Perfil Administración" :aria-invalid="Boolean(fieldErrors.profileName)">
+          <input id="profileName" v-model="form.profileName" class="app-field__input" placeholder="Ej: Perfil Administración" :aria-invalid="Boolean(fieldErrors.profileName)">
         </AppField>
         <fieldset class="sector-picker sector-picker--select">
-          <legend>Rubros de interés (máx. 4)</legend>
+          <legend class="sector-picker__legend">Rubros de interés (máx. 4)</legend>
           <label class="sector-picker__select-wrap">
             <span class="visually-hidden">Agregar rubro</span>
             <select
@@ -728,7 +755,7 @@ async function complete() {
           <small class="sector-picker__hint">Elegí hasta 4 rubros desde el desplegable. Tocá uno seleccionado para quitarlo.</small>
         </fieldset>
         <fieldset class="availability">
-          <legend>Disponibilidad horaria</legend>
+          <legend class="availability__legend">Disponibilidad horaria</legend>
           <button
             type="button"
             class="availability__choice"
@@ -737,7 +764,7 @@ async function complete() {
             @click="form.availability = 'FULL_TIME'"
           >
             <span class="availability__choice-title">Full-time</span>
-            <small>Más de 30 horas semanales</small>
+            <small class="availability__choice-note">Más de 30 horas semanales</small>
           </button>
           <button
             type="button"
@@ -747,17 +774,17 @@ async function complete() {
             @click="form.availability = 'PART_TIME'"
           >
             <span class="availability__choice-title">Part-time</span>
-            <small>Menos de 30 horas semanales</small>
+            <small class="availability__choice-note">Menos de 30 horas semanales</small>
           </button>
         </fieldset>
         <label class="registration-card__check">
-          <input v-model="form.hasVehicle" type="checkbox"> Tengo vehículo propio habilitado
+          <input v-model="form.hasVehicle" class="registration-card__check-input" type="checkbox"> Tengo vehículo propio habilitado
         </label>
       </section>
 
       <section v-else class="registration-card__step" aria-labelledby="step-cv">
-        <h2 id="step-cv" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><FileText :size="24" /></span> Curriculum Vitae</h2>
-        <p>Elige una modalidad: adjunta un PDF existente o crea uno nuevo con tu información.</p>
+        <h2 id="step-cv" ref="stepHeading" class="registration-card__heading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><FileText :size="24" /></span> Curriculum Vitae</h2>
+        <p class="registration-card__step-text">Elige una modalidad: adjunta un PDF existente o crea uno nuevo con tu información.</p>
         <div class="cv-mode-actions" aria-label="Modalidad de curriculum">
           <button type="button" class="cv-mode-actions__button" :class="{ 'cv-mode-actions__button--active': cvMode === 'upload' }" :aria-pressed="cvMode === 'upload'" @click="selectCvMode('upload')">
             <Paperclip :size="17" aria-hidden="true" /> Adjuntar CV
@@ -768,9 +795,9 @@ async function complete() {
         </div>
 
         <section v-if="cvMode === 'upload'" class="cv-option-panel" aria-labelledby="attach-cv-title">
-          <h3 id="attach-cv-title"><Paperclip :size="18" aria-hidden="true" /> Adjuntar archivo de CV</h3>
-          <div class="upload-placeholder">
-            <div><small>Un único CV por perfil, en formato PDF de hasta 5MB.</small></div>
+          <h3 id="attach-cv-title" class="cv-option-panel__subheading"><Paperclip :size="18" aria-hidden="true" /> Adjuntar archivo de CV</h3>
+          <div class="upload-placeholder cv-option-panel__upload-placeholder">
+            <div class="upload-placeholder__box"><small class="upload-placeholder__note">Un único CV por perfil, en formato PDF de hasta 5MB.</small></div>
             <label class="upload-placeholder__action" for="cv-file-input">Elegir CV</label>
             <input id="cv-file-input" class="upload-placeholder__input" type="file" accept=".pdf,application/pdf" @change="onCvFileChange">
           </div>
@@ -789,47 +816,47 @@ async function complete() {
         </section>
 
         <section v-else-if="cvMode === 'manual'" class="experience-form" aria-labelledby="manual-cv-title">
-          <h3 id="manual-cv-title"><BriefcaseBusiness :size="18" aria-hidden="true" /> Crear CV manualmente</h3>
+          <h3 id="manual-cv-title" class="experience-form__subheading"><BriefcaseBusiness :size="18" aria-hidden="true" /> Crear CV manualmente</h3>
           <p class="experience-form__intro">Al completar el registro se generará un PDF y se guardará como el único CV de este perfil.</p>
           <section class="manual-cv-section manual-cv-section--summary">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--summary" aria-hidden="true"><UserRound :size="20" /></span> Perfil profesional</h4>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--summary" aria-hidden="true"><UserRound :size="20" /></span> Perfil profesional</h4>
             </div>
             <AppField id="manualSummary" label="Resumen profesional">
-              <textarea id="manualSummary" v-model="manualCv.summary" placeholder="Resume tu experiencia, fortalezas y objetivo laboral..."></textarea>
+              <textarea id="manualSummary" v-model="manualCv.summary" class="app-field__textarea manual-cv-section__textarea" placeholder="Resume tu experiencia, fortalezas y objetivo laboral..."></textarea>
             </AppField>
           </section>
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon" aria-hidden="true"><BriefcaseBusiness :size="20" /></span> Experiencia laboral</h4>
-              <button type="button" @click="addExperience"><Plus :size="14" aria-hidden="true" /> Agregar experiencia</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon" aria-hidden="true"><BriefcaseBusiness :size="20" /></span> Experiencia laboral</h4>
+              <button class="manual-cv-section__heading-button" type="button" @click="addExperience"><Plus :size="14" aria-hidden="true" /> Agregar experiencia</button>
             </div>
             <article v-for="(experience, index) in manualCv.experiences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
-                <label>Cargo<input v-model="experience.role" placeholder="Ej: Auxiliar administrativo"></label>
-                <label>Empresa<input v-model="experience.company" placeholder="Ej: Empresa Ejemplo"></label>
-                <label>Desde<input v-model="experience.startDate" type="month"></label>
-                <label>Hasta<input v-model="experience.endDate" type="month" :disabled="experience.current"></label>
+                <label class="manual-cv-entry__grid-label">Cargo<input v-model="experience.role" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: Auxiliar administrativo"></label>
+                <label class="manual-cv-entry__grid-label">Empresa<input v-model="experience.company" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: Empresa Ejemplo"></label>
+                <label class="manual-cv-entry__grid-label">Desde<input v-model="experience.startDate" class="manual-cv-entry__input manual-cv-section__input" type="month"></label>
+                <label class="manual-cv-entry__grid-label">Hasta<input v-model="experience.endDate" class="manual-cv-entry__input manual-cv-section__input" type="month" :disabled="experience.current"></label>
               </div>
-              <label class="manual-cv-entry__check"><input v-model="experience.current" type="checkbox"> Trabajo actual</label>
-              <label>Responsabilidades y logros<textarea v-model="experience.description" placeholder="Describe tareas, herramientas usadas y logros..."></textarea></label>
+              <label class="manual-cv-entry__check manual-cv-entry__label"><input v-model="experience.current" class="manual-cv-entry__check-input manual-cv-entry__input manual-cv-section__input" type="checkbox"> Trabajo actual</label>
+              <label class="manual-cv-entry__label">Responsabilidades y logros<textarea v-model="experience.description" class="manual-cv-entry__textarea manual-cv-section__textarea" placeholder="Describe tareas, herramientas usadas y logros..."></textarea></label>
               <button v-if="manualCv.experiences.length > 1" type="button" class="manual-cv-entry__remove" @click="removeExperience(index)"><Trash2 :size="13" /> Quitar</button>
             </article>
           </section>
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--education" aria-hidden="true"><GraduationCap :size="20" /></span> Formación académica</h4>
-              <button type="button" @click="addEducation"><Plus :size="14" aria-hidden="true" /> Agregar formación</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--education" aria-hidden="true"><GraduationCap :size="20" /></span> Formación académica</h4>
+              <button class="manual-cv-section__heading-button" type="button" @click="addEducation"><Plus :size="14" aria-hidden="true" /> Agregar formación</button>
             </div>
             <article v-for="(education, index) in manualCv.education" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
-                <label>Institución<input v-model="education.institution" placeholder="Ej: UTU"></label>
-                <label>Título o carrera<input v-model="education.degree" placeholder="Ej: Técnico en administración"></label>
-                <label>Nivel<select v-model="education.level"><option value="">Seleccionar</option><option>Secundaria</option><option>Técnico</option><option>Terciario</option><option>Universitario</option><option>Curso</option></select></label>
-                <label>Desde<input v-model="education.startYear" type="month"></label>
-                <label>Hasta<input v-model="education.endYear" type="month"></label>
+                <label class="manual-cv-entry__grid-label">Institución<input v-model="education.institution" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: UTU"></label>
+                <label class="manual-cv-entry__grid-label">Título o carrera<input v-model="education.degree" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: Técnico en administración"></label>
+                <label class="manual-cv-entry__grid-label">Nivel<select v-model="education.level" class="manual-cv-entry__select manual-cv-section__select"><option value="">Seleccionar</option><option>Secundaria</option><option>Técnico</option><option>Terciario</option><option>Universitario</option><option>Curso</option></select></label>
+                <label class="manual-cv-entry__grid-label">Desde<input v-model="education.startYear" class="manual-cv-entry__input manual-cv-section__input" type="month"></label>
+                <label class="manual-cv-entry__grid-label">Hasta<input v-model="education.endYear" class="manual-cv-entry__input manual-cv-section__input" type="month"></label>
               </div>
               <button v-if="manualCv.education.length > 1" type="button" class="manual-cv-entry__remove" @click="removeEducation(index)"><Trash2 :size="13" /> Quitar</button>
             </article>
@@ -837,55 +864,55 @@ async function complete() {
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--skills" aria-hidden="true"><Wrench :size="20" /></span> Competencias</h4>
-              <button v-if="!manualCv.showCompetencies" type="button" @click="manualCv.showCompetencies = true"><Plus :size="14" aria-hidden="true" /> Agregar competencias</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--skills" aria-hidden="true"><Wrench :size="20" /></span> Competencias</h4>
+              <button v-if="!manualCv.showCompetencies" class="manual-cv-section__heading-button" type="button" @click="manualCv.showCompetencies = true"><Plus :size="14" aria-hidden="true" /> Agregar competencias</button>
             </div>
             <template v-if="manualCv.showCompetencies">
-              <label>Habilidades técnicas<textarea v-model="manualCv.technicalSkills" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
-              <label>Cursos y certificaciones<textarea v-model="manualCv.certifications" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
+              <label class="manual-cv-section__label">Habilidades técnicas<textarea v-model="manualCv.technicalSkills" class="manual-cv-section__textarea" placeholder="Ej: Excel, facturación, caja, atención al cliente, AutoCAD..."></textarea></label>
+              <label class="manual-cv-section__label">Cursos y certificaciones<textarea v-model="manualCv.certifications" class="manual-cv-section__textarea" placeholder="Indica cursos, certificaciones o capacitaciones relevantes..."></textarea></label>
             </template>
           </section>
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--languages" aria-hidden="true"><Languages :size="20" /></span> Idiomas</h4>
-              <button type="button" @click="addLanguage"><Plus :size="14" aria-hidden="true" /> Agregar idioma</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--languages" aria-hidden="true"><Languages :size="20" /></span> Idiomas</h4>
+              <button class="manual-cv-section__heading-button" type="button" @click="addLanguage"><Plus :size="14" aria-hidden="true" /> Agregar idioma</button>
             </div>
             <div v-for="(language, index) in manualCv.languages" :key="index" class="manual-cv-language">
-              <label>Idioma<input v-model="language.name" placeholder="Ej: Inglés"></label>
-              <label>Nivel<select v-model="language.level"><option value="">Seleccionar</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select></label>
-              <button v-if="manualCv.languages.length > 1" type="button" aria-label="Quitar idioma" @click="removeLanguage(index)"><Trash2 :size="14" /></button>
+              <label>Idioma<input v-model="language.name" class="manual-cv-section__input" placeholder="Ej: Inglés"></label>
+              <label>Nivel<select v-model="language.level" class="manual-cv-section__select"><option value="">Seleccionar</option><option>Básico</option><option>Intermedio</option><option>Avanzado</option><option>Nativo</option></select></label>
+              <button v-if="manualCv.languages.length > 1" class="manual-cv-language__button" type="button" aria-label="Quitar idioma" @click="removeLanguage(index)"><Trash2 :size="14" /></button>
             </div>
           </section>
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--work-references" aria-hidden="true"><BadgeCheck :size="20" /></span> Referencias laborales</h4>
-              <button type="button" @click="addWorkReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--work-references" aria-hidden="true"><BadgeCheck :size="20" /></span> Referencias laborales</h4>
+              <button class="manual-cv-section__heading-button" type="button" @click="addWorkReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
             </div>
             <article v-for="(reference, index) in manualCv.workReferences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
-                <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
-                <label>Cargo<input v-model="reference.role" placeholder="Ej: Supervisor"></label>
-                <label>Empresa<input v-model="reference.company" placeholder="Empresa"></label>
-                <label>Teléfono<input v-model="reference.phone" type="tel" placeholder="099 123 456"></label>
+                <label class="manual-cv-entry__grid-label">Nombre<input v-model="reference.name" class="manual-cv-entry__input manual-cv-section__input" placeholder="Nombre completo"></label>
+                <label class="manual-cv-entry__grid-label">Cargo<input v-model="reference.role" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: Supervisor"></label>
+                <label class="manual-cv-entry__grid-label">Empresa<input v-model="reference.company" class="manual-cv-entry__input manual-cv-section__input" placeholder="Empresa"></label>
+                <label class="manual-cv-entry__grid-label">Teléfono<input v-model="reference.phone" class="manual-cv-entry__input manual-cv-section__input" type="tel" placeholder="099 123 456"></label>
               </div>
-              <label>Correo electrónico<input v-model="reference.email" type="email" placeholder="referencia@correo.com"></label>
+              <label class="manual-cv-entry__label">Correo electrónico<input v-model="reference.email" class="manual-cv-entry__input manual-cv-section__input" type="email" placeholder="referencia@correo.com"></label>
               <button type="button" class="manual-cv-entry__remove" @click="removeWorkReference(index)"><Trash2 :size="13" /> Quitar</button>
             </article>
           </section>
 
           <section class="manual-cv-section">
             <div class="manual-cv-section__heading">
-              <h4><span class="manual-cv-section__icon manual-cv-section__icon--personal-references" aria-hidden="true"><UsersRound :size="20" /></span> Referencias personales</h4>
-              <button type="button" @click="addPersonalReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
+              <h4 class="manual-cv-section__minor-heading"><span class="manual-cv-section__icon manual-cv-section__icon--personal-references" aria-hidden="true"><UsersRound :size="20" /></span> Referencias personales</h4>
+              <button class="manual-cv-section__heading-button" type="button" @click="addPersonalReference"><Plus :size="14" aria-hidden="true" /> Agregar referencia</button>
             </div>
             <article v-for="(reference, index) in manualCv.personalReferences" :key="index" class="manual-cv-entry">
               <div class="manual-cv-entry__grid">
-                <label>Nombre<input v-model="reference.name" placeholder="Nombre completo"></label>
-                <label>Relación o profesión<input v-model="reference.role" placeholder="Ej: Excompañero/a"></label>
-                <label>Teléfono<input v-model="reference.phone" type="tel" placeholder="099 123 456"></label>
-                <label>Correo electrónico<input v-model="reference.email" type="email" placeholder="referencia@correo.com"></label>
+                <label class="manual-cv-entry__grid-label">Nombre<input v-model="reference.name" class="manual-cv-entry__input manual-cv-section__input" placeholder="Nombre completo"></label>
+                <label class="manual-cv-entry__grid-label">Relación o profesión<input v-model="reference.role" class="manual-cv-entry__input manual-cv-section__input" placeholder="Ej: Excompañero/a"></label>
+                <label class="manual-cv-entry__grid-label">Teléfono<input v-model="reference.phone" class="manual-cv-entry__input manual-cv-section__input" type="tel" placeholder="099 123 456"></label>
+                <label class="manual-cv-entry__grid-label">Correo electrónico<input v-model="reference.email" class="manual-cv-entry__input manual-cv-section__input" type="email" placeholder="referencia@correo.com"></label>
               </div>
               <button type="button" class="manual-cv-entry__remove" @click="removePersonalReference(index)"><Trash2 :size="13" /> Quitar</button>
             </article>
@@ -893,23 +920,23 @@ async function complete() {
         </section>
       </section>
 
-      <AppAlert v-if="error">{{ error }}</AppAlert>
-      <AppAlert v-if="success" tone="success">{{ success }}</AppAlert>
+      <AppAlert v-if="error" class="registration-card__alert">{{ error }}</AppAlert>
+      <AppAlert v-if="success" class="registration-card__alert" tone="success">{{ success }}</AppAlert>
 
       <label v-if="step === 3 && !registered" class="registration-terms">
         <input v-model="acceptedTerms" type="checkbox">
-        <span>Acepto los <RouterLink to="/terminos" target="_blank">términos y condiciones</RouterLink> del CCISJ.</span>
+        <span>Acepto los <RouterLink class="registration-terms__link" to="/terminos" target="_blank">términos y condiciones</RouterLink> del CCISJ.</span>
       </label>
 
       <footer class="registration-card__actions">
-        <AppButton v-if="step > (googleRegistration.pending ? 2 : 1)" variant="secondary" @click="previous">
+        <AppButton v-if="step > (googleRegistration.pending ? 2 : 1)" class="registration-card__actions-app-button" variant="secondary" @click="previous">
           <ArrowLeft :size="14" aria-hidden="true" /> Anterior
         </AppButton>
         <span v-else></span>
-        <AppButton v-if="step < 3" type="submit" :loading="busy">
+        <AppButton v-if="step < 3" class="registration-card__actions-app-button" type="submit" :loading="busy">
           Continuar <ArrowRight :size="15" aria-hidden="true" />
         </AppButton>
-        <AppButton v-else type="submit" :loading="busy">
+        <AppButton v-else class="registration-card__actions-app-button" type="submit" :loading="busy">
           {{ busy ? 'Registrando...' : 'Completar Registro' }}
           <Check :size="15" aria-hidden="true" />
         </AppButton>
@@ -919,8 +946,29 @@ async function complete() {
 </template>
 
 <style scoped>
+.registration__toolbar { width: min(calc(100% - 48px), 900px); margin: 24px auto -12px; }
+.registration__back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px; border-radius: 999px; color: var(--t-fgv-brand); font-size: var(--text-sm); font-weight: 600; text-decoration: none; transition: background-color .15s ease, color .15s ease; }
+.registration__back:hover { background: var(--color-brand-soft); color: var(--t-fgv-brand); }
+.registration__back:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.registration__back-icon { flex: none; }
+.registration-google__reauth { border: 1px solid var(--color-border); border-radius: 11px; background: var(--color-surface); }
+.registration-google__reauth--open { border-color: var(--color-brand); }
+.registration-google__reauth-summary { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 11px; color: var(--t-fgv-brand); font-size: var(--text-sm); font-weight: 600; list-style: none; cursor: pointer; user-select: none; }
+.registration-google__reauth-summary::-webkit-details-marker { display: none; }
+.registration-google__reauth-summary::marker { content: ''; }
+.registration-google__reauth-summary:hover { background: var(--color-brand-soft); }
+.registration-google__reauth-summary:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.registration-google__reauth-icon { flex: none; transition: transform .2s ease; }
+.registration-google__reauth-icon--open { transform: rotate(180deg); }
+.registration-google__reauth-body { padding: 0 14px 4px; }
+.registration-google__cancel { width: 100%; }
+
+/* Mismo ancho que la tarjeta del formulario en tablet/móvil (ver responsive.css, max-width: 980px). */
+@media (max-width: 980px) {
+  .registration__toolbar { width: calc(100% - 24px); margin: 18px auto -10px; }
+}
 .registration-google { display: grid; gap: 16px; margin-bottom: 24px; }
 .registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--t-bg-e8f5ee); color: var(--t-fg-087b48); }
 .registration-terms { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; color: var(--t-fg-445249); font-size: 0.95rem; }
-.registration-terms a { color: var(--t-fg-08775f); }
+.registration-terms__link { color: var(--t-fg-08775f); }
 </style>

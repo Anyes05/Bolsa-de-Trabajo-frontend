@@ -1,14 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-type Listener = (event: { matches: boolean }) => void
-
-function simularSistema(oscuro: boolean) {
-  const listeners: Listener[] = []
-  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: oscuro, addEventListener: (_: string, fn: Listener) => listeners.push(fn) })))
-  return (matches: boolean) => listeners.forEach((fn) => fn({ matches }))
-}
-
 async function cargar() {
   vi.resetModules()
   return import('./useTheme')
@@ -26,37 +18,31 @@ afterEach(() => {
 })
 
 describe('tema claro / oscuro', () => {
-  it('sin elección guardada sigue el tema del sistema y sus cambios', async () => {
-    const cambiarSistema = simularSistema(true)
+  it('sin elección guardada arranca en modo claro aunque el sistema esté en oscuro', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: true, addEventListener: vi.fn() })))
     const { initTheme, useTheme } = await cargar()
     initTheme()
-    expect(document.documentElement.dataset.theme).toBe('dark')
-    expect(useTheme().theme.value).toBe('dark')
-    expect(document.querySelector('meta[name="theme-color"]')!.getAttribute('content')).toBe('#0f1f17')
-    cambiarSistema(false)
     expect(document.documentElement.dataset.theme).toBe('light')
+    expect(useTheme().theme.value).toBe('light')
+    expect(document.querySelector('meta[name="theme-color"]')!.getAttribute('content')).toBe('#008c45')
   })
 
-  it('la elección guardada tiene prioridad y no la pisa el sistema', async () => {
-    localStorage.setItem('ccisj-theme', 'light')
-    const cambiarSistema = simularSistema(true)
+  it('respeta la elección guardada', async () => {
+    localStorage.setItem('ccisj-theme', 'dark')
     const { initTheme } = await cargar()
     initTheme()
-    expect(document.documentElement.dataset.theme).toBe('light')
-    cambiarSistema(true)
-    expect(document.documentElement.dataset.theme).toBe('light')
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(document.querySelector('meta[name="theme-color"]')!.getAttribute('content')).toBe('#0f1f17')
   })
 
-  it('ignora valores guardados inválidos y funciona sin matchMedia', async () => {
+  it('ignora valores guardados inválidos', async () => {
     localStorage.setItem('ccisj-theme', 'violeta')
-    vi.stubGlobal('matchMedia', undefined)
     const { initTheme } = await cargar()
     initTheme()
     expect(document.documentElement.dataset.theme).toBe('light')
   })
 
   it('alternar cambia el tema, lo aplica y lo recuerda', async () => {
-    simularSistema(false)
     const { initTheme, useTheme, THEME_STORAGE_KEY } = await cargar()
     initTheme()
     const { theme, toggleTheme, setTheme } = useTheme()
@@ -71,7 +57,6 @@ describe('tema claro / oscuro', () => {
   })
 
   it('si el almacenamiento falla, el tema igual se aplica para esta visita', async () => {
-    simularSistema(false)
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('bloqueado') })
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('bloqueado') })
     const { initTheme, useTheme } = await cargar()

@@ -101,7 +101,7 @@ function closeOpenedModal() {
     <div v-if="open" class="shell-backdrop" @click="open = false" />
     <aside class="socio-sidebar" :class="{ 'socio-sidebar--open': open }">
       <div class="socio-sidebar__brand">
-        <BrandLogo variant="white" />
+        <BrandLogo class="socio-sidebar__brand-logo" variant="white" />
         <button class="shell-sidebar-close" type="button" aria-label="Cerrar menú" @click="open = false">
           <X :size="18" />
         </button>
@@ -182,8 +182,8 @@ function closeOpenedModal() {
           />
           <div class="socio-header__user">
             <div class="socio-header__identity">
-              <strong>{{ shownCompany.name }}</strong>
-              <span>{{ shownCompany.roleLabel }}</span>
+              <strong class="socio-header__identity-strong">{{ shownCompany.name }}</strong>
+              <span class="socio-header__identity-inline">{{ shownCompany.roleLabel }}</span>
             </div>
             <ProfileAvatar class="socio-header__avatar" :src="auth.photoUrl" :initials="shownCompany.initials" />
             <button type="button" class="shell-exit" @click="logout">
@@ -208,9 +208,9 @@ function closeOpenedModal() {
             <Megaphone :size="16" />
           </span>
           <span>
-            <strong>{{ notifications.toast.title }}</strong>
-            <p>{{ notifications.toast.body }}</p>
-            <em>Abrir comunicado</em>
+            <strong class="socio-toast__strong">{{ notifications.toast.title }}</strong>
+            <p class="socio-toast__text">{{ notifications.toast.body }}</p>
+            <em class="socio-toast__emphasis">Abrir comunicado</em>
           </span>
         </button>
         <button type="button" class="socio-toast__close" aria-label="Cerrar aviso" @click="notifications.dismissToast()">
@@ -234,15 +234,15 @@ function closeOpenedModal() {
               <p class="notification-modal__eyebrow">
                 {{ notifications.blocking ? 'Comunicado obligatorio' : 'Comunicado CCISJ' }}
               </p>
-              <h2 :id="`notification-modal-title-${notifications.opened.id}`">{{ notifications.opened.title }}</h2>
-              <time v-if="notifications.opened.date">{{ notifications.opened.date }}</time>
+              <h2 :id="`notification-modal-title-${notifications.opened.id}`" class="notification-modal__header-heading">{{ notifications.opened.title }}</h2>
+              <time v-if="notifications.opened.date" class="notification-modal__header-time">{{ notifications.opened.date }}</time>
             </div>
             <button type="button" class="notification-modal__close" aria-label="Cerrar" @click="closeOpenedModal">
               <X :size="18" />
             </button>
           </header>
           <div class="notification-modal__body">
-            <p>{{ notifications.opened.body }}</p>
+            <p class="notification-modal__body-text">{{ notifications.opened.body }}</p>
           </div>
           <footer class="notification-modal__footer">
             <button type="button" class="notification-modal__done" @click="closeOpenedModal">

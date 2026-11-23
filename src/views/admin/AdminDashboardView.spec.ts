@@ -177,7 +177,7 @@ describe('control de caja del administrador', () => {
       expect(beta.find('.cash-status--yellow').exists()).toBe(true)
 
       const epsilon = fila(wrapper, 'Epsilon')
-      expect(epsilon.find('.cash-balance-credit').text()).toMatch(/^\+.*200,00/)
+      expect(epsilon.find('.cash-table__cell--credit').text()).toMatch(/^\+.*200,00/)
 
       // Inactivo sin deuda: solo historial. Inactivo con deuda: cobro e historial.
       const gamma = fila(wrapper, 'Gamma')
@@ -461,7 +461,7 @@ describe('control de caja del administrador', () => {
       expect(resumenCuenta).toMatch(/Total.*1\.500,00/)
 
       await boton(modalCobro(wrapper), 'Transferencia').trigger('click')
-      expect(boton(modalCobro(wrapper), 'Transferencia').classes()).toContain('cash-payment__option--active')
+      expect(boton(modalCobro(wrapper), 'Transferencia').classes()).toContain('cash-payment__button--active')
       await modalCobro(wrapper).find('.cash-amount input').setValue('600')
       expect(modalCobro(wrapper).find('.account-result').text()).toMatch(/900,00/)
       const detalles = modalCobro(wrapper).findAll('.cash-payment-detail')
@@ -590,7 +590,7 @@ describe('control de caja del administrador', () => {
       await modalCobro(wrapper).find('button[aria-label="Cerrar"]').trigger('click')
       await boton(fila(wrapper, 'Epsilon'), 'Cobro').trigger('click')
       await flushPromises()
-      expect(boton(modalCobro(wrapper), 'Efectivo').classes()).toContain('cash-payment__option--active')
+      expect(boton(modalCobro(wrapper), 'Efectivo').classes()).toContain('cash-payment__button--active')
       expect(modalCobro(wrapper).find('p').text()).toBe('Epsilon')
     })
   })

@@ -350,14 +350,14 @@ onMounted(loadDisponibilidad)
         <div class="job-search-status__heading">
           <span class="job-search-status__icon" aria-hidden="true"><Pause v-if="disponibilidad?.busquedaPausada" :size="22" /><Briefcase v-else :size="22" /></span>
           <div>
-            <h2 id="job-search-title">Disponibilidad laboral</h2>
-            <p v-if="disponibilidad" class="job-search-status__state">{{ disponibilidad.busquedaPausada ? 'Búsqueda pausada' : 'Estoy buscando trabajo' }}</p>
-            <p v-else>{{ disponibilidadLoading ? 'Cargando disponibilidad...' : 'Disponibilidad no disponible' }}</p>
+            <h2 id="job-search-title" class="job-search-status__heading-h2">Disponibilidad laboral</h2>
+            <p v-if="disponibilidad" class="job-search-status__state job-search-status__heading-text">{{ disponibilidad.busquedaPausada ? 'Búsqueda pausada' : 'Estoy buscando trabajo' }}</p>
+            <p v-else class="job-search-status__heading-text">{{ disponibilidadLoading ? 'Cargando disponibilidad...' : 'Disponibilidad no disponible' }}</p>
           </div>
         </div>
         <div v-if="disponibilidad" class="job-search-status__control">
           <span id="job-search-label">No busco trabajo actualmente</span>
-          <button type="button" class="job-search-status__switch" role="switch" aria-labelledby="job-search-label" aria-describedby="job-search-help" :aria-checked="disponibilidad.busquedaPausada" :disabled="disponibilidadLoading || disponibilidadSaving" @click="toggleDisponibilidad"><span /></button>
+          <button type="button" class="job-search-status__switch" role="switch" aria-labelledby="job-search-label" aria-describedby="job-search-help" :aria-checked="disponibilidad.busquedaPausada" :disabled="disponibilidadLoading || disponibilidadSaving" @click="toggleDisponibilidad"><span class="job-search-status__switch-inline" /></button>
         </div>
         <p id="job-search-help" class="job-search-status__help">{{ disponibilidad?.busquedaPausada ? 'Tus perfiles están ocultos para las búsquedas de socios. El administrador puede seguir viéndolos y vos podés editarlos. Desactivá esta opción cuando quieras volver a buscar trabajo.' : 'Podés pausar todos tus perfiles sin eliminar tu cuenta. Al reanudar la búsqueda se respeta la visibilidad individual de cada perfil.' }}</p>
         <p v-if="disponibilidadSaving" class="job-search-status__help" role="status">Guardando disponibilidad...</p>
@@ -370,30 +370,30 @@ onMounted(loadDisponibilidad)
       <article v-for="profile in profiles" :key="profile.id" class="profile-card-postulante">
         <header class="profile-card-postulante__header">
           <div>
-            <h2>{{ profile.nombre }}</h2>
+            <h2 class="profile-card-postulante__header-heading">{{ profile.nombre }}</h2>
             <span class="profile-card-postulante__visibility" :class="profile.visible && disponibilidad && !disponibilidad.busquedaPausada ? 'profile-card-postulante__visibility--visible' : 'profile-card-postulante__visibility--hidden'">{{ !profile.visible ? 'Perfil oculto' : !disponibilidad ? 'Visibilidad pendiente' : disponibilidad.busquedaPausada ? 'Oculto por búsqueda pausada' : 'Perfil visible' }}</span>
           </div>
           <div class="profile-card-postulante__actions">
-            <AppButton variant="secondary" @click="setVisibility(profile, !profile.visible)">{{ profile.visible ? 'Ocultar perfil' : disponibilidad?.busquedaPausada ? 'Habilitar al reanudar' : 'Hacer visible' }}</AppButton>
-            <AppButton variant="secondary" @click="openEditor(profile)">Editar</AppButton>
+            <AppButton class="profile-card-postulante__actions-app-button" variant="secondary" @click="setVisibility(profile, !profile.visible)">{{ profile.visible ? 'Ocultar perfil' : disponibilidad?.busquedaPausada ? 'Habilitar al reanudar' : 'Hacer visible' }}</AppButton>
+            <AppButton class="profile-card-postulante__actions-app-button" variant="secondary" @click="openEditor(profile)">Editar</AppButton>
           </div>
         </header>
         <div class="profile-card-postulante__details">
-          <p><strong>Habilidades y áreas de interés:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro">{{ rubro }}</span></span></p>
-          <p><strong>Disponibilidad horaria:</strong> {{ availabilityLabel[profile.disponibilidadHoraria] }}</p>
-          <p><strong>Vehículo propio:</strong> {{ profile.tieneVehiculo ? 'Sí' : 'No' }}</p>
-          <p><strong>Libreta de conducir:</strong> {{ profile.libreta || 'No informada' }}</p>
-          <p><strong>Detalle del último empleo:</strong> {{ profile.ultimoEmpleo || 'No informado' }}</p>
-          <p><strong>Resumen de experiencia laboral y presentación:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
+          <p class="profile-card-postulante__details-text"><strong>Habilidades y áreas de interés:</strong> <span class="profile-card-postulante__skills"><span v-for="rubro in profile.rubros" :key="rubro" class="profile-card-postulante__skills-inline">{{ rubro }}</span></span></p>
+          <p class="profile-card-postulante__details-text"><strong>Disponibilidad horaria:</strong> {{ availabilityLabel[profile.disponibilidadHoraria] }}</p>
+          <p class="profile-card-postulante__details-text"><strong>Vehículo propio:</strong> {{ profile.tieneVehiculo ? 'Sí' : 'No' }}</p>
+          <p class="profile-card-postulante__details-text"><strong>Libreta de conducir:</strong> {{ profile.libreta || 'No informada' }}</p>
+          <p class="profile-card-postulante__details-text"><strong>Detalle del último empleo:</strong> {{ profile.ultimoEmpleo || 'No informado' }}</p>
+          <p class="profile-card-postulante__details-text"><strong>Resumen de experiencia laboral y presentación:</strong> {{ profile.descripcionExperiencia || 'No informado' }}</p>
         </div>
         <section class="profile-pdfs">
-          <h3>CV del perfil</h3>
+          <h3 class="profile-pdfs__subheading">CV del perfil</h3>
           <p v-if="!cvsFor(profile.id).length">Este perfil todavía no tiene un CV. Podés subirlo o crearlo desde Editar.</p>
           <div v-for="cv in cvsFor(profile.id)" :key="cv.id" class="profile-pdfs__item">
             <span>{{ cv.nombreArchivo || 'CV del perfil' }}</span>
             <div class="profile-card-postulante__actions">
-              <AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
-              <AppButton variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
+              <AppButton class="profile-card-postulante__actions-app-button" variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
+              <AppButton class="profile-card-postulante__actions-app-button" variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
             </div>
           </div>
         </section>
@@ -404,31 +404,31 @@ onMounted(loadDisponibilidad)
     <div v-if="editing" class="modal" aria-modal="true" aria-labelledby="edit-profile-title">
       <div class="modal__backdrop" @click="editing = null"></div>
       <section class="modal__panel modal__panel--large">
-        <header class="modal__header"><h3 id="edit-profile-title">Editar Perfil Profesional</h3><button type="button" class="modal__close" @click="editing = null">×</button></header>
+        <header class="modal__header"><h3 id="edit-profile-title" class="modal__header-subheading">Editar Perfil Profesional</h3><button type="button" class="modal__close" @click="editing = null">×</button></header>
         <div class="modal__form-grid profile-editor">
-          <label>Nombre del perfil profesional *<input v-model="editing.nombre"></label>
-          <fieldset><legend>Habilidades y áreas de interés</legend><div class="profile-card-postulante__skills"><button v-for="sector in sectors" :key="sector" type="button" :class="{ 'profile-chip--selected': editing.rubros.includes(sector) }" @click="toggleSector(sector)">{{ sector }}</button></div></fieldset>
-          <label>Disponibilidad Horaria *<select v-model="editing.disponibilidadHoraria"><option value="FULL_TIME">Tiempo completo</option><option value="INDEFINIDO">Cualquier horario</option><option value="PART_TIME">Part-time</option></select></label>
-          <label class="modal__checkbox">
-            <input v-model="editing.tieneVehiculo" type="checkbox">
+          <label class="profile-editor__label">Nombre del perfil profesional *<input v-model="editing.nombre" class="profile-editor__input"></label>
+          <fieldset class="profile-editor__fieldset"><legend>Habilidades y áreas de interés</legend><div class="profile-card-postulante__skills"><button v-for="sector in sectors" :key="sector" class="profile-card-postulante__skills-button" type="button" :class="{ 'profile-card-postulante__skills-button--selected': editing.rubros.includes(sector) }" @click="toggleSector(sector)">{{ sector }}</button></div></fieldset>
+          <label class="profile-editor__label">Disponibilidad Horaria *<select v-model="editing.disponibilidadHoraria" class="profile-editor__select"><option value="FULL_TIME">Tiempo completo</option><option value="INDEFINIDO">Cualquier horario</option><option value="PART_TIME">Part-time</option></select></label>
+          <label class="modal__checkbox profile-editor__label">
+            <input v-model="editing.tieneVehiculo" class="modal__checkbox-input" type="checkbox">
             <span>Posee vehículo propio</span>
           </label>
-          <label>Libreta de conducir<input v-model="editing.libreta" maxlength="120" placeholder="Ej. Cat. A, G2"></label>
-          <label>Detalle del último empleo *<input v-model="editing.ultimoEmpleo"></label>
-          <label>Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia"></textarea></label>
-          <label class="modal__checkbox">
-            <input v-model="editing.visible" type="checkbox">
+          <label class="profile-editor__label">Libreta de conducir<input v-model="editing.libreta" class="profile-editor__input" maxlength="120" placeholder="Ej. Cat. A, G2"></label>
+          <label class="profile-editor__label">Detalle del último empleo *<input v-model="editing.ultimoEmpleo" class="profile-editor__input"></label>
+          <label class="profile-editor__label">Resumen de experiencia laboral y presentación *<textarea v-model="editing.descripcionExperiencia" class="profile-editor__textarea"></textarea></label>
+          <label class="modal__checkbox profile-editor__label">
+            <input v-model="editing.visible" class="modal__checkbox-input" type="checkbox">
             <span>{{ disponibilidad?.busquedaPausada ? 'Habilitar este perfil para cuando reanude mi búsqueda' : 'Perfil visible para socios en la bolsa de empleo' }}</span>
           </label>
           <AppAlert v-if="editorError">{{ editorError }}</AppAlert>
           <section v-if="editing.id" class="profile-pdfs profile-pdfs--editor">
-            <h4>CV de este perfil</h4>
+            <h4 class="profile-pdfs__minor-heading">CV de este perfil</h4>
             <p>Un único documento por perfil. Reemplazarlo actualiza también el CV de sus postulaciones vinculadas.</p>
             <div v-for="cv in editingCvs" :key="cv.id" class="profile-pdfs__item">
               <span>{{ cv.nombreArchivo || 'CV del perfil' }}</span>
               <div class="profile-card-postulante__actions">
-                <AppButton variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
-                <AppButton variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
+                <AppButton class="profile-card-postulante__actions-app-button" variant="secondary" @click="openDownload(cv.downloadUrl)">Descargar</AppButton>
+                <AppButton class="profile-card-postulante__actions-app-button" variant="danger" :disabled="uploading" @click="deleteCv(cv.id)">Eliminar</AppButton>
               </div>
             </div>
             <div class="profile-pdfs__upload">
@@ -436,10 +436,10 @@ onMounted(loadDisponibilidad)
               <AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">{{ editingCvs.length ? 'Reemplazar CV' : 'Subir CV' }}</AppButton>
               <AppButton variant="secondary" :disabled="uploading" @click="manualCvOpen = !manualCvOpen"><Wrench :size="15" /> {{ editingCvs.length ? 'Reemplazar por CV manual' : 'Crear CV manual' }}</AppButton>
             </div>
-            <section v-if="manualCvOpen" class="profile-manual-cv"><p>Agrega una referencia laboral o personal para poder generar el PDF.</p><label>Perfil profesional<textarea v-model="manualCv.summary" /></label><div class="profile-manual-cv__heading"><b>Experiencia laboral</b><button type="button" @click="addManualEntry('experiences')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.experiences" :key="`experience-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" placeholder="Cargo | Empresa"><input v-model="entry.from" type="month"><input v-model="entry.to" type="month"><textarea v-model="entry.detail" placeholder="Responsabilidades y logros" /><button type="button" @click="removeEntry('experiences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Formación académica</b><button type="button" @click="addManualEntry('education')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.education" :key="`education-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" placeholder="Título | Institución"><input v-model="entry.from" type="month"><input v-model="entry.to" type="month"><textarea v-model="entry.detail" placeholder="Detalle de la formación" /><button type="button" @click="removeEntry('education', index)"><Trash2 :size="14" /> Quitar</button></div><label>Habilidades técnicas<textarea v-model="manualCv.skills" /></label><label>Idiomas<textarea v-model="manualCv.languages" placeholder="Ej: Inglés - Intermedio" /></label><label>Cursos y certificaciones<textarea v-model="manualCv.certifications" /></label><div class="profile-manual-cv__heading"><b>Referencias laborales</b><button type="button" @click="addReference('workReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.workReferences" :key="`work-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" placeholder="Nombre"><input v-model="reference.role" placeholder="Cargo / relación"><input v-model="reference.phone" placeholder="Teléfono"><input v-model="reference.email" placeholder="Correo"><button type="button" @click="removeReference('workReferences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Referencias personales</b><button type="button" @click="addReference('personalReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.personalReferences" :key="`personal-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" placeholder="Nombre"><input v-model="reference.role" placeholder="Relación"><input v-model="reference.phone" placeholder="Teléfono"><input v-model="reference.email" placeholder="Correo"><button type="button" @click="removeReference('personalReferences', index)"><Trash2 :size="14" /> Quitar</button></div><AppButton :loading="uploading" @click="uploadManualCv">Generar y subir PDF</AppButton></section>
+            <section v-if="manualCvOpen" class="profile-manual-cv"><p class="profile-manual-cv__text">Agrega una referencia laboral o personal para poder generar el PDF.</p><label class="profile-editor__label profile-manual-cv__label">Perfil profesional<textarea v-model="manualCv.summary" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Experiencia laboral</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('experiences')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.experiences" :key="`experience-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" class="profile-manual-cv__input" placeholder="Cargo | Empresa"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Responsabilidades y logros" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('experiences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Formación académica</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('education')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.education" :key="`education-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" class="profile-manual-cv__input" placeholder="Título | Institución"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Detalle de la formación" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('education', index)"><Trash2 :size="14" /> Quitar</button></div><label class="profile-editor__label profile-manual-cv__label">Habilidades técnicas<textarea v-model="manualCv.skills" class="profile-editor__textarea profile-manual-cv__textarea" /></label><label class="profile-editor__label profile-manual-cv__label">Idiomas<textarea v-model="manualCv.languages" class="profile-editor__textarea profile-manual-cv__textarea" placeholder="Ej: Inglés - Intermedio" /></label><label class="profile-editor__label profile-manual-cv__label">Cursos y certificaciones<textarea v-model="manualCv.certifications" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Referencias laborales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('workReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.workReferences" :key="`work-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Cargo / relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('workReferences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Referencias personales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('personalReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.personalReferences" :key="`personal-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('personalReferences', index)"><Trash2 :size="14" /> Quitar</button></div><AppButton :loading="uploading" @click="uploadManualCv">Generar y subir PDF</AppButton></section>
           </section>
         </div>
-        <footer class="modal__actions"><AppButton variant="secondary" @click="editing = null">Cancelar</AppButton><AppButton :loading="saving" @click="saveProfile">Guardar cambios</AppButton></footer>
+        <footer class="modal__actions"><AppButton class="modal__actions-app-button" variant="secondary" @click="editing = null">Cancelar</AppButton><AppButton class="modal__actions-app-button" :loading="saving" @click="saveProfile">Guardar cambios</AppButton></footer>
       </section>
     </div>
   </PostulanteShell>
@@ -449,16 +449,16 @@ onMounted(loadDisponibilidad)
 .job-search-status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; padding: 24px; border: 1px solid var(--t-line-dce8df); border-radius: 16px; background: var(--t-bg-ffffff); box-shadow: 0 4px 18px #163c2908; }
 .job-search-status__heading { display: flex; align-items: center; gap: 14px; }
 .job-search-status__icon { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px; color: var(--t-fg-087c42); background: var(--t-bg-eaf5ee); }
-.job-search-status h2 { margin: 0; font-size: 1.05rem; color: var(--t-fg-24352b); }
-.job-search-status__heading p { margin: 5px 0 0; font-size: .875rem; color: var(--t-fg-087c42); }
+.job-search-status__heading-h2 { margin: 0; font-size: 1.05rem; color: var(--t-fg-24352b); }
+.job-search-status__heading-text { margin: 5px 0 0; font-size: .875rem; color: var(--t-fg-087c42); }
 .job-search-status--paused { border-color: var(--t-line-e4dcc6); background: var(--t-bg-fffdf8); }
 .job-search-status--paused .job-search-status__icon { color: var(--t-fg-886322); background: var(--t-bg-f7eed8); }
 .job-search-status--paused .job-search-status__state { color: var(--t-fg-886322); }
 .job-search-status__control { display: flex; align-items: center; gap: 14px; font-size: .875rem; color: var(--t-fg-344b3d); }
 .job-search-status__switch { display: flex; align-items: center; flex-shrink: 0; width: 48px; height: 28px; padding: 3px; border: 1px solid var(--t-line-bdcfc3); border-radius: 20px; background: var(--t-bg-dce7df); cursor: pointer; }
-.job-search-status__switch span { width: 20px; height: 20px; border-radius: 50%; background: var(--t-bg-ffffff); box-shadow: 0 1px 3px #163c2933; transition: transform .18s; }
+.job-search-status__switch-inline { width: 20px; height: 20px; border-radius: 50%; background: var(--t-bg-ffffff); box-shadow: 0 1px 3px #163c2933; transition: transform .18s; }
 .job-search-status__switch[aria-checked="true"] { background: var(--t-bg-078844); border-color: var(--t-line-078844); }
-.job-search-status__switch[aria-checked="true"] span { transform: translateX(20px); }
+.job-search-status__switch[aria-checked="true"] .job-search-status__switch-inline { transform: translateX(20px); }
 .job-search-status__switch:focus-visible { outline: 2px solid var(--t-line-078844); outline-offset: 3px; }
 .job-search-status__switch:disabled { cursor: wait; opacity: .6; }
 .job-search-status__help, .job-search-status__confirmation { grid-column: 1 / -1; margin: 0; font-size: .875rem; line-height: 1.6; color: var(--t-fg-64736a); }
@@ -469,6 +469,6 @@ onMounted(loadDisponibilidad)
   .job-search-status__control { justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .job-search-status__switch span { transition: none; }
+  .job-search-status__switch-inline { transition: none; }
 }
 </style>

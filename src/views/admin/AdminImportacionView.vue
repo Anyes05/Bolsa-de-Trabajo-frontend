@@ -93,8 +93,8 @@ function ficticios(fila: ImportacionFila) {
   >
     <section class="fee-panel fee-current">
       <div class="fee-current__intro">
-        <h2>1. Subir Excel</h2>
-        <p>
+        <h2 class="fee-current__heading">1. Subir Excel</h2>
+        <p class="fee-current__intro-text">
           La primera fila tiene que ser el encabezado (razón social, dirección, celular, localidad, giro, mail, RUT, BPS, inicio, fecha de afiliación).
           WhatsApp, lista de difusión, mes y número se ignoran. Los campos vacíos se completan con datos provisionales bien marcados.
           Las celdas o filas en rojo del Excel son socios inactivos: se importan igual, pero quedan dados de baja.
@@ -102,11 +102,11 @@ function ficticios(fila: ImportacionFila) {
       </div>
       <label class="import-file">
         <FileSpreadsheet :size="18" />
-        <input ref="fileInput" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" @change="onFileChange">
+        <input ref="fileInput" class="import-file__input" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" @change="onFileChange">
         <span>{{ file ? file.name : 'Elegir archivo .xlsx' }}</span>
       </label>
       <div class="import-actions">
-        <button class="fee-save" type="button" :disabled="!file || busy || importing" @click="runPreview">
+        <button class="fee-save fee-panel__fee-save" type="button" :disabled="!file || busy || importing" @click="runPreview">
           <Upload :size="16" /> {{ busy ? 'Leyendo...' : 'Previsualizar' }}
         </button>
         <button v-if="canCancel" class="import-cancel" type="button" @click="cancelarSubida">
@@ -120,51 +120,51 @@ function ficticios(fila: ImportacionFila) {
     <section v-if="preview" class="fee-panel">
       <div class="fee-current__intro">
         <h2>2. Previsualización</h2>
-        <p>
+        <p class="fee-current__intro-text">
           Revisá qué se va a crear. Los duplicados y las filas sin razón social no se importan.
           Las etiquetas amarillas son los campos que no venían en el Excel y se van a completar con datos provisionales.
           El estado rojo <strong>Inactivo</strong> es un socio pintado en rojo en el Excel: se crea, pero no puede entrar al sistema.
         </p>
       </div>
       <div class="import-stats">
-        <article><strong>{{ preview.resumen.total }}</strong><span>Filas</span></article>
-        <article><strong>{{ preview.resumen.importables }}</strong><span>A importar</span></article>
-        <article><strong>{{ preview.resumen.conFicticios }}</strong><span>Con datos provisionales</span></article>
-        <article><strong>{{ preview.resumen.duplicados }}</strong><span>Duplicados</span></article>
-        <article><strong>{{ preview.resumen.inactivos ?? 0 }}</strong><span>Inactivos</span></article>
-        <article><strong>{{ preview.resumen.errores }}</strong><span>Errores</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.total }}</strong><span class="import-stats__inline">Filas</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.importables }}</strong><span class="import-stats__inline">A importar</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.conFicticios }}</strong><span class="import-stats__inline">Con datos provisionales</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.duplicados }}</strong><span class="import-stats__inline">Duplicados</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.inactivos ?? 0 }}</strong><span class="import-stats__inline">Inactivos</span></article>
+        <article class="import-stats__article"><strong class="import-stats__strong">{{ preview.resumen.errores }}</strong><span class="import-stats__inline">Errores</span></article>
       </div>
       <div class="cash-table-wrap">
         <table class="cash-table">
           <thead>
             <tr>
-              <th>Fila</th>
-              <th>Estado</th>
-              <th>Razón social</th>
-              <th>BPS</th>
-              <th>RUT</th>
-              <th>Campos provisionales</th>
-              <th>Motivo</th>
+              <th class="cash-table__header-cell">Fila</th>
+              <th class="cash-table__header-cell">Estado</th>
+              <th class="cash-table__header-cell">Razón social</th>
+              <th class="cash-table__header-cell">BPS</th>
+              <th class="cash-table__header-cell">RUT</th>
+              <th class="cash-table__header-cell">Campos provisionales</th>
+              <th class="cash-table__header-cell">Motivo</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="fila in preview.filas" :key="fila.filaExcel">
-              <td>{{ fila.filaExcel }}</td>
-              <td>
+          <tbody class="cash-table__tbody">
+            <tr v-for="fila in preview.filas" :key="fila.filaExcel" class="cash-table__row">
+              <td class="cash-table__cell">{{ fila.filaExcel }}</td>
+              <td class="cash-table__cell">
                 <span class="cash-status" :class="`cash-status--${estadoTone(fila.estado)}`">
-                  <i />{{ estadoLabel(fila.estado) }}
+                  <i class="cash-status__italic" />{{ estadoLabel(fila.estado) }}
                 </span>
               </td>
-              <td>{{ fila.razonSocial || '—' }}</td>
-              <td>{{ fila.bps || '—' }}</td>
-              <td>{{ fila.rut || '—' }}</td>
-              <td>
+              <td class="cash-table__cell">{{ fila.razonSocial || '—' }}</td>
+              <td class="cash-table__cell">{{ fila.bps || '—' }}</td>
+              <td class="cash-table__cell">{{ fila.rut || '—' }}</td>
+              <td class="cash-table__cell">
                 <span v-if="ficticios(fila).length" class="import-tags">
-                  <b v-for="label in ficticios(fila)" :key="label">{{ label }}</b>
+                  <b v-for="label in ficticios(fila)" :key="label" class="import-tags__bold">{{ label }}</b>
                 </span>
                 <span v-else>—</span>
               </td>
-              <td>{{ fila.motivo || '—' }}</td>
+              <td class="cash-table__cell">{{ fila.motivo || '—' }}</td>
             </tr>
           </tbody>
         </table>
@@ -182,7 +182,7 @@ function ficticios(fila: ImportacionFila) {
     <section v-if="resultado" class="fee-panel">
       <div class="fee-current__intro">
         <h2>3. Resultado</h2>
-        <p>
+        <p class="fee-current__intro-text">
           Se crearon <strong>{{ resultado.resumen.creados }}</strong> socios
           <template v-if="resultado.resumen.inactivos"> ({{ resultado.resumen.inactivos }} inactivos)</template>.
           Quedan visibles en Gestión de Socios y en Caja. Los inactivos no pueden entrar; el resto tampoco hasta que completes BPS y email reales y habilites el ingreso.
@@ -211,7 +211,7 @@ function ficticios(fila: ImportacionFila) {
   cursor: pointer;
 }
 
-.import-file input {
+.import-file__input {
   display: none;
 }
 
@@ -222,20 +222,20 @@ function ficticios(fila: ImportacionFila) {
   margin: 16px 0 20px;
 }
 
-.import-stats article {
+.import-stats__article {
   padding: 12px 14px;
   border: 1px solid var(--t-line-e4e9ee);
   border-radius: 10px;
   background: var(--t-bg-ffffff);
 }
 
-.import-stats strong {
+.import-stats__strong {
   display: block;
   color: var(--t-fg-0a7a3e);
   font-size: 1.4rem;
 }
 
-.import-stats span {
+.import-stats__inline {
   color: var(--t-fg-5a6870);
   font-size: 0.85rem;
 }
@@ -246,7 +246,7 @@ function ficticios(fila: ImportacionFila) {
   gap: 4px;
 }
 
-.import-tags b {
+.import-tags__bold {
   padding: 3px 7px;
   border-radius: 999px;
   background: var(--t-bg-fef9c3);

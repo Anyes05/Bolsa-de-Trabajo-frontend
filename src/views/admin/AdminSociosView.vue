@@ -238,10 +238,10 @@ async function resetClave() {
       <button class="cash-download" type="button" :disabled="busy || exporting || !listado.data.value.totalElements" @click="downloadExcel">
         <Download :size="16" /> {{ exporting ? 'Descargando...' : 'Descargar Excel' }}
       </button>
-      <RouterLink class="company-button company-button--outline" to="/admin/socios/importacion">
+      <RouterLink class="company-button company-button--outline company-actions__company-button" to="/admin/socios/importacion">
         Carga masiva
       </RouterLink>
-      <RouterLink class="company-button company-button--primary" to="/admin/socios/nueva">
+      <RouterLink class="company-button company-button--primary company-actions__company-button" to="/admin/socios/nueva">
         <Plus :size="16" /> Nuevo Socio
       </RouterLink>
     </div>
@@ -249,13 +249,13 @@ async function resetClave() {
     <section class="company-search-card">
       <label class="company-search">
         <Search :size="17" />
-        <input v-model="query" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro...">
+        <input v-model="query" class="company-search__input" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro...">
       </label>
       <label class="company-incomplete-filter">
         <input v-model="onlyIncomplete" type="checkbox">
         Solo datos incompletos
       </label>
-      <span>{{ listado.data.value.totalElements }} socios listados</span>
+      <span class="company-search-card__inline">{{ listado.data.value.totalElements }} socios listados</span>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -267,20 +267,20 @@ async function resetClave() {
         <table class="company-table">
           <thead>
             <tr>
-              <th>Socio<br><small>BPS / Cédula</small></th>
-              <th>RUT / Cédula</th>
-              <th>Rubro</th>
-              <th>Estado</th>
-              <th>Directivo</th>
-              <th>Alta</th>
-              <th>Baja</th>
-              <th>Activo</th>
-              <th>Acciones</th>
+              <th class="company-table__header-cell">Socio<br><small class="company-table__note">BPS / Cédula</small></th>
+              <th class="company-table__header-cell">RUT / Cédula</th>
+              <th class="company-table__header-cell">Rubro</th>
+              <th class="company-table__header-cell">Estado</th>
+              <th class="company-table__header-cell">Directivo</th>
+              <th class="company-table__header-cell">Alta</th>
+              <th class="company-table__header-cell">Baja</th>
+              <th class="company-table__header-cell">Activo</th>
+              <th class="company-table__header-cell">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="socio in socios" :key="socio.id">
-              <td>
+          <tbody class="company-table__tbody">
+            <tr v-for="socio in socios" :key="socio.id" class="company-table__row">
+              <td class="company-table__cell">
                 <div class="company-table__identity">
                   <ProfileAvatar
                     class="company-table__avatar"
@@ -288,26 +288,26 @@ async function resetClave() {
                     :initials="socio.razonSocial.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase()"
                   />
                   <div class="company-table__name">
-                    <strong>{{ socio.razonSocial }}</strong>
-                    <small>{{ adminIdentificadorLabel(socio) }}</small>
+                    <strong class="company-table__name-strong">{{ socio.razonSocial }}</strong>
+                    <small class="company-table__name-note">{{ adminIdentificadorLabel(socio) }}</small>
                     <span v-if="(socio.camposFicticios?.length ?? 0) > 0" class="socio-incomplete">Datos incompletos</span>
                     <span v-if="socio.importadoMasivo && socio.accesoHabilitado === false" class="socio-no-access">Sin acceso</span>
-                    <small v-if="socio.emailUsuario">Cuenta: {{ socio.emailUsuario }}</small>
-                    <small v-if="socio.emailContacto">Contacto: {{ socio.emailContacto }}</small>
+                    <small v-if="socio.emailUsuario" class="company-table__name-note">Cuenta: {{ socio.emailUsuario }}</small>
+                    <small v-if="socio.emailContacto" class="company-table__name-note">Contacto: {{ socio.emailContacto }}</small>
                   </div>
                 </div>
               </td>
-              <td>{{ socio.rut || '—' }}</td>
-              <td>{{ socio.nombreRubro || '—' }}</td>
-              <td>
+              <td class="company-table__cell">{{ socio.rut || '—' }}</td>
+              <td class="company-table__cell">{{ socio.nombreRubro || '—' }}</td>
+              <td class="company-table__cell">
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(socio.estadoMorosidad)}`">
-                  <i />{{ estadoMorosidadLabel[socio.estadoMorosidad] }}
+                  <i class="cash-status__italic" />{{ estadoMorosidadLabel[socio.estadoMorosidad] }}
                 </span>
               </td>
-              <td>{{ socio.esDirectivo ? 'Sí' : 'No' }}</td>
-              <td>{{ formatDate(socio.fechaAlta) }}</td>
-              <td>{{ formatDate(socio.fechaBaja) }}</td>
-              <td>
+              <td class="company-table__cell">{{ socio.esDirectivo ? 'Sí' : 'No' }}</td>
+              <td class="company-table__cell">{{ formatDate(socio.fechaAlta) }}</td>
+              <td class="company-table__cell">{{ formatDate(socio.fechaBaja) }}</td>
+              <td class="company-table__cell">
                 <button
                   class="company-toggle"
                   :class="{ 'company-toggle--on': socio.activo }"
@@ -315,10 +315,10 @@ async function resetClave() {
                   :aria-label="socio.activo ? 'Dar de baja al socio' : 'Reactivar socio'"
                   @click="toggleActive(socio)"
                 >
-                  <i />
+                  <i class="company-toggle__italic" />
                 </button>
               </td>
-              <td>
+              <td class="company-table__cell">
                 <button class="company-edit" type="button" @click="openEdit(socio)">
                   <Pencil :size="12" /> Editar
                 </button>
@@ -341,103 +341,103 @@ async function resetClave() {
       <button class="admin-modal__backdrop" type="button" aria-label="Cerrar" @click="closeEdit" />
       <section class="new-company-card admin-modal__card">
         <header class="new-company-card__header">
-          <h2 id="edit-socio-title">Editar socio</h2>
-          <p v-if="!editing.importadoMasivo">El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
-          <p v-else>Los campos en amarillo son datos provisionales de la carga masiva. Reemplazalos por el dato real.</p>
-          <p v-if="labelsCamposFicticios(editing.camposFicticios).length" class="socio-ficticios-list">
+          <h2 id="edit-socio-title" class="new-company-card__header-heading">Editar socio</h2>
+          <p v-if="!editing.importadoMasivo" class="new-company-card__header-text">El identificador de acceso (BPS o cédula) y el email de cuenta no se cambian aquí.</p>
+          <p v-else class="new-company-card__header-text">Los campos en amarillo son datos provisionales de la carga masiva. Reemplazalos por el dato real.</p>
+          <p v-if="labelsCamposFicticios(editing.camposFicticios).length" class="socio-ficticios-list new-company-card__header-text">
             Provisionales: {{ labelsCamposFicticios(editing.camposFicticios).join(', ') }}
           </p>
         </header>
         <form class="new-company-form" @submit.prevent="saveEdit">
-          <label class="new-company-form__wide">Razón social *
-            <input v-model="editForm.razonSocial" required>
+          <label class="new-company-form__wide new-company-form__label">Razón social *
+            <input v-model="editForm.razonSocial" class="new-company-form__input" required>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('bps') }">Identificador de acceso
-            <input v-if="fieldHint('bps')" v-model="editForm.bps" inputmode="numeric" placeholder="BPS real (mín. 9 dígitos)">
-            <input v-else :value="adminIdentificadorLabel(editing)" readonly>
-            <small v-if="fieldHint('bps')">Dato provisional. Completá el BPS real.</small>
-            <small v-else>Se define solo en el alta: BPS o cédula, no ambos.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('bps') }">Identificador de acceso
+            <input v-if="fieldHint('bps')" v-model="editForm.bps" class="field-ficticio__input new-company-form__input" inputmode="numeric" placeholder="BPS real (mín. 9 dígitos)">
+            <input v-else class="field-ficticio__input new-company-form__input" :value="adminIdentificadorLabel(editing)" readonly>
+            <small v-if="fieldHint('bps')" class="new-company-form__note">Dato provisional. Completá el BPS real.</small>
+            <small v-else class="new-company-form__note">Se define solo en el alta: BPS o cédula, no ambos.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('rut') }">RUT o cédula *
-            <input v-model="editForm.rut" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
-            <small v-if="fieldHint('rut')">Dato provisional. Completá el RUT o cédula real.</small>
-            <small v-else>Si no tiene RUT, va la cédula.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('rut') }">RUT o cédula *
+            <input v-model="editForm.rut" class="field-ficticio__input new-company-form__input" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
+            <small v-if="fieldHint('rut')" class="new-company-form__note">Dato provisional. Completá el RUT o cédula real.</small>
+            <small v-else class="new-company-form__note">Si no tiene RUT, va la cédula.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('telefono') }">Teléfono *
-            <input v-model="editForm.telefono" required>
-            <small v-if="fieldHint('telefono')">Dato provisional. Completá el teléfono real.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('telefono') }">Teléfono *
+            <input v-model="editForm.telefono" class="field-ficticio__input new-company-form__input" required>
+            <small v-if="fieldHint('telefono')" class="new-company-form__note">Dato provisional. Completá el teléfono real.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('emailUsuario') }">Email de cuenta
-            <input v-if="fieldHint('emailUsuario')" v-model="editForm.emailUsuario" type="email" placeholder="cuenta@empresa.com">
-            <input v-else :value="editing.emailUsuario || ''" type="email" readonly>
-            <small v-if="fieldHint('emailUsuario')">Dato provisional. Completá el email real de la cuenta.</small>
-            <small v-else>Con este correo se registró el usuario.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('emailUsuario') }">Email de cuenta
+            <input v-if="fieldHint('emailUsuario')" v-model="editForm.emailUsuario" class="field-ficticio__input new-company-form__input" type="email" placeholder="cuenta@empresa.com">
+            <input v-else class="field-ficticio__input new-company-form__input" :value="editing.emailUsuario || ''" type="email" readonly>
+            <small v-if="fieldHint('emailUsuario')" class="new-company-form__note">Dato provisional. Completá el email real de la cuenta.</small>
+            <small v-else class="new-company-form__note">Con este correo se registró el usuario.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('emailContacto') }">Email de contacto
-            <input v-model="editForm.emailContacto" type="email" placeholder="contacto@empresa.com">
-            <small v-if="fieldHint('emailContacto')">Dato provisional. Completá el email de contacto real.</small>
-            <small v-else>Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('emailContacto') }">Email de contacto
+            <input v-model="editForm.emailContacto" class="field-ficticio__input new-company-form__input" type="email" placeholder="contacto@empresa.com">
+            <small v-if="fieldHint('emailContacto')" class="new-company-form__note">Dato provisional. Completá el email de contacto real.</small>
+            <small v-else class="new-company-form__note">Con este correo se contacta a la firma. Puede ser el mismo u otro.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('fechaAlta') }">Fecha de alta en el CCISJ
-            <input v-model="editForm.fechaAlta" type="date">
-            <small v-if="fieldHint('fechaAlta')">Fecha provisional. Completá la fecha de afiliación real.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('fechaAlta') }">Fecha de alta en el CCISJ
+            <input v-model="editForm.fechaAlta" class="field-ficticio__input new-company-form__input" type="date">
+            <small v-if="fieldHint('fechaAlta')" class="new-company-form__note">Fecha provisional. Completá la fecha de afiliación real.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('fechaAniversario') }">Fecha de aniversario *
-            <input v-model="editForm.fechaAniversario" type="date" required>
-            <small v-if="fieldHint('fechaAniversario')">Fecha provisional (vino vacía en el Excel).</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('fechaAniversario') }">Fecha de aniversario *
+            <input v-model="editForm.fechaAniversario" class="field-ficticio__input new-company-form__input" type="date" required>
+            <small v-if="fieldHint('fechaAniversario')" class="new-company-form__note">Fecha provisional (vino vacía en el Excel).</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('rubro') }">Rubro *
-            <select v-model="editForm.rubroId" class="new-company-select" required>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('rubro') }">Rubro *
+            <select v-model="editForm.rubroId" class="new-company-select new-company-form__new-company-select new-company-form__select field-ficticio__select" required>
               <option value="" disabled>Seleccionar rubro</option>
               <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
             </select>
           </label>
-          <label>Estado de cuenta
-            <select v-model="editForm.estadoMorosidad" class="new-company-select">
+          <label class="new-company-form__label">Estado de cuenta
+            <select v-model="editForm.estadoMorosidad" class="new-company-select new-company-form__new-company-select new-company-form__select">
               <option value="AL_DIA">Al día</option>
               <option value="MOROSO">Moroso</option>
               <option value="INACTIVO">Inactivo</option>
             </select>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('calle') }">Calle *
-            <input v-model="editForm.calle" required>
-            <small v-if="fieldHint('calle')">Dato provisional. Completá la dirección real.</small>
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('calle') }">Calle *
+            <input v-model="editForm.calle" class="field-ficticio__input new-company-form__input" required>
+            <small v-if="fieldHint('calle')" class="new-company-form__note">Dato provisional. Completá la dirección real.</small>
           </label>
-          <label :class="{ 'field-ficticio': fieldHint('numero') }">Nro puerta
-            <input v-model="editForm.numero">
+          <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('numero') }">Nro puerta
+            <input v-model="editForm.numero" class="field-ficticio__input new-company-form__input">
           </label>
-          <label class="new-company-form__wide" :class="{ 'field-ficticio': fieldHint('localidad') }">Localidad / Zona *
-            <select v-model="editForm.localidad" class="new-company-select" required>
+          <label class="new-company-form__wide new-company-form__label" :class="{ 'field-ficticio': fieldHint('localidad') }">Localidad / Zona *
+            <select v-model="editForm.localidad" class="new-company-select new-company-form__new-company-select new-company-form__select field-ficticio__select" required>
               <option value="" disabled>Seleccionar localidad</option>
               <option v-for="localidad in localidadOptions" :key="localidad" :value="localidad">{{ localidad }}</option>
             </select>
           </label>
-          <label class="new-company-check">
-            <input v-model="editForm.esDirectivo" type="checkbox">
+          <label class="new-company-check new-company-form__label">
+            <input v-model="editForm.esDirectivo" class="new-company-check__input new-company-form__input" type="checkbox">
             Es directivo
           </label>
-          <fieldset v-if="editing.accesoHabilitado === false" class="new-company-form__wide socio-reset-clave">
-            <legend>Habilitar acceso</legend>
-            <p>Cuando BPS y email de cuenta sean reales, habilitá el ingreso y se envían las credenciales.</p>
-            <button class="company-edit" type="button" :disabled="accessBusy" @click="habilitarAcceso">
+          <fieldset v-if="editing.accesoHabilitado === false" class="new-company-form__wide socio-reset-clave admin-modal__card-fieldset new-company-form__fieldset">
+            <legend class="admin-modal__card-legend new-company-form__legend socio-reset-clave__legend">Habilitar acceso</legend>
+            <p class="admin-modal__card-text socio-reset-clave__text">Cuando BPS y email de cuenta sean reales, habilitá el ingreso y se envían las credenciales.</p>
+            <button class="company-edit socio-reset-clave__company-edit" type="button" :disabled="accessBusy" @click="habilitarAcceso">
               {{ accessBusy ? 'Habilitando...' : 'Habilitar acceso y enviar clave' }}
             </button>
           </fieldset>
-          <fieldset class="new-company-form__wide socio-reset-clave">
-            <legend>Restablecer clave provisional</legend>
-            <p>Se genera una clave temporal a partir de la razón social. El socio debe cambiarla dentro de las 24 horas desde que se le envía o se restablece; si vence, hay que generar una nueva.</p>
-            <button class="company-edit" type="button" :disabled="resetBusy" @click="resetClave">
+          <fieldset class="new-company-form__wide socio-reset-clave admin-modal__card-fieldset new-company-form__fieldset">
+            <legend class="admin-modal__card-legend new-company-form__legend socio-reset-clave__legend">Restablecer clave provisional</legend>
+            <p class="admin-modal__card-text socio-reset-clave__text">Se genera una clave temporal a partir de la razón social. El socio debe cambiarla dentro de las 24 horas desde que se le envía o se restablece; si vence, hay que generar una nueva.</p>
+            <button class="company-edit socio-reset-clave__company-edit" type="button" :disabled="resetBusy" @click="resetClave">
               {{ resetBusy ? 'Generando...' : 'Generar nueva clave' }}
             </button>
-            <label v-if="generatedPassword">Clave provisional generada
-              <PasswordInput :model-value="generatedPassword" readonly autocomplete="off" />
+            <label v-if="generatedPassword" class="new-company-form__label">Clave provisional generada
+              <PasswordInput input-class="new-company-form__input" :model-value="generatedPassword" readonly autocomplete="off" />
             </label>
-            <small v-if="resetHint">{{ resetHint }}</small>
+            <small v-if="resetHint" class="admin-modal__card-note new-company-form__note socio-reset-clave__note">{{ resetHint }}</small>
           </fieldset>
           <AppAlert v-if="editError">{{ editError }}</AppAlert>
           <footer class="new-company-form__footer">
-            <button class="new-company-cancel" type="button" @click="closeEdit">Cancelar</button>
-            <button class="new-company-submit" type="submit" :disabled="editBusy">
+            <button class="new-company-cancel new-company-form__footer-button" type="button" @click="closeEdit">Cancelar</button>
+            <button class="new-company-submit new-company-form__footer-button" type="submit" :disabled="editBusy">
               {{ editBusy ? 'Guardando...' : 'Guardar cambios' }}
             </button>
           </footer>
@@ -475,21 +475,20 @@ async function resetClave() {
   background: var(--t-bg-f7faf8);
 }
 
-.socio-reset-clave legend {
+.socio-reset-clave__legend {
   padding: 0 6px;
   color: var(--t-fg-2f3e35);
   font-size: 12px;
   font-weight: 800;
 }
 
-.socio-reset-clave p,
-.socio-reset-clave small {
+.socio-reset-clave__text,.socio-reset-clave__note {
   color: var(--t-fg-6a7685);
   font-size: 12px;
   font-weight: 500;
 }
 
-.socio-reset-clave .company-edit {
+.socio-reset-clave__company-edit {
   justify-self: start;
 }
 
@@ -523,8 +522,8 @@ async function resetClave() {
   font-weight: 600;
 }
 
-.field-ficticio input,
-.field-ficticio select {
+.field-ficticio .field-ficticio__input,
+.field-ficticio .field-ficticio__select {
   border-color: var(--t-line-ca8a04) !important;
   background: var(--t-bg-fffbeb);
 }

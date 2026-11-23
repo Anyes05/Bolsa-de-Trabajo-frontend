@@ -152,8 +152,8 @@ async function signInGoogle(credential: GoogleCredential) {
             <component :is="detail?.icon" :size="20" />
           </span>
           <div>
-            <h2>{{ detail?.title }}</h2>
-            <p>Ingresa con tus credenciales</p>
+            <h2 class="login-form__heading-heading">{{ detail?.title }}</h2>
+            <p class="login-form__heading-text">Ingresa con tus credenciales</p>
           </div>
         </header>
         <GoogleSignInButton v-if="role === 'POSTULANTE'" :disabled="busy" @credential="signInGoogle" />
@@ -161,6 +161,7 @@ async function signInGoogle(credential: GoogleCredential) {
           <input
             id="login-identifier"
             v-model="identifier"
+            class="app-field__input"
             :placeholder="detail?.placeholder"
             :inputmode="role === 'SOCIO' ? 'numeric' : 'email'"
             autocomplete="username"
@@ -172,6 +173,7 @@ async function signInGoogle(credential: GoogleCredential) {
           <PasswordInput
             id="login-password"
             v-model="password"
+            input-class="app-field__input"
             placeholder="Ingresa tu contraseña"
             autocomplete="current-password"
             required
@@ -187,7 +189,7 @@ async function signInGoogle(credential: GoogleCredential) {
           ¿No tienes cuenta? Crear postulante
         </RouterLink>
         <RouterLink class="login-form__register-link" to="/terminos">Términos y condiciones</RouterLink>
-        <AppButton type="submit" :loading="busy">
+        <AppButton class="login-form__app-button" type="submit" :loading="busy">
           {{ busy ? 'Ingresando...' : 'Ingresar' }}
           <ArrowRight :size="15" aria-hidden="true" />
         </AppButton>

@@ -56,7 +56,7 @@ canvas {
 
 .socio-header__title,
 .postulante-header__title,
-.admin-breadcrumb b {
+.admin-breadcrumb__bold {
   overflow-wrap: break-word;
   word-break: normal;
   hyphens: manual;
@@ -145,11 +145,11 @@ canvas {
     margin-top: 16px;
   }
 
-  .brand-panel__copy h1 {
+  .brand-panel__copy-title {
     font-size: clamp(1.35rem, 5vw, 1.75rem);
   }
 
-  .brand-panel__copy p {
+  .brand-panel__copy-text {
     max-width: none;
   }
 
@@ -231,7 +231,7 @@ canvas {
     gap: 12px;
   }
 
-  .admin-page__heading h1,
+  .admin-page__heading-title,
   .socio-header__title,
   .postulante-header__title {
     font-size: 1.25rem !important;
@@ -242,7 +242,8 @@ canvas {
     word-break: normal;
   }
 
-  .admin-page__heading p,
+  .admin-page__eyebrow,
+  .admin-page__heading-subtitle,
   .socio-header__subtitle,
   .postulante-header__subtitle {
     font-size: 0.9rem !important;
@@ -268,8 +269,7 @@ canvas {
     display: none;
   }
 
-  .admin-breadcrumb span:first-child,
-  .admin-breadcrumb strong {
+  .admin-breadcrumb__inline:first-child,.admin-breadcrumb__strong {
     display: none;
   }
 
@@ -317,7 +317,7 @@ canvas {
     flex-wrap: wrap;
   }
 
-  .company-actions .company-button {
+  .company-actions__company-button {
     flex: 1 1 140px;
   }
 
@@ -349,7 +349,7 @@ canvas {
     white-space: normal;
   }
 
-  .company-table td:last-child {
+  .company-table__cell:last-child {
     white-space: normal;
   }
 
@@ -470,15 +470,13 @@ canvas {
     gap: 10px;
   }
 
-  .profile-card-postulante__actions .app-button,
-  .socio-offer-card__actions .app-button,
-  .profile-modal__actions .app-button,
-  .registration-card__actions .app-button,
-  .registration-success__actions .app-button,
-  .new-company-form__footer .app-button,
-  .new-company-form__footer a,
-  .new-company-form__footer button,
-  .modal__actions .app-button {
+  .profile-card-postulante__actions-app-button,
+  .profile-modal__actions-app-button,
+  .registration-card__actions-app-button,
+  .registration-success__actions-app-button,
+  .new-company-form__footer-link,
+  .new-company-form__footer-button,
+  .modal__actions-app-button {
     width: 100%;
     justify-content: center;
   }
@@ -487,7 +485,7 @@ canvas {
     gap: 10px;
   }
 
-  .registration__header h1 {
+  .registration__header-title {
     font-size: 1.15rem;
   }
 
@@ -639,8 +637,7 @@ canvas {
     font-size: 0.75rem;
   }
 
-  .access-card__title,
-  .login-form__heading h2 {
+  .access-card__title,.login-form__heading-heading {
     font-size: 1.45rem;
   }
 
@@ -648,7 +645,7 @@ canvas {
     padding: 14px;
   }
 
-  .role-option__text small {
+  .role-option__text-note {
     font-size: 0.875rem;
   }
 
@@ -661,7 +658,7 @@ canvas {
     grid-template-columns: 1fr !important;
   }
 
-  .history-date-filters button {
+  .history-date-filters__button {
     width: 100%;
   }
 
@@ -669,7 +666,7 @@ canvas {
     grid-template-columns: 14px minmax(0, 1fr) !important;
   }
 
-  .history-entry aside {
+  .history-entry__aside {
     grid-column: 2;
     justify-items: start;
   }

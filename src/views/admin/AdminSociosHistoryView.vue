@@ -125,10 +125,10 @@ onMounted(load)
     <p v-if="loading" role="status">Cargando socios...</p>
     <div v-else class="subscription-layout">
       <section class="subscription-panel" aria-label="Seleccionar socio">
-        <label class="subscription-search"><Search :size="18" aria-hidden="true" /><input v-model="query" placeholder="Razón social, RUT / Cédula..." aria-label="Buscar socio para ver historial"></label>
+        <label class="subscription-search"><Search :size="18" aria-hidden="true" /><input v-model="query" class="subscription-search__input" placeholder="Razón social, RUT / Cédula..." aria-label="Buscar socio para ver historial"></label>
         <div class="subscription-companies">
           <button v-for="socio in filtered" :key="socio.id" type="button" class="subscription-company" :class="{ 'subscription-company--selected': selected?.id === socio.id }" :aria-pressed="selected?.id === socio.id" :disabled="saving" @click="select(socio)">
-            <span><strong>{{ socio.razonSocial }}</strong><small>{{ socio.rut || socio.cedula || 'Sin RUT / Cédula' }}</small></span>
+            <span><strong class="subscription-company__strong">{{ socio.razonSocial }}</strong><small class="subscription-company__note">{{ socio.rut || socio.cedula || 'Sin RUT / Cédula' }}</small></span>
             <span class="subscription-badge" :class="{ 'subscription-badge--inactive': !socio.activo }">{{ socio.activo ? 'Activo' : 'Inactivo' }}</span>
           </button>
           <p v-if="!filtered.length && !listado.loading.value" class="subscription-empty">No hay socios que coincidan con la búsqueda.</p>
@@ -144,33 +144,33 @@ onMounted(load)
       </section>
       <section class="subscription-panel subscription-detail" aria-live="polite">
         <template v-if="selected">
-          <header><h2>{{ selected.razonSocial }}</h2><p>El alta original y cada cambio de suscripción se conservan en este historial.</p></header>
-          <p v-if="detailLoading" role="status">Cargando historial...</p>
-          <AppAlert v-if="detailError">{{ detailError }} <button v-if="!saving" type="button" @click="select(selected)">Actualizar historial</button></AppAlert>
-          <AppAlert v-if="success" tone="success">{{ success }}</AppAlert>
+          <header><h2 class="subscription-detail__heading">{{ selected.razonSocial }}</h2><p class="subscription-detail__text">El alta original y cada cambio de suscripción se conservan en este historial.</p></header>
+          <p v-if="detailLoading" class="subscription-detail__text" role="status">Cargando historial...</p>
+          <AppAlert v-if="detailError" text-class="subscription-detail__text">{{ detailError }} <button v-if="!saving" type="button" @click="select(selected)">Actualizar historial</button></AppAlert>
+          <AppAlert v-if="success" text-class="subscription-detail__text" tone="success">{{ success }}</AppAlert>
           <template v-if="!detailLoading && !detailError">
             <div v-if="pending" class="subscription-resume">
-              <h3><CalendarDays :size="18" /> Reingreso programado</h3>
-              <p>Fecha: <strong>{{ formatDate(pending.fecha) }}</strong>. La suscripción se reactivará automáticamente ese día (hora de Uruguay).</p>
+              <h3 class="subscription-resume__subheading"><CalendarDays :size="18" /> Reingreso programado</h3>
+              <p class="subscription-detail__text">Fecha: <strong>{{ formatDate(pending.fecha) }}</strong>. La suscripción se reactivará automáticamente ese día (hora de Uruguay).</p>
               <AppButton variant="secondary" :disabled="saving" @click="cancel">Cancelar programación</AppButton>
             </div>
             <form v-else-if="!selected.activo" class="subscription-resume" @submit.prevent="resume">
-              <h3><CalendarDays :size="18" /> Reanudar suscripción</h3>
-              <label>Fecha de reingreso<input v-model="fecha" type="date" required :min="minimum" :disabled="saving"></label>
-              <p>Una fecha futura programa el reingreso. Se conservan las deudas y pagos; no se generan cuotas retroactivas automáticamente.</p>
-              <AppAlert v-if="invalidDate">La fecha no puede ser anterior a la última alta o baja.</AppAlert>
+              <h3 class="subscription-resume__subheading"><CalendarDays :size="18" /> Reanudar suscripción</h3>
+              <label class="subscription-resume__label">Fecha de reingreso<input v-model="fecha" class="subscription-resume__input" type="date" required :min="minimum" :disabled="saving"></label>
+              <p class="subscription-detail__text">Una fecha futura programa el reingreso. Se conservan las deudas y pagos; no se generan cuotas retroactivas automáticamente.</p>
+              <AppAlert v-if="invalidDate" text-class="subscription-detail__text">La fecha no puede ser anterior a la última alta o baja.</AppAlert>
               <AppButton type="submit" :loading="saving" :disabled="!fecha || invalidDate">Confirmar reingreso</AppButton>
             </form>
             <ol class="subscription-timeline">
-              <li v-for="entry in entries" :key="entry.id">
+              <li v-for="entry in entries" :key="entry.id" class="subscription-timeline__item">
                 <span class="subscription-dot" :class="`subscription-dot--${entry.tipo}`"></span>
-                <div><h3>{{ labels[entry.tipo] }}</h3><time :datetime="entry.fecha">{{ formatDate(entry.fecha) }}</time><small v-if="entry.tipo === 'REINGRESO_PROGRAMADO'">{{ states[entry.estado] }}</small><small v-if="entry.origen === 'MIGRACION'">Fecha recuperada de los datos existentes</small></div>
+                <div><h3 class="subscription-timeline__subheading">{{ labels[entry.tipo] }}</h3><time class="subscription-timeline__time" :datetime="entry.fecha">{{ formatDate(entry.fecha) }}</time><small v-if="entry.tipo === 'REINGRESO_PROGRAMADO'" class="subscription-timeline__note">{{ states[entry.estado] }}</small><small v-if="entry.origen === 'MIGRACION'" class="subscription-timeline__note">Fecha recuperada de los datos existentes</small></div>
               </li>
             </ol>
-            <p v-if="!entries.length" class="subscription-empty">No hay movimientos registrados.</p>
+            <p v-if="!entries.length" class="subscription-empty subscription-detail__text">No hay movimientos registrados.</p>
           </template>
         </template>
-        <div v-else class="subscription-empty"><History :size="32" /><h2>Historial de suscripción</h2><p>Seleccioná un socio para consultar sus fechas de alta, baja y reingreso.</p></div>
+        <div v-else class="subscription-empty"><History :size="32" /><h2 class="subscription-detail__heading">Historial de suscripción</h2><p class="subscription-detail__text">Seleccioná un socio para consultar sus fechas de alta, baja y reingreso.</p></div>
       </section>
     </div>
   </AdminShell>
@@ -180,30 +180,30 @@ onMounted(load)
 .subscription-layout { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
 .subscription-panel { min-width: 0; background: var(--t-bg-ffffff); border: 1px solid var(--t-line-dce8df); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 18px #163c2908; }
 .subscription-search { display: flex; align-items: center; gap: 10px; padding: 18px; color: var(--t-fg-64736a); border-bottom: 1px solid var(--t-line-e6eee8); }
-.subscription-search input { width: 100%; min-width: 0; border: 0; background: transparent; font: inherit; }
+.subscription-search__input { width: 100%; min-width: 0; border: 0; background: transparent; font: inherit; }
 .subscription-companies { max-height: 620px; overflow-y: auto; }
 .subscription-company { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; padding: 18px; border: 0; border-bottom: 1px solid var(--t-line-edf2ee); background: var(--t-bg-ffffff); text-align: left; color: var(--t-fg-24352b); cursor: pointer; }
 .subscription-company--selected, .subscription-company:hover { background: var(--t-bg-eaf5ee); }
-.subscription-company strong { display: block; overflow-wrap: anywhere; }
-.subscription-company small { display: block; margin-top: 6px; color: var(--t-fg-64736a); }
+.subscription-company__strong { display: block; overflow-wrap: anywhere; }
+.subscription-company__note { display: block; margin-top: 6px; color: var(--t-fg-64736a); }
 .subscription-badge { padding: 5px 9px; border-radius: 20px; font-size: .75rem; background: var(--t-bg-e4f3e9); color: var(--t-fg-087c42); }
 .subscription-badge--inactive { background: var(--t-bg-f7eee3); color: var(--t-fg-886322); }
 .subscription-detail { padding: 24px; display: grid; gap: 20px; }
-.subscription-detail h2 { margin: 0 0 8px; font-size: 1.2rem; color: var(--t-fg-24352b); overflow-wrap: anywhere; }
-.subscription-detail p { margin: 0; font-size: .875rem; line-height: 1.6; color: var(--t-fg-64736a); }
+.subscription-detail__heading { margin: 0 0 8px; font-size: 1.2rem; color: var(--t-fg-24352b); overflow-wrap: anywhere; }
+.subscription-detail__text { margin: 0; font-size: .875rem; line-height: 1.6; color: var(--t-fg-64736a); }
 .subscription-resume { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--t-line-dce8df); border-radius: 12px; background: var(--t-bg-f8fbf9); }
-.subscription-resume h3 { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--t-fg-087c42); font-size: 1rem; }
-.subscription-resume label { display: grid; gap: 8px; color: var(--t-fg-344b3d); font-size: .875rem; }
-.subscription-resume input { padding: 10px 12px; min-width: 0; border: 1px solid var(--t-line-cfd9d3); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-24352b); font: inherit; }
+.subscription-resume__subheading { display: flex; gap: 8px; align-items: center; margin: 0; color: var(--t-fg-087c42); font-size: 1rem; }
+.subscription-resume__label { display: grid; gap: 8px; color: var(--t-fg-344b3d); font-size: .875rem; }
+.subscription-resume__input { padding: 10px 12px; min-width: 0; border: 1px solid var(--t-line-cfd9d3); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-24352b); font: inherit; }
 .subscription-timeline { list-style: none; padding: 0; margin: 0; }
-.subscription-timeline li { position: relative; display: flex; gap: 16px; padding: 0 0 24px; }
-.subscription-timeline li:not(:last-child)::before { content: ''; position: absolute; top: 14px; bottom: 0; left: 5px; width: 2px; background: var(--t-bg-e0eae3); }
+.subscription-timeline__item { position: relative; display: flex; gap: 16px; padding: 0 0 24px; }
+.subscription-timeline__item:not(:last-child)::before { content: ''; position: absolute; top: 14px; bottom: 0; left: 5px; width: 2px; background: var(--t-bg-e0eae3); }
 .subscription-dot { z-index: 1; width: 12px; height: 12px; margin-top: 4px; flex-shrink: 0; border-radius: 50%; background: var(--t-bg-078844); }
 .subscription-dot--BAJA { background: var(--t-bg-b86145); }
 .subscription-dot--REINGRESO_PROGRAMADO { background: var(--t-bg-ad842b); }
-.subscription-timeline h3 { margin: 0 0 6px; color: var(--t-fg-24352b); font-size: .95rem; }
-.subscription-timeline time { color: var(--t-fg-344b3d); font-size: .875rem; }
-.subscription-timeline small { display: block; margin-top: 6px; color: var(--t-fg-718177); }
+.subscription-timeline__subheading { margin: 0 0 6px; color: var(--t-fg-24352b); font-size: .95rem; }
+.subscription-timeline__time { color: var(--t-fg-344b3d); font-size: .875rem; }
+.subscription-timeline__note { display: block; margin-top: 6px; color: var(--t-fg-718177); }
 .subscription-empty { padding: 24px; text-align: center; color: var(--t-fg-718177); }
 .subscription-layout :is(button,input):focus-visible { outline: 2px solid var(--t-line-078844); outline-offset: -2px; }
 @media (max-width: 850px) { .subscription-layout { grid-template-columns: 1fr; } .subscription-companies { max-height: 260px; } .subscription-detail { padding: 20px; } }

@@ -50,11 +50,11 @@ function openNotice(item: SocioNotificationItem) {
         </span>
         <div class="socio-notification-card__body">
           <header class="socio-notification-card__header">
-            <h2>{{ item.title }}</h2>
+            <h2 class="socio-notification-card__header-heading">{{ item.title }}</h2>
           </header>
-          <p>{{ item.body }}</p>
+          <p class="socio-notification-card__body-text">{{ item.body }}</p>
           <div class="socio-notification-card__meta">
-            <time>{{ item.date }}</time>
+            <time class="socio-notification-card__body-time">{{ item.date }}</time>
             <span class="socio-notification-card__read">Ver completo</span>
           </div>
         </div>

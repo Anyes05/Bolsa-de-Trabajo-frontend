@@ -11,7 +11,7 @@ type Callback = (response: { credential: string }) => void
 function apiFalsa() {
   const api = {
     initialize: vi.fn<(options: { client_id: string; nonce: string; callback: Callback }) => void>(),
-    renderButton: vi.fn<(container: HTMLElement, options: Record<string, string>) => void>(),
+    renderButton: vi.fn<(container: HTMLElement, options: Record<string, string | number>) => void>(),
   }
   vi.mocked(loadGoogleIdentity).mockResolvedValue(api)
   return api
@@ -33,7 +33,12 @@ describe('botón de acceso con Google', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
     vi.restoreAllMocks()
+    delete document.documentElement.dataset.theme
   })
+
+  function anchoDelContenedor(ancho: number) {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(ancho)
+  }
 
   it('muestra un error y no carga Google si falta el client id', async () => {
     vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '')
@@ -51,8 +56,35 @@ describe('botón de acceso con Google', () => {
     expect(api.initialize).toHaveBeenCalledWith(expect.objectContaining({ client_id: 'client-123', nonce: 'nonce-1-2-3-4' }))
     const [container, opciones] = api.renderButton.mock.calls[0]
     expect(container).toBe(wrapper.find('.google-sign-in > div').element)
-    expect(opciones).toEqual({ type: 'standard', theme: 'outline', size: 'large', text: 'signup_with' })
+    expect(opciones).toEqual({
+      type: 'standard', theme: 'outline', size: 'large', shape: 'rectangular', text: 'signup_with', logo_alignment: 'center',
+    })
+    expect(container.classList.contains('google-sign-in__button')).toBe(true)
     expect(wrapper.find('button').exists()).toBe(false)
+  })
+
+  it('dibuja el botón grande con el ancho del contenedor', async () => {
+    anchoDelContenedor(344)
+    const api = apiFalsa()
+    mount(GoogleSignInButton)
+    await flushPromises()
+    expect(api.renderButton.mock.calls[0][1]).toMatchObject({ size: 'large', shape: 'rectangular', width: 344, logo_alignment: 'center' })
+  })
+
+  it('limita el ancho a 400 px (el máximo de Google) cuando el contenedor es más ancho', async () => {
+    anchoDelContenedor(836)
+    const api = apiFalsa()
+    mount(GoogleSignInButton)
+    await flushPromises()
+    expect(api.renderButton.mock.calls[0][1].width).toBe(400)
+  })
+
+  it('usa el tema oscuro de Google cuando la app está en modo oscuro', async () => {
+    document.documentElement.dataset.theme = 'dark'
+    const api = apiFalsa()
+    mount(GoogleSignInButton)
+    await flushPromises()
+    expect(api.renderButton.mock.calls[0][1].theme).toBe('filled_black')
   })
 
   it('emite la credencial con el nonce y valida respuestas vacías', async () => {
@@ -112,11 +144,14 @@ describe('botón de acceso con Google', () => {
     const wrapper = mount(GoogleSignInButton)
     await flushPromises()
     expect(wrapper.text()).toContain('No se pudo conectar con Google.')
+    expect(wrapper.find('.google-sign-in__button').classes()).toContain('google-sign-in__button--hidden')
+    expect(wrapper.find('button').classes()).toEqual(expect.arrayContaining(['app-button', 'app-button--secondary', 'google-sign-in__retry']))
     const api = apiFalsa()
     await wrapper.find('button').trigger('click')
     await flushPromises()
     expect(api.renderButton).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).not.toContain('No se pudo conectar con Google.')
+    expect(wrapper.find('.google-sign-in__button').classes()).not.toContain('google-sign-in__button--hidden')
   })
 
   it('usa un mensaje genérico si la falla no es un Error', async () => {

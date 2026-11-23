@@ -151,31 +151,31 @@ onMounted(load)
         <button type="button" class="socio-application-card__main" @click="openProfile(application)">
           <span class="socio-application-card__avatar" aria-hidden="true">{{ application.initials }}</span>
           <div>
-            <h2>{{ application.fullName }}</h2>
-            <p>
+            <h2 class="socio-application-card__heading">{{ application.fullName }}</h2>
+            <p class="socio-application-card__text">
               Perfil: {{ application.profileName }}
-              <span>
+              <span class="socio-application-card__inline">
                 <MapPin :size="15" aria-hidden="true" />
                 {{ application.location }}
               </span>
-              <span v-if="application.phone">
+              <span v-if="application.phone" class="socio-application-card__inline">
                 <Phone :size="15" aria-hidden="true" />
                 {{ application.phone }}
               </span>
             </p>
-            <ul>
-              <li v-for="tag in application.tags" :key="tag">{{ tag }}</li>
+            <ul class="socio-application-card__list">
+              <li v-for="tag in application.tags" :key="tag" class="socio-application-card__item">{{ tag }}</li>
             </ul>
           </div>
         </button>
         <div class="socio-application-card__status" :class="`socio-application-card__status--${application.status.toLowerCase()}`">
           <label>
-            <span class="sr-only">Estado de {{ application.fullName }}</span>
-            <select :value="application.status" :disabled="savingId === application.id" @change="updateStatus(application, $event)">
+            <span class="sr-only socio-application-card__status-inline">Estado de {{ application.fullName }}</span>
+            <select class="socio-application-card__status-select" :value="application.status" :disabled="savingId === application.id" @change="updateStatus(application, $event)">
               <option v-for="status in allowedNextStatuses(application.status)" :key="status" :value="status">{{ statusLabels[status] }}</option>
             </select>
           </label>
-          <time>{{ application.appliedOn }}</time>
+          <time class="socio-application-card__status-time">{{ application.appliedOn }}</time>
         </div>
       </article>
       <p v-if="!loading && !applications.length" class="socio-applications__empty">Todavía no hay postulaciones para esta oferta.</p>

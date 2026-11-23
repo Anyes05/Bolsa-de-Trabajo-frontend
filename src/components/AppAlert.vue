@@ -5,9 +5,12 @@ import { computed } from 'vue'
 const props = withDefaults(defineProps<{
   tone?: 'error' | 'success' | 'info' | 'warning'
   title?: string
+  /** Clase BEM extra para el texto, definida por la vista que usa el componente. */
+  textClass?: string
 }>(), {
   tone: 'error',
   title: undefined,
+  textClass: undefined,
 })
 
 const icon = computed(() => {
@@ -25,7 +28,7 @@ const icon = computed(() => {
     </span>
     <div class="app-alert__body">
       <strong v-if="title" class="app-alert__title">{{ title }}</strong>
-      <p class="app-alert__text"><slot /></p>
+      <p class="app-alert__text" :class="textClass"><slot /></p>
     </div>
   </div>
 </template>

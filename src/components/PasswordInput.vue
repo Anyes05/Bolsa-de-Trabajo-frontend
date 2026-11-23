@@ -11,6 +11,8 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   readonly?: boolean
   minlength?: number
+  /** Clase BEM extra para el input interno, definida por la vista que usa el componente. */
+  inputClass?: string
 }>(), {
   id: undefined,
   placeholder: '',
@@ -19,6 +21,7 @@ const props = withDefaults(defineProps<{
   disabled: false,
   readonly: false,
   minlength: undefined,
+  inputClass: undefined,
 })
 
 const emit = defineEmits<{
@@ -36,6 +39,8 @@ function onInput(event: Event) {
   <div class="password-field">
     <input
       :id="props.id"
+      class="password-field__input"
+      :class="props.inputClass"
       :value="props.modelValue"
       :type="show ? 'text' : 'password'"
       :placeholder="props.placeholder"

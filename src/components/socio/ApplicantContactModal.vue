@@ -54,27 +54,27 @@ onUnmounted(() => {
 
       <div class="profile-modal__body">
         <section class="profile-modal__block">
-          <h3>Resultado del proceso</h3>
-          <p>Seleccione la oferta laboral y el resultado que desea comunicar. El postulante recibirá un correo y una notificación con los datos de la vacante y de su empresa.</p>
-          <p v-if="loadingApplications" role="status">Cargando postulaciones...</p>
-          <AppAlert v-else-if="!applications.length && !error" tone="info">Este postulante no tiene postulaciones disponibles a ofertas de su empresa.</AppAlert>
+          <h3 class="profile-modal__block-subheading">Resultado del proceso</h3>
+          <p class="profile-modal__block-text">Seleccione la oferta laboral y el resultado que desea comunicar. El postulante recibirá un correo y una notificación con los datos de la vacante y de su empresa.</p>
+          <p v-if="loadingApplications" class="profile-modal__block-text" role="status">Cargando postulaciones...</p>
+          <AppAlert v-else-if="!applications.length && !error" text-class="profile-modal__block-text" tone="info">Este postulante no tiene postulaciones disponibles a ofertas de su empresa.</AppAlert>
           <label v-else-if="applications.length" class="contact-offer">
             Oferta laboral
-            <select v-model="selectedOfferId" :disabled="loading || loadingApplications">
+            <select v-model="selectedOfferId" class="contact-offer__select" :disabled="loading || loadingApplications">
               <option disabled value="">Seleccione una oferta</option>
               <option v-for="application in applications" :key="application.ofertaId" :value="application.ofertaId">
                 {{ application.ofertaTitulo }} — {{ application.perfilNombre }}
               </option>
             </select>
           </label>
-          <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
+          <AppAlert v-if="error" text-class="profile-modal__block-text" tone="error">{{ error }}</AppAlert>
         </section>
       </div>
 
       <footer class="profile-modal__actions">
-        <AppButton variant="secondary" type="button" :disabled="loading" @click="emit('close')">Cancelar</AppButton>
-        <AppButton variant="secondary" type="button" :loading="loading" :disabled="loadingApplications || !selectedApplication" @click="selectedApplication && emit('notify', false, selectedApplication)">No seleccionado</AppButton>
-        <AppButton variant="primary" type="button" :loading="loading" :disabled="loadingApplications || !selectedApplication" @click="selectedApplication && emit('notify', true, selectedApplication)">Seleccionado</AppButton>
+        <AppButton class="profile-modal__actions-app-button" variant="secondary" type="button" :disabled="loading" @click="emit('close')">Cancelar</AppButton>
+        <AppButton class="profile-modal__actions-app-button" variant="secondary" type="button" :loading="loading" :disabled="loadingApplications || !selectedApplication" @click="selectedApplication && emit('notify', false, selectedApplication)">No seleccionado</AppButton>
+        <AppButton class="profile-modal__actions-app-button" variant="primary" type="button" :loading="loading" :disabled="loadingApplications || !selectedApplication" @click="selectedApplication && emit('notify', true, selectedApplication)">Seleccionado</AppButton>
       </footer>
     </section>
   </dialog>
@@ -82,5 +82,5 @@ onUnmounted(() => {
 
 <style scoped>
 .contact-offer { display: grid; gap: 8px; margin-top: 16px; }
-.contact-offer select { width: 100%; padding: 10px 12px; border: 1px solid var(--t-line-d8e2db); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-243028); font: inherit; }
+.contact-offer__select { width: 100%; padding: 10px 12px; border: 1px solid var(--t-line-d8e2db); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-243028); font: inherit; }
 </style>

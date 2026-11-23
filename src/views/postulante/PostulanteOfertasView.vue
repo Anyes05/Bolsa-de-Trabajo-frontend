@@ -147,7 +147,7 @@ onMounted(load)
 
       <label v-if="activeTab === 'activas'" class="postulante-offers__filter">
         Filtrar por rubro
-        <select v-model.number="selectedSectorId">
+        <select v-model.number="selectedSectorId" class="postulante-offers__filter-select">
           <option :value="null">Todos los rubros</option>
           <option v-for="sector in sectors" :key="sector.id" :value="sector.id">{{ sector.nombreRubro }}</option>
         </select>
@@ -192,16 +192,16 @@ onMounted(load)
       <div v-else class="postulante-offers__list">
         <article v-for="application in applications" :key="application.id" class="application-card">
           <header class="application-card__header">
-            <div class="application-card__icon" aria-hidden="true">▦</div>
-            <div>
-              <h2 class="application-card__title">{{ application.ofertaTitulo }}</h2>
-              <p class="application-card__company">{{ application.socioNombre }} · {{ application.rubro }}</p>
+            <div class="application-card__icon application-card__header-box" aria-hidden="true">▦</div>
+            <div class="application-card__header-box">
+              <h2 class="application-card__title application-card__header-heading">{{ application.ofertaTitulo }}</h2>
+              <p class="application-card__company application-card__header-text">{{ application.socioNombre }} · {{ application.rubro }}</p>
             </div>
           </header>
 
           <div class="application-card__body">
-            <p><strong>Perfil utilizado:</strong> <span class="application-card__pill">{{ application.perfilNombre || 'Perfil anterior' }}</span></p>
-            <p>{{ formatDate(application.fecha) }}<template v-if="application.cvNombre"> · CV: {{ application.cvNombre }}</template></p>
+            <p class="application-card__body-text"><strong>Perfil utilizado:</strong> <span class="application-card__pill">{{ application.perfilNombre || 'Perfil anterior' }}</span></p>
+            <p class="application-card__body-text">{{ formatDate(application.fecha) }}<template v-if="application.cvNombre"> · CV: {{ application.cvNombre }}</template></p>
           </div>
 
           <footer class="application-card__footer">
@@ -216,7 +216,7 @@ onMounted(load)
       <div class="modal__backdrop" @click="closeApplyModal"></div>
       <section class="modal__panel">
         <header class="modal__header">
-          <h3 id="apply-modal-title">Seleccionar Perfil</h3>
+          <h3 id="apply-modal-title" class="modal__header-subheading">Seleccionar Perfil</h3>
         </header>
         <p class="modal__text">Para postularte a <b>{{ selectedOffer.titulo }}</b>, elige el perfil y su CV.</p>
 
@@ -230,14 +230,14 @@ onMounted(load)
             <input v-model="selectedProfileId" type="radio" :value="profile.id">
             <div>
               <strong>{{ profile.nombre }}</strong>
-              <small>{{ profile.rubros.join(' · ') || 'Sin rubros indicados' }} · {{ cvs.find((cv) => cv.perfilLaboralId === profile.id)?.nombreArchivo || 'CV del perfil' }}</small>
+              <small class="modal-profile__note">{{ profile.rubros.join(' · ') || 'Sin rubros indicados' }} · {{ cvs.find((cv) => cv.perfilLaboralId === profile.id)?.nombreArchivo || 'CV del perfil' }}</small>
             </div>
           </label>
         </div>
 
         <footer class="modal__actions">
-          <AppButton variant="secondary" @click="closeApplyModal">Cancelar</AppButton>
-          <AppButton :loading="submitting" :disabled="!selectedProfileCv" @click="confirmApply">Confirmar Postulación</AppButton>
+          <AppButton class="modal__actions-app-button" variant="secondary" @click="closeApplyModal">Cancelar</AppButton>
+          <AppButton class="modal__actions-app-button" :loading="submitting" :disabled="!selectedProfileCv" @click="confirmApply">Confirmar Postulación</AppButton>
         </footer>
       </section>
     </div>

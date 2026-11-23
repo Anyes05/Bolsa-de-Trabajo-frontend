@@ -34,7 +34,7 @@ defineEmits<{
       · Libreta: {{ profile.license }}
     </p>
     <footer class="profile-card__actions">
-      <AppButton variant="secondary" type="button" @click="$emit('view')">Ver perfil completo</AppButton>
+      <AppButton class="profile-card__actions-app-button" variant="secondary" type="button" @click="$emit('view')">Ver perfil completo</AppButton>
     </footer>
   </article>
 </template>

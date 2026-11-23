@@ -1,15 +1,20 @@
+export type GoogleButtonOptions = {
+  type: 'standard'
+  theme: 'outline' | 'filled_black'
+  size: 'large'
+  shape: 'rectangular' | 'pill'
+  text: 'signin_with' | 'signup_with'
+  logo_alignment: 'left' | 'center'
+  width?: number
+}
+
 type GoogleIdentityApi = {
   initialize(options: {
     client_id: string
     nonce: string
     callback: (response: { credential: string }) => void
   }): void
-  renderButton(container: HTMLElement, options: {
-    type: 'standard'
-    theme: 'outline'
-    size: 'large'
-    text: 'signin_with' | 'signup_with'
-  }): void
+  renderButton(container: HTMLElement, options: GoogleButtonOptions): void
 }
 
 declare global {

@@ -47,9 +47,9 @@ onMounted(() => {
           <Megaphone :size="16" />
         </span>
         <div>
-          <h2>{{ item.titulo }}</h2>
-          <p>{{ item.cuerpo }}</p>
-          <time>{{ item.createdAt ? new Date(item.createdAt).toLocaleString('es-UY') : '' }}</time>
+          <h2 class="postulante-notification-card__heading">{{ item.titulo }}</h2>
+          <p class="postulante-notification-card__text">{{ item.cuerpo }}</p>
+          <time class="postulante-notification-card__time">{{ item.createdAt ? new Date(item.createdAt).toLocaleString('es-UY') : '' }}</time>
         </div>
       </article>
     </section>
@@ -71,14 +71,14 @@ onMounted(() => {
   cursor: pointer;
 }
 .postulante-notification-card--unread { border-color: var(--t-line-9fbfad); background: var(--t-bg-f4faf6); }
-.postulante-notification-card h2 { margin: 0 0 6px; font-size: 1rem; color: var(--t-fg-16382b); }
-.postulante-notification-card p {
+.postulante-notification-card__heading { margin: 0 0 6px; font-size: 1rem; color: var(--t-fg-16382b); }
+.postulante-notification-card__text {
   margin: 0 0 8px;
   white-space: pre-wrap;
   color: var(--t-fg-4d5b55);
   font-size: 0.92rem;
 }
-.postulante-notification-card time { color: var(--t-fg-7a8781); font-size: 0.82rem; }
+.postulante-notification-card__time { color: var(--t-fg-7a8781); font-size: 0.82rem; }
 .postulante-notification-card__icon {
   display: grid;
   place-items: center;

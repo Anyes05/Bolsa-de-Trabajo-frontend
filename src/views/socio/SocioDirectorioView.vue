@@ -74,23 +74,23 @@ function statusLabel(value: EstadoMorosidad) {
     <section class="socio-directory">
       <div class="socio-directory__banner">
         <div>
-          <h2>
+          <h2 class="socio-directory__banner-heading">
             <Landmark :size="18" aria-hidden="true" />
             Comisión Directiva – Vista restringida
           </h2>
-          <p>Como miembro directivo puedes ver el directorio de todos los socios del CCISJ, incluidos los inactivos.</p>
+          <p class="socio-directory__banner-text">Como miembro directivo puedes ver el directorio de todos los socios del CCISJ, incluidos los inactivos.</p>
         </div>
-        <span>Solo directivos</span>
+        <span class="socio-directory__banner-inline">Solo directivos</span>
       </div>
 
       <div class="socio-directory__toolbar">
         <label class="socio-directory__search">
           <Search :size="16" aria-hidden="true" />
-          <input v-model="query" type="search" placeholder="Buscar socio, email, rubro o teléfono...">
+          <input v-model="query" class="socio-directory__search-input" type="search" placeholder="Buscar socio, email, rubro o teléfono...">
         </label>
         <label class="socio-directory__filter">
           <span class="visually-hidden">Filtrar por estado</span>
-          <select v-model="status">
+          <select v-model="status" class="socio-directory__filter-select">
             <option v-for="option in statusOptions" :key="option" :value="option">
               {{ option === 'Todos' ? 'Todos' : statusLabel(option) }}
             </option>
@@ -108,23 +108,23 @@ function statusLabel(value: EstadoMorosidad) {
         <table class="socio-directory__table">
           <thead>
             <tr>
-              <th>Razón social</th>
-              <th>Rubro</th>
-              <th>Teléfono</th>
-              <th>Email</th>
-              <th>Estado</th>
+              <th class="socio-directory__table-header-cell">Razón social</th>
+              <th class="socio-directory__table-header-cell">Rubro</th>
+              <th class="socio-directory__table-header-cell">Teléfono</th>
+              <th class="socio-directory__table-header-cell">Email</th>
+              <th class="socio-directory__table-header-cell">Estado</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="member in filtered" :key="member.id">
-              <td>
-                <strong>{{ member.razonSocial }}</strong>
-                <small>Alta: {{ formatDate(member.fechaAlta) }}</small>
+              <td class="socio-directory__table-cell">
+                <strong class="socio-directory__table-strong">{{ member.razonSocial }}</strong>
+                <small class="socio-directory__table-note">Alta: {{ formatDate(member.fechaAlta) }}</small>
               </td>
-              <td>{{ member.rubro || '—' }}</td>
-              <td>{{ member.telefono || '—' }}</td>
-              <td>{{ member.email || '—' }}</td>
-              <td>
+              <td class="socio-directory__table-cell">{{ member.rubro || '—' }}</td>
+              <td class="socio-directory__table-cell">{{ member.telefono || '—' }}</td>
+              <td class="socio-directory__table-cell">{{ member.email || '—' }}</td>
+              <td class="socio-directory__table-cell">
                 <span class="socio-directory__status" :class="statusClass(member.estadoMorosidad)">
                   {{ statusLabel(member.estadoMorosidad) }}
                 </span>

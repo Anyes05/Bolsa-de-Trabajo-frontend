@@ -235,7 +235,7 @@ function logout() {
         <section class="socio-profile__identity">
           <div class="socio-profile__photo">
             <label class="socio-profile__avatar">
-              <img v-if="auth.photoUrl" :src="auth.photoUrl" alt="Foto de perfil">
+              <img v-if="auth.photoUrl" class="socio-profile__avatar-image" :src="auth.photoUrl" alt="Foto de perfil">
               <template v-else>{{ initials }}</template>
               <input type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden" :disabled="uploadingPhoto" @change="onPhotoChange">
               <span class="socio-profile__camera" aria-hidden="true">
@@ -253,76 +253,76 @@ function logout() {
             </div>
           </div>
           <div>
-            <h2>{{ displayName }}</h2>
-            <p>{{ emailCuenta }}</p>
+            <h2 class="socio-profile__identity-heading">{{ displayName }}</h2>
+            <p class="socio-profile__identity-text">{{ emailCuenta }}</p>
             <span class="socio-profile__badge">{{ auth.isDirectivo ? 'Socio directivo' : 'Socio' }}</span>
             <small v-if="photoError" class="socio-profile__photo-error">{{ photoError }}</small>
           </div>
         </section>
 
         <form class="socio-profile__card" @submit.prevent="saveProfile">
-          <h3>Datos de la firma</h3>
-          <label>
+          <h3 class="socio-profile__card-subheading">Datos de la firma</h3>
+          <label class="socio-profile__card-label">
             Razón social *
-            <input v-model="form.razonSocial" required>
+            <input v-model="form.razonSocial" class="socio-profile__card-input" required>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             Email de cuenta
-            <input :value="emailCuenta" type="email" disabled>
-            <small>No editable</small>
+            <input class="socio-profile__card-input" :value="emailCuenta" type="email" disabled>
+            <small class="socio-profile__card-note">No editable</small>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             BPS / Cédula
-            <input :value="identificador" disabled>
-            <small>Identificador de acceso (no editable)</small>
+            <input class="socio-profile__card-input" :value="identificador" disabled>
+            <small class="socio-profile__card-note">Identificador de acceso (no editable)</small>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             RUT / Cédula
-            <input :value="socio.rut || ''" disabled>
-            <small>No editable</small>
+            <input class="socio-profile__card-input" :value="socio.rut || ''" disabled>
+            <small class="socio-profile__card-note">No editable</small>
           </label>
 
-          <h4>Contacto y ubicación</h4>
+          <h4 class="socio-profile__card-minor-heading">Contacto y ubicación</h4>
           <div class="socio-profile__row">
-            <label>
+            <label class="socio-profile__card-label">
               Teléfono *
-              <input v-model="form.telefono" required>
+              <input v-model="form.telefono" class="socio-profile__card-input" required>
             </label>
-            <label>
+            <label class="socio-profile__card-label">
               Email de contacto
-              <input v-model="form.emailContacto" type="email">
+              <input v-model="form.emailContacto" class="socio-profile__card-input" type="email">
             </label>
           </div>
-          <label>
+          <label class="socio-profile__card-label">
             Rubro *
-            <select v-model="form.rubroId" required>
+            <select v-model="form.rubroId" class="socio-profile__card-select" required>
               <option value="" disabled>Seleccionar rubro</option>
               <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
             </select>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             Fecha de aniversario *
-            <input v-model="form.fechaAniversario" type="date" required>
+            <input v-model="form.fechaAniversario" class="socio-profile__card-input" type="date" required>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             Calle *
-            <input v-model="form.calle" required>
+            <input v-model="form.calle" class="socio-profile__card-input" required>
           </label>
           <div class="socio-profile__row">
-            <label>
+            <label class="socio-profile__card-label">
               Nro puerta
-              <input v-model="form.numero">
+              <input v-model="form.numero" class="socio-profile__card-input">
             </label>
-            <label>
+            <label class="socio-profile__card-label">
               Localidad / Zona *
-              <select v-model="form.localidad" required>
+              <select v-model="form.localidad" class="socio-profile__card-select" required>
                 <option value="" disabled>Seleccionar localidad</option>
                 <option v-for="localidad in localidadOptions" :key="localidad" :value="localidad">{{ localidad }}</option>
               </select>
             </label>
           </div>
           <p v-if="savedHint" class="socio-profile__hint">{{ savedHint }}</p>
-          <AppButton type="submit" :disabled="saving">
+          <AppButton class="socio-profile__card-app-button" type="submit" :disabled="saving">
             {{ saving ? 'Guardando...' : 'Guardar cambios' }}
           </AppButton>
         </form>
@@ -333,8 +333,8 @@ function logout() {
               <Mail :size="18" />
             </span>
             <div>
-              <h3>Correos del CCISJ</h3>
-              <p>{{ silenciarCorreos ? 'Correos silenciados' : 'Recibís comunicados y aniversarios por correo' }}</p>
+              <h3 class="socio-profile__card-subheading socio-profile__mail-subheading">Correos del CCISJ</h3>
+              <p class="socio-profile__mail-heading-text">{{ silenciarCorreos ? 'Correos silenciados' : 'Recibís comunicados y aniversarios por correo' }}</p>
             </div>
           </div>
           <div class="socio-profile__mail-control">
@@ -349,7 +349,7 @@ function logout() {
               :disabled="mailBusy"
               @click="toggleSilenciarCorreos"
             >
-              <span />
+              <span class="socio-profile__switch-inline" />
             </button>
           </div>
           <p id="silenciar-correos-help" class="socio-profile__mail-help">
@@ -362,32 +362,32 @@ function logout() {
         </section>
 
         <form class="socio-profile__card" @submit.prevent="updatePassword">
-          <h3>Cambiar contraseña</h3>
-          <label>
+          <h3 class="socio-profile__card-subheading">Cambiar contraseña</h3>
+          <label class="socio-profile__card-label">
             Contraseña actual *
-            <PasswordInput v-model="password.current" autocomplete="current-password" />
+            <PasswordInput v-model="password.current" input-class="socio-profile__card-input" autocomplete="current-password" />
           </label>
           <div class="socio-profile__row">
-            <label>
+            <label class="socio-profile__card-label">
               Nueva contraseña *
-              <PasswordInput v-model="password.next" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
-              <small>{{ PASSWORD_HINT }}</small>
+              <PasswordInput v-model="password.next" input-class="socio-profile__card-input" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+              <small class="socio-profile__card-note">{{ PASSWORD_HINT }}</small>
             </label>
-            <label>
+            <label class="socio-profile__card-label">
               Repetir contraseña *
-              <PasswordInput v-model="password.repeat" autocomplete="new-password" />
+              <PasswordInput v-model="password.repeat" input-class="socio-profile__card-input" autocomplete="new-password" />
             </label>
           </div>
           <AppAlert v-if="passwordError">{{ passwordError }}</AppAlert>
           <p v-if="passwordHint" class="socio-profile__hint">{{ passwordHint }}</p>
-          <AppButton type="submit" :disabled="!canUpdatePassword || passwordBusy">
+          <AppButton class="socio-profile__card-app-button" type="submit" :disabled="!canUpdatePassword || passwordBusy">
             {{ passwordBusy ? 'Actualizando...' : 'Actualizar contraseña' }}
           </AppButton>
         </form>
 
         <section class="socio-profile__logout">
-          <h3>Cerrar sesión</h3>
-          <p>Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
+          <h3 class="socio-profile__logout-subheading">Cerrar sesión</h3>
+          <p class="socio-profile__logout-text">Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
           <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesión</button>
         </section>
       </template>

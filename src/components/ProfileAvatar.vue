@@ -13,12 +13,12 @@ function imageFailed() {
 
 <template>
   <span class="profile-avatar" aria-hidden="true">
-    <img v-if="src && !failed" :src="src" alt="" loading="lazy" @error="imageFailed">
+    <img v-if="src && !failed" class="profile-avatar__image socio-header__avatar-image" :src="src" alt="" loading="lazy" @error="imageFailed">
     <template v-else>{{ initials }}</template>
   </span>
 </template>
 
 <style scoped>
 .profile-avatar { overflow: hidden; flex-shrink: 0; }
-.profile-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.profile-avatar__image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 </style>

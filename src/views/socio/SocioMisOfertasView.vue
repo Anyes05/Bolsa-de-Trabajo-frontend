@@ -133,7 +133,7 @@ function displayStatus(status: JobOffer['estado']) {
         <button
           v-for="filter in (['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA'] as const)"
           :key="filter"
-          class="cash-filter"
+          class="cash-filter offers-status-filters__cash-filter"
           :class="{ 'cash-filter--active': statusFilter === filter }"
           type="button"
           @click="statusFilter = filter"
@@ -150,7 +150,7 @@ function displayStatus(status: JobOffer['estado']) {
       >
         <div class="socio-offer-card__body">
           <header class="socio-offer-card__header">
-            <h2>{{ offer.titulo }}</h2>
+            <h2 class="socio-offer-card__header-heading">{{ offer.titulo }}</h2>
             <span class="socio-offer-card__status">{{ displayStatus(offer.estado) }}</span>
           </header>
           <p class="socio-offer-card__meta">

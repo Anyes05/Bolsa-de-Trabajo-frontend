@@ -91,7 +91,7 @@ async function toggleActivo(rubro: RubroAdmin) {
 <template>
   <AdminShell active="rubros" title="Gestión de Rubros" subtitle="Catálogo usado por socios, ofertas y postulantes">
     <div class="company-actions">
-      <button class="company-button company-button--primary" type="button" @click="openCreate">
+      <button class="company-button company-button--primary company-actions__company-button" type="button" @click="openCreate">
         <Plus :size="16" /> Nuevo Rubro
       </button>
     </div>
@@ -99,9 +99,9 @@ async function toggleActivo(rubro: RubroAdmin) {
     <section class="company-search-card">
       <label class="company-search">
         <Search :size="17" />
-        <input v-model="query" placeholder="Buscar rubro...">
+        <input v-model="query" class="company-search__input" placeholder="Buscar rubro...">
       </label>
-      <span>{{ activos }} activos · {{ listado.data.value.pagina.totalElements }} listados</span>
+      <span class="company-search-card__inline">{{ activos }} activos · {{ listado.data.value.pagina.totalElements }} listados</span>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -113,24 +113,24 @@ async function toggleActivo(rubro: RubroAdmin) {
         <table class="company-table">
           <thead>
             <tr>
-              <th>Rubro</th>
-              <th>Estado</th>
-              <th>Activo</th>
-              <th>Acciones</th>
+              <th class="company-table__header-cell">Rubro</th>
+              <th class="company-table__header-cell">Estado</th>
+              <th class="company-table__header-cell">Activo</th>
+              <th class="company-table__header-cell">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="rubro in filtered" :key="rubro.id">
-              <td class="company-table__name">
-                <strong>{{ rubro.nombreRubro }}</strong>
-                <small>ID {{ rubro.id }}</small>
+          <tbody class="company-table__tbody">
+            <tr v-for="rubro in filtered" :key="rubro.id" class="company-table__row">
+              <td class="company-table__name company-table__cell">
+                <strong class="company-table__name-strong">{{ rubro.nombreRubro }}</strong>
+                <small class="company-table__name-note">ID {{ rubro.id }}</small>
               </td>
-              <td>
+              <td class="company-table__cell">
                 <span class="cash-status" :class="rubro.activo ? 'cash-status--green' : 'cash-status--red'">
-                  <i />{{ rubro.activo ? 'Activo' : 'Inactivo' }}
+                  <i class="cash-status__italic" />{{ rubro.activo ? 'Activo' : 'Inactivo' }}
                 </span>
               </td>
-              <td>
+              <td class="company-table__cell">
                 <button
                   class="company-toggle"
                   :class="{ 'company-toggle--on': rubro.activo }"
@@ -138,10 +138,10 @@ async function toggleActivo(rubro: RubroAdmin) {
                   :aria-label="rubro.activo ? 'Desactivar rubro' : 'Activar rubro'"
                   @click="toggleActivo(rubro)"
                 >
-                  <i />
+                  <i class="company-toggle__italic" />
                 </button>
               </td>
-              <td>
+              <td class="company-table__cell">
                 <button class="company-edit" type="button" @click="openEdit(rubro)">
                   <Pencil :size="12" /> Editar
                 </button>
@@ -164,20 +164,20 @@ async function toggleActivo(rubro: RubroAdmin) {
       <button class="admin-modal__backdrop" type="button" aria-label="Cerrar" @click="closeForm" />
       <section class="new-company-card admin-modal__card rubro-form-card">
         <header class="new-company-card__header">
-          <h2>
+          <h2 class="new-company-card__header-heading">
             <Tags :size="18" aria-hidden="true" />
             {{ editing ? 'Editar rubro' : 'Nuevo rubro' }}
           </h2>
-          <p>Este catálogo alimenta socios, ofertas laborales y perfiles de postulantes.</p>
+          <p class="new-company-card__header-text">Este catálogo alimenta socios, ofertas laborales y perfiles de postulantes.</p>
         </header>
         <form class="new-company-form" @submit.prevent="save">
-          <label class="new-company-form__wide">Nombre del rubro *
-            <input v-model="form.nombreRubro" required maxlength="100" placeholder="Ej: Atención al Cliente">
+          <label class="new-company-form__wide new-company-form__label">Nombre del rubro *
+            <input v-model="form.nombreRubro" class="new-company-form__input" required maxlength="100" placeholder="Ej: Atención al Cliente">
           </label>
           <AppAlert v-if="formError">{{ formError }}</AppAlert>
           <footer class="new-company-form__footer">
-            <button class="new-company-cancel" type="button" @click="closeForm">Cancelar</button>
-            <button class="new-company-submit" type="submit" :disabled="formBusy">
+            <button class="new-company-cancel new-company-form__footer-button" type="button" @click="closeForm">Cancelar</button>
+            <button class="new-company-submit new-company-form__footer-button" type="submit" :disabled="formBusy">
               {{ formBusy ? 'Guardando...' : (editing ? 'Guardar cambios' : 'Crear rubro') }}
             </button>
           </footer>
@@ -192,7 +192,7 @@ async function toggleActivo(rubro: RubroAdmin) {
   width: min(100%, 520px);
 }
 
-.new-company-card__header h2 {
+.new-company-card__header-heading {
   display: inline-flex;
   align-items: center;
   gap: 8px;

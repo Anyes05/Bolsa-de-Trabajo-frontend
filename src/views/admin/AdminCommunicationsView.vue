@@ -149,43 +149,45 @@ function formatNoticeDate(value: string | null | undefined) {
     <div class="communications-layout">
       <div class="communications-main">
         <section class="communication-editor">
-          <h2>Redactar Comunicado</h2>
+          <h2 class="communication-editor__heading">Redactar Comunicado</h2>
           <p class="communication-draft">
             <CheckCircle2 :size="14" />
             Se envía a la vez por la campana interna y por Gmail al <strong>email de contacto</strong> del socio (si no hay, usa el email de cuenta).
           </p>
-          <label>Título del Comunicado
-            <input v-model="title" maxlength="180" placeholder="Asunto del aviso institucional">
+          <label class="communication-editor__label">Título del Comunicado
+            <input v-model="title" class="communication-editor__input" maxlength="180" placeholder="Asunto del aviso institucional">
           </label>
-          <label>Mensaje
-            <textarea v-model="message" rows="6" placeholder="Redactá el contenido del comunicado..." />
+          <label class="communication-editor__label">Mensaje
+            <textarea v-model="message" class="communication-editor__textarea" rows="6" placeholder="Redactá el contenido del comunicado..." />
           </label>
-          <fieldset>
-            <legend>Destinatarios</legend>
+          <fieldset class="communication-editor__fieldset">
+            <legend class="communication-editor__legend">Destinatarios</legend>
             <div class="communication-audiences">
               <button
+                class="communication-audiences__button"
                 type="button"
                 :class="{ 'communication-audience--active': audience === 'SOCIOS' }"
                 @click="audience = 'SOCIOS'"
               >
                 Todos los Socios
-                <small>{{ counts.sociosActivos }} socios activos</small>
+                <small class="communication-audiences__note">{{ counts.sociosActivos }} socios activos</small>
               </button>
               <button
+                class="communication-audiences__button"
                 type="button"
                 :class="{ 'communication-audience--active': audience === 'SOLO_DIRECTIVOS' }"
                 @click="audience = 'SOLO_DIRECTIVOS'"
               >
                 Socios Directivos
-                <small>Comisión directiva ({{ counts.sociosDirectivos }})</small>
+                <small class="communication-audiences__note">Comisión directiva ({{ counts.sociosDirectivos }})</small>
               </button>
             </div>
           </fieldset>
-          <label class="communication-popup-option">
-            <input v-model="asPopup" type="checkbox">
-            <span>
-              <strong>Mostrar como ventana emergente</strong>
-              <small>Al ingresar, el socio verá un pop-up bloqueante hasta cerrarlo (además de la campana y el mail).</small>
+          <label class="communication-popup-option communication-editor__label">
+            <input v-model="asPopup" class="communication-editor__input communication-popup-option__input" type="checkbox">
+            <span class="communication-popup-option__inline">
+              <strong class="communication-popup-option__strong">Mostrar como ventana emergente</strong>
+              <small class="communication-popup-option__note">Al ingresar, el socio verá un pop-up bloqueante hasta cerrarlo (además de la campana y el mail).</small>
             </span>
           </label>
           <AppAlert v-if="error">{{ error }}</AppAlert>
@@ -197,25 +199,25 @@ function formatNoticeDate(value: string | null | undefined) {
         </section>
 
         <section class="communication-previous">
-          <h3>Comunicados anteriores</h3>
-          <p v-if="loading" class="communication-empty">Cargando historial...</p>
-          <p v-else-if="!notices.length" class="communication-empty">Todavía no hay comunicados enviados.</p>
+          <h3 class="communication-previous__subheading">Comunicados anteriores</h3>
+          <p v-if="loading" class="communication-empty communication-previous__text">Cargando historial...</p>
+          <p v-else-if="!notices.length" class="communication-empty communication-previous__text">Todavía no hay comunicados enviados.</p>
           <div
             v-for="notice in notices"
             :key="notice.id"
-            class="communication-previous__row"
+            class="communication-previous__row communication-previous__box"
             :class="{ 'communication-previous__row--active': selectedId === notice.id }"
           >
-            <span><FileText :size="15" /></span>
-            <p>
-              <strong>{{ notice.titulo }}</strong>
-              <small>
+            <span class="communication-previous__inline"><FileText :size="15" /></span>
+            <p class="communication-previous__text">
+              <strong class="communication-previous__strong">{{ notice.titulo }}</strong>
+              <small class="communication-previous__note">
                 {{ formatNoticeDate(notice.fechaPublicacion) }}
                 · Audiencia: {{ destinatarioLabel(notice.destinatario) }}
                 <template v-if="notice.popup"> · Pop-up</template>
               </small>
             </p>
-            <button type="button" class="communication-previous__view" @click.stop="viewNotice(notice)">
+            <button type="button" class="communication-previous__view communication-previous__button" @click.stop="viewNotice(notice)">
               <Eye :size="14" /> Ver
             </button>
           </div>
@@ -224,29 +226,29 @@ function formatNoticeDate(value: string | null | undefined) {
 
       <aside class="communication-previews">
         <section class="preview-window">
-          <header><i /><i /><i /><span>Panel del Socio (Vista Web)</span></header>
-          <div>
-            <h3>VISTA EN CAMPANA / PORTAL</h3>
-            <article>
-              <strong>📢 {{ previewTitle }}</strong>
-              <small>Audiencia: {{ previewAudience }} · {{ previewDate }}</small>
-              <p>{{ previewMessage }}</p>
-              <b>{{ asPopup || selectedNotice?.popup ? 'Pop-up bloqueante + campana' : 'Notificación interna' }}</b>
+          <header class="preview-window__header"><i class="preview-window__italic" /><i class="preview-window__italic" /><i class="preview-window__italic" /><span class="preview-window__inline">Panel del Socio (Vista Web)</span></header>
+          <div class="preview-window__box">
+            <h3 class="preview-window__subheading">VISTA EN CAMPANA / PORTAL</h3>
+            <article class="preview-window__article">
+              <strong class="preview-window__strong">📢 {{ previewTitle }}</strong>
+              <small class="preview-window__note">Audiencia: {{ previewAudience }} · {{ previewDate }}</small>
+              <p class="preview-window__text">{{ previewMessage }}</p>
+              <b class="preview-window__bold">{{ asPopup || selectedNotice?.popup ? 'Pop-up bloqueante + campana' : 'Notificación interna' }}</b>
             </article>
           </div>
         </section>
         <section class="preview-window preview-email">
-          <header><i /><i /><i /><span>Correo Electrónico Entrante</span></header>
-          <div>
-            <small>De: <b>CCISJ</b></small>
-            <small>Para: {{ previewAudience }}</small>
-            <small>Asunto: CCISJ: {{ previewTitle }}</small>
-            <article>
-              <strong>CENTRO COMERCIAL E INDUSTRIAL DE SAN JOSÉ</strong>
-              <h3>{{ previewTitle }}</h3>
-              <p>{{ previewMessage }}</p>
-              <b>También disponible en tu campana de notificaciones</b>
-              <small>Artigas 532, San José de Mayo, Uruguay</small>
+          <header class="preview-window__header"><i class="preview-window__italic" /><i class="preview-window__italic" /><i class="preview-window__italic" /><span class="preview-window__inline">Correo Electrónico Entrante</span></header>
+          <div class="preview-email__box preview-window__box">
+            <small class="preview-email__note">De: <b>CCISJ</b></small>
+            <small class="preview-email__note">Para: {{ previewAudience }}</small>
+            <small class="preview-email__note">Asunto: CCISJ: {{ previewTitle }}</small>
+            <article class="preview-email__article preview-window__article">
+              <strong class="preview-email__strong preview-window__strong">CENTRO COMERCIAL E INDUSTRIAL DE SAN JOSÉ</strong>
+              <h3 class="preview-email__subheading preview-window__subheading">{{ previewTitle }}</h3>
+              <p class="preview-window__text">{{ previewMessage }}</p>
+              <b class="preview-email__bold preview-window__bold">También disponible en tu campana de notificaciones</b>
+              <small class="preview-email__note preview-window__note">Artigas 532, San José de Mayo, Uruguay</small>
             </article>
           </div>
         </section>
@@ -266,8 +268,8 @@ function formatNoticeDate(value: string | null | undefined) {
         <header class="notification-modal__header">
           <div>
             <p class="notification-modal__eyebrow">Comunicado enviado</p>
-            <h2 :id="`admin-comunicado-${openedNotice.id}`">{{ openedNotice.titulo }}</h2>
-            <time>{{ formatNoticeDate(openedNotice.fechaPublicacion) }}</time>
+            <h2 :id="`admin-comunicado-${openedNotice.id}`" class="notification-modal__header-heading">{{ openedNotice.titulo }}</h2>
+            <time class="notification-modal__header-time">{{ formatNoticeDate(openedNotice.fechaPublicacion) }}</time>
             <p class="communication-modal__meta">
               Audiencia: {{ destinatarioLabel(openedNotice.destinatario) }}
               <template v-if="openedNotice.popup"> · Pop-up bloqueante</template>
@@ -279,12 +281,12 @@ function formatNoticeDate(value: string | null | undefined) {
           </button>
         </header>
         <div class="notification-modal__body">
-          <p>{{ openedNotice.contenido }}</p>
+          <p class="notification-modal__body-text">{{ openedNotice.contenido }}</p>
         </div>
         <footer class="notification-modal__footer communication-modal__footer">
           <div v-if="openedNotice.correosDestino?.length" class="communication-modal__emails">
-            <strong>Correos destino</strong>
-            <span>{{ openedNotice.correosDestino.join(', ') }}</span>
+            <strong class="communication-modal__emails-strong">Correos destino</strong>
+            <span class="communication-modal__emails-inline">{{ openedNotice.correosDestino.join(', ') }}</span>
           </div>
           <button type="button" class="notification-modal__done" @click="closeNotice">Cerrar</button>
         </footer>
@@ -352,11 +354,11 @@ function formatNoticeDate(value: string | null | undefined) {
   font-size: 0.85rem;
 }
 
-.communication-modal__emails strong {
+.communication-modal__emails-strong {
   color: var(--t-fg-1f2a24);
 }
 
-.communication-modal__emails span {
+.communication-modal__emails-inline {
   overflow-wrap: anywhere;
 }
 </style>

@@ -55,17 +55,17 @@ async function confirmarSesion() {
       <BrandLogo variant="green" />
     </header>
     <section class="permanencia__card" aria-labelledby="permanencia-title">
-      <h1 id="permanencia-title">Permanencia en la Bolsa</h1>
-      <p v-if="busy">Confirmando tu permanencia...</p>
-      <AppAlert v-else-if="error" tone="error">{{ error }}</AppAlert>
+      <h1 id="permanencia-title" class="permanencia__card-title">Permanencia en la Bolsa</h1>
+      <p v-if="busy" class="permanencia__card-text">Confirmando tu permanencia...</p>
+      <AppAlert v-else-if="error" text-class="permanencia__card-text" tone="error">{{ error }}</AppAlert>
       <template v-else-if="done">
-        <AppAlert tone="success">Listo. Tu perfil vuelve a estar visible para las empresas socias.</AppAlert>
+        <AppAlert text-class="permanencia__card-text" tone="success">Listo. Tu perfil vuelve a estar visible para las empresas socias.</AppAlert>
         <AppButton type="button" @click="router.push(auth.isAuthenticated ? { name: 'postulante-bolsa-empleo' } : { name: 'access' })">
           Continuar
         </AppButton>
       </template>
       <template v-else-if="auth.isAuthenticated && auth.role === 'POSTULANTE'">
-        <p>Confirmá que querés seguir formando parte de la Bolsa de Empleo del CCISJ.</p>
+        <p class="permanencia__card-text">Confirmá que querés seguir formando parte de la Bolsa de Empleo del CCISJ.</p>
         <AppButton type="button" :disabled="busy" @click="confirmarSesion">Confirmar permanencia</AppButton>
       </template>
     </section>
@@ -92,11 +92,11 @@ async function confirmarSesion() {
   background: var(--t-bg-ffffff);
   box-shadow: 0 18px 40px rgb(16 48 36 / 8%);
 }
-.permanencia__card h1 {
+.permanencia__card-title {
   margin: 0;
   font-family: var(--font-display);
   color: var(--t-fg-16382b);
   font-size: 1.6rem;
 }
-.permanencia__card p { margin: 0; color: var(--t-fg-4d5b55); line-height: 1.45; }
+.permanencia__card-text { margin: 0; color: var(--t-fg-4d5b55); line-height: 1.45; }
 </style>

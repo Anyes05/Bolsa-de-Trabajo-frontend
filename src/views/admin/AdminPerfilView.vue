@@ -106,7 +106,7 @@ function logout() {
       <section class="socio-profile__identity" aria-label="Perfil del administrador">
         <div class="socio-profile__photo">
           <label class="socio-profile__avatar">
-            <img v-if="auth.photoUrl" :src="auth.photoUrl" alt="Foto de perfil">
+            <img v-if="auth.photoUrl" class="socio-profile__avatar-image" :src="auth.photoUrl" alt="Foto de perfil">
             <template v-else>{{ initials }}</template>
             <input type="file" accept="image/jpeg,image/png,image/webp" class="visually-hidden" aria-label="Cambiar foto desde el avatar" :disabled="uploadingPhoto" @change="onPhotoChange">
             <span class="socio-profile__camera" aria-hidden="true"><Camera :size="14" /></span>
@@ -122,57 +122,57 @@ function logout() {
           </div>
         </div>
         <div>
-          <h2>{{ displayName }}</h2>
-          <p>{{ auth.email }}</p>
+          <h2 class="socio-profile__identity-heading">{{ displayName }}</h2>
+          <p class="socio-profile__identity-text">{{ auth.email }}</p>
           <span class="socio-profile__badge">Administrador</span>
-          <p class="socio-profile__hint">JPG, PNG o WEBP de hasta 5 MB.</p>
+          <p class="socio-profile__hint socio-profile__identity-text">JPG, PNG o WEBP de hasta 5 MB.</p>
         </div>
       </section>
       <AppAlert v-if="photoError" tone="error">{{ photoError }}</AppAlert>
       <AppAlert v-if="photoMessage" tone="success">{{ photoMessage }}</AppAlert>
 
       <section class="socio-profile__card" aria-labelledby="admin-account-title">
-        <h3 id="admin-account-title">Datos de la cuenta</h3>
+        <h3 id="admin-account-title" class="socio-profile__card-subheading">Datos de la cuenta</h3>
         <div class="socio-profile__row">
-          <label>
+          <label class="socio-profile__card-label">
             Correo de acceso
-            <input :value="auth.email || ''" type="email" readonly>
-            <small>El correo de acceso no se modifica desde esta pantalla.</small>
+            <input class="socio-profile__card-input" :value="auth.email || ''" type="email" readonly>
+            <small class="socio-profile__card-note">El correo de acceso no se modifica desde esta pantalla.</small>
           </label>
-          <label>
+          <label class="socio-profile__card-label">
             Rol
-            <input value="Administrador" readonly>
-            <small>Permisos de administración del sistema CCISJ.</small>
+            <input class="socio-profile__card-input" value="Administrador" readonly>
+            <small class="socio-profile__card-note">Permisos de administración del sistema CCISJ.</small>
           </label>
         </div>
       </section>
 
       <form class="socio-profile__card" aria-labelledby="admin-password-title" @submit.prevent="updatePassword">
-        <h3 id="admin-password-title">Cambiar contraseña</h3>
-        <label for="admin-current-password">Contraseña actual *</label>
-        <PasswordInput id="admin-current-password" v-model="password.current" autocomplete="current-password" required :disabled="passwordBusy" />
+        <h3 id="admin-password-title" class="socio-profile__card-subheading">Cambiar contraseña</h3>
+        <label class="socio-profile__card-label" for="admin-current-password">Contraseña actual *</label>
+        <PasswordInput id="admin-current-password" v-model="password.current" input-class="socio-profile__card-input" autocomplete="current-password" required :disabled="passwordBusy" />
         <div class="socio-profile__row">
           <div>
-            <label for="admin-new-password">Nueva contraseña *</label>
-            <PasswordInput id="admin-new-password" v-model="password.next" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required :minlength="8" :disabled="passwordBusy" />
-            <small>{{ PASSWORD_HINT }}</small>
+            <label class="socio-profile__card-label" for="admin-new-password">Nueva contraseña *</label>
+            <PasswordInput id="admin-new-password" v-model="password.next" input-class="socio-profile__card-input" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required :minlength="8" :disabled="passwordBusy" />
+            <small class="socio-profile__card-note">{{ PASSWORD_HINT }}</small>
           </div>
           <div>
-            <label for="admin-repeat-password">Repetir contraseña *</label>
-            <PasswordInput id="admin-repeat-password" v-model="password.repeat" autocomplete="new-password" required :disabled="passwordBusy" />
-            <small v-if="password.repeat && !passwordsMatch">Las contraseñas no coinciden.</small>
+            <label class="socio-profile__card-label" for="admin-repeat-password">Repetir contraseña *</label>
+            <PasswordInput id="admin-repeat-password" v-model="password.repeat" input-class="socio-profile__card-input" autocomplete="new-password" required :disabled="passwordBusy" />
+            <small v-if="password.repeat && !passwordsMatch" class="socio-profile__card-note">Las contraseñas no coinciden.</small>
           </div>
         </div>
         <AppAlert v-if="passwordError" tone="error">{{ passwordError }}</AppAlert>
         <AppAlert v-if="passwordMessage" tone="success">{{ passwordMessage }}</AppAlert>
-        <AppButton type="submit" :disabled="!canUpdatePassword" :loading="passwordBusy">
+        <AppButton class="socio-profile__card-app-button" type="submit" :disabled="!canUpdatePassword" :loading="passwordBusy">
           {{ passwordBusy ? 'Actualizando...' : 'Actualizar contraseña' }}
         </AppButton>
       </form>
 
       <section class="socio-profile__logout">
-        <h3>Cerrar sesión</h3>
-        <p>Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
+        <h3 class="socio-profile__logout-subheading">Cerrar sesión</h3>
+        <p class="socio-profile__logout-text">Al cerrar sesión deberás ingresar tus credenciales nuevamente.</p>
         <button type="button" class="socio-profile__logout-button" @click="logout">Cerrar sesión</button>
       </section>
     </div>

@@ -35,9 +35,9 @@ const emit = defineEmits<{
 <template>
   <article class="applicant-group-card">
     <header class="applicant-group-card__header">
-      <ProfileAvatar class="applicant-group-card__avatar" :src="applicant.profiles[0]?.fotoUrl" :initials="applicant.initials" />
+      <ProfileAvatar class="applicant-group-card__avatar applicant-group-card__header-inline" :src="applicant.profiles[0]?.fotoUrl" :initials="applicant.initials" />
       <div class="applicant-group-card__identity">
-        <h3>
+        <h3 class="applicant-group-card__header-subheading">
           {{ applicant.fullName }}
           <span
             v-if="showEstado && applicant.estado"
@@ -50,12 +50,12 @@ const emit = defineEmits<{
             {{ applicant.busquedaPausada ? 'Búsqueda pausada' : applicant.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
           </span>
         </h3>
-        <a class="applicant-group-card__contact" :href="`mailto:${applicant.email}`">
+        <a class="applicant-group-card__contact applicant-group-card__header-link" :href="`mailto:${applicant.email}`">
           <Mail :size="15" aria-hidden="true" />{{ applicant.email }}
         </a>
         <a
           v-if="applicant.phone"
-          class="applicant-group-card__contact"
+          class="applicant-group-card__contact applicant-group-card__header-link"
           :href="`tel:${applicant.phone.replace(/\s+/g, '')}`"
         >
           <Phone :size="15" aria-hidden="true" />{{ applicant.phone }}
@@ -64,15 +64,15 @@ const emit = defineEmits<{
           <Phone :size="15" aria-hidden="true" />Sin teléfono
         </span>
       </div>
-      <span class="applicant-group-card__count">
+      <span class="applicant-group-card__count applicant-group-card__header-inline">
         {{ applicant.profiles.length }} {{ applicant.profiles.length === 1 ? 'perfil' : 'perfiles' }}
       </span>
     </header>
     <footer class="applicant-group-card__actions">
-      <AppButton variant="secondary" type="button" @click="emit('toggle')">
+      <AppButton class="applicant-group-card__actions-app-button" variant="secondary" type="button" @click="emit('toggle')">
         Ver sus perfiles <ChevronDown :size="15" :class="{ 'applicant-group-card__chevron--open': expanded }" />
       </AppButton>
-      <AppButton v-if="showContact" variant="primary" type="button" @click="emit('contact')">
+      <AppButton v-if="showContact" class="applicant-group-card__actions-app-button" variant="primary" type="button" @click="emit('contact')">
         <Mail :size="14" aria-hidden="true" /> Contactar
       </AppButton>
     </footer>

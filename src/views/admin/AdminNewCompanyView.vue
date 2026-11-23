@@ -162,13 +162,13 @@ async function sendCredentialsMail() {
     </template>
     <section v-if="createdSocio" class="new-company-card">
       <header class="new-company-card__header">
-        <h2>Socio creado correctamente</h2>
-        <p>Comunícale esta clave provisional a <strong>{{ createdSocio.razonSocial }}</strong>. Deberá cambiarla en las primeras 24 horas al ingresar. No se podrá volver a ver.</p>
+        <h2 class="new-company-card__header-heading">Socio creado correctamente</h2>
+        <p class="new-company-card__header-text">Comunícale esta clave provisional a <strong>{{ createdSocio.razonSocial }}</strong>. Deberá cambiarla en las primeras 24 horas al ingresar. No se podrá volver a ver.</p>
       </header>
       <div class="new-company-form">
-        <label class="new-company-form__wide">Clave provisional generada
-          <PasswordInput :model-value="createdSocio.passwordProvisional ?? ''" readonly autocomplete="off" />
-          <small>Se generó automáticamente a partir de la razón social.</small>
+        <label class="new-company-form__wide new-company-form__label">Clave provisional generada
+          <PasswordInput input-class="new-company-form__input" :model-value="createdSocio.passwordProvisional ?? ''" readonly autocomplete="off" />
+          <small class="new-company-form__note">Se generó automáticamente a partir de la razón social.</small>
         </label>
         <p class="new-company-form__wide">
           Al dar de alta se intenta enviar automáticamente las credenciales a
@@ -179,8 +179,8 @@ async function sendCredentialsMail() {
         <AppAlert v-if="mailError">{{ mailError }}</AppAlert>
         <p v-if="mailSent" class="socio-profile__hint">{{ mailSent }}</p>
         <footer class="new-company-form__footer">
-          <button class="new-company-cancel" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado</button>
-          <button class="new-company-submit" type="button" :disabled="mailBusy" @click="sendCredentialsMail">
+          <button class="new-company-cancel new-company-form__footer-button" type="button" @click="router.push({ name: 'admin-socios' })">Ir al listado</button>
+          <button class="new-company-submit new-company-form__footer-button" type="button" :disabled="mailBusy" @click="sendCredentialsMail">
             <Mail :size="15" aria-hidden="true" />
             {{ mailBusy ? 'Enviando...' : (mailSent ? 'Reenviar mail al socio' : 'Reintentar envío de mail') }}
           </button>
@@ -189,76 +189,77 @@ async function sendCredentialsMail() {
     </section>
     <section v-else class="new-company-card">
       <header class="new-company-card__header">
-        <h2>Ficha del Socio</h2>
-        <p>Registra al socio con BPS o cédula (una sola opción, es su usuario de ingreso). El RUT o la cédula fiscal se carga aparte. Elige también la fecha de alta en el CCISJ. La clave provisional se genera automáticamente.</p>
+        <h2 class="new-company-card__header-heading">Ficha del Socio</h2>
+        <p class="new-company-card__header-text">Registra al socio con BPS o cédula (una sola opción, es su usuario de ingreso). El RUT o la cédula fiscal se carga aparte. Elige también la fecha de alta en el CCISJ. La clave provisional se genera automáticamente.</p>
       </header>
       <form class="new-company-form" @submit.prevent="submit">
-        <label>Registrar con *
-          <select v-model="form.tipoIdentificador" class="new-company-select" required @change="onTipoChange">
+        <label class="new-company-form__label">Registrar con *
+          <select v-model="form.tipoIdentificador" class="new-company-select new-company-form__new-company-select new-company-form__select" required @change="onTipoChange">
             <option value="BPS">Número de BPS</option>
             <option value="CEDULA">Número de cédula</option>
           </select>
         </label>
-        <label>{{ identificadorLabel }} *
+        <label class="new-company-form__label">{{ identificadorLabel }} *
           <input
             v-model="form.identificador"
+            class="new-company-form__input"
             inputmode="numeric"
             required
             :placeholder="form.tipoIdentificador === 'CEDULA' ? '12345678' : '123456789'"
           >
-          <small v-if="form.tipoIdentificador === 'BPS'">El socio ingresará al sistema con este número (mínimo 9 dígitos). No puede tener BPS y cédula a la vez.</small>
-          <small v-else>El socio ingresará al sistema con este mismo número. No puede tener BPS y cédula a la vez.</small>
+          <small v-if="form.tipoIdentificador === 'BPS'" class="new-company-form__note">El socio ingresará al sistema con este número (mínimo 9 dígitos). No puede tener BPS y cédula a la vez.</small>
+          <small v-else class="new-company-form__note">El socio ingresará al sistema con este mismo número. No puede tener BPS y cédula a la vez.</small>
         </label>
-        <label>Fecha de alta en el CCISJ *
-          <input v-model="form.fechaAlta" type="date" required>
+        <label class="new-company-form__label">Fecha de alta en el CCISJ *
+          <input v-model="form.fechaAlta" class="new-company-form__input" type="date" required>
         </label>
-        <label>Email de cuenta *
-          <input v-model="form.email" type="email" required placeholder="cuenta@empresa.com">
-          <small>Con este correo se registra el usuario en el sistema.</small>
+        <label class="new-company-form__label">Email de cuenta *
+          <input v-model="form.email" class="new-company-form__input" type="email" required placeholder="cuenta@empresa.com">
+          <small class="new-company-form__note">Con este correo se registra el usuario en el sistema.</small>
         </label>
-        <label class="new-company-form__wide">Razón social *
-          <input v-model="form.razonSocial" required>
+        <label class="new-company-form__wide new-company-form__label">Razón social *
+          <input v-model="form.razonSocial" class="new-company-form__input" required>
         </label>
-        <label>RUT o cédula *
-          <input v-model="form.rut" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
-          <small>Si no tiene RUT, ingresa la cédula. Distinto del BPS/cédula de ingreso al sistema.</small>
+        <label class="new-company-form__label">RUT o cédula *
+          <input v-model="form.rut" class="new-company-form__input" inputmode="numeric" required placeholder="RUT (12 dígitos) o cédula (8 dígitos)">
+          <small class="new-company-form__note">Si no tiene RUT, ingresa la cédula. Distinto del BPS/cédula de ingreso al sistema.</small>
         </label>
-        <label>Teléfono *
-          <input v-model="form.telefono" required>
+        <label class="new-company-form__label">Teléfono *
+          <input v-model="form.telefono" class="new-company-form__input" required>
         </label>
-        <label>Email de contacto
-          <input v-model="form.emailContacto" type="email" placeholder="contacto@empresa.com">
-          <small>Con este correo se contacta a la firma. Puede coincidir con el de cuenta.</small>
+        <label class="new-company-form__label">Email de contacto
+          <input v-model="form.emailContacto" class="new-company-form__input" type="email" placeholder="contacto@empresa.com">
+          <small class="new-company-form__note">Con este correo se contacta a la firma. Puede coincidir con el de cuenta.</small>
         </label>
-        <label>Fecha de aniversario *
-          <input v-model="form.fechaAniversario" type="date" required>
+        <label class="new-company-form__label">Fecha de aniversario *
+          <input v-model="form.fechaAniversario" class="new-company-form__input" type="date" required>
         </label>
-        <label>Rubro *
-          <select v-model="form.rubroId" class="new-company-select" required>
+        <label class="new-company-form__label">Rubro *
+          <select v-model="form.rubroId" class="new-company-select new-company-form__new-company-select new-company-form__select" required>
             <option value="" disabled>Seleccionar rubro</option>
             <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
           </select>
         </label>
-        <label>Calle *
-          <input v-model="form.calle" required>
+        <label class="new-company-form__label">Calle *
+          <input v-model="form.calle" class="new-company-form__input" required>
         </label>
-        <label>Nro puerta
-          <input v-model="form.numero">
+        <label class="new-company-form__label">Nro puerta
+          <input v-model="form.numero" class="new-company-form__input">
         </label>
-        <label class="new-company-form__wide">Localidad / Zona *
-          <select v-model="form.localidad" class="new-company-select" required>
+        <label class="new-company-form__wide new-company-form__label">Localidad / Zona *
+          <select v-model="form.localidad" class="new-company-select new-company-form__new-company-select new-company-form__select" required>
             <option value="" disabled>Seleccionar localidad</option>
             <option v-for="localidad in LOCALIDADES_SAN_JOSE" :key="localidad" :value="localidad">{{ localidad }}</option>
           </select>
         </label>
-        <label class="new-company-check">
-          <input v-model="form.esDirectivo" type="checkbox">
+        <label class="new-company-check new-company-form__label">
+          <input v-model="form.esDirectivo" class="new-company-check__input new-company-form__input" type="checkbox">
           Es directivo
         </label>
         <AppAlert v-if="error">{{ error }}</AppAlert>
         <footer class="new-company-form__footer">
-          <RouterLink class="new-company-cancel" to="/admin/socios">Cancelar</RouterLink>
-          <button class="new-company-submit" type="submit" :disabled="busy">
+          <RouterLink class="new-company-cancel new-company-form__footer-link" to="/admin/socios">Cancelar</RouterLink>
+          <button class="new-company-submit new-company-form__footer-button" type="submit" :disabled="busy">
             {{ busy ? 'Creando...' : 'Crear Socio' }}
           </button>
         </footer>

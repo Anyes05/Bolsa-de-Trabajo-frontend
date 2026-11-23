@@ -124,45 +124,45 @@ onMounted(load)
       <p v-if="loading">Cargando datos personales...</p>
       <form v-else-if="profile" class="personal-profile__form" @submit.prevent="save">
         <div class="personal-profile__photo">
-          <img v-if="profile.fotoUrl" :src="profile.fotoUrl" alt="Foto de perfil">
-          <span v-else>{{ profile.nombreCompleto.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() }}</span>
-          <label><input type="file" accept="image/jpeg,image/png,image/webp" :disabled="uploadingPhoto" @change="onPhotoChange"><span>{{ uploadingPhoto ? 'Subiendo foto...' : 'Cambiar foto' }}</span></label>
+          <img v-if="profile.fotoUrl" class="personal-profile__photo-image" :src="profile.fotoUrl" alt="Foto de perfil">
+          <span v-else class="personal-profile__photo-inline">{{ profile.nombreCompleto.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() }}</span>
+          <label class="personal-profile__photo-label"><input class="personal-profile__photo-input personal-profile__form-input" type="file" accept="image/jpeg,image/png,image/webp" :disabled="uploadingPhoto" @change="onPhotoChange"><span>{{ uploadingPhoto ? 'Subiendo foto...' : 'Cambiar foto' }}</span></label>
         </div>
-        <label>Nombre y apellido *
-          <input v-model="profile.nombreCompleto" required placeholder="Como figura en tu documento">
+        <label class="personal-profile__form-label">Nombre y apellido *
+          <input v-model="profile.nombreCompleto" class="personal-profile__form-input" required placeholder="Como figura en tu documento">
         </label>
-        <label>Correo electrónico
-          <input :value="profile.email" disabled>
-          <small>No se puede modificar desde aquí</small>
+        <label class="personal-profile__form-label">Correo electrónico
+          <input class="personal-profile__form-input" :value="profile.email" disabled>
+          <small class="personal-profile__form-note">No se puede modificar desde aquí</small>
         </label>
-        <label>Cédula de identidad
-          <input v-model="profile.cedulaIdentidad" inputmode="numeric" placeholder="Sin puntos ni guiones">
+        <label class="personal-profile__form-label">Cédula de identidad
+          <input v-model="profile.cedulaIdentidad" class="personal-profile__form-input" inputmode="numeric" placeholder="Sin puntos ni guiones">
         </label>
-        <label>Teléfono
-          <input v-model="profile.telefono" inputmode="tel" placeholder="Ej. 099123456">
+        <label class="personal-profile__form-label">Teléfono
+          <input v-model="profile.telefono" class="personal-profile__form-input" inputmode="tel" placeholder="Ej. 099123456">
         </label>
-        <label>Zona de residencia
-          <select v-model="profile.zonaResidencia">
+        <label class="personal-profile__form-label">Zona de residencia
+          <select v-model="profile.zonaResidencia" class="personal-profile__form-select">
             <option value="" disabled>Seleccionar localidad</option>
             <option v-for="localidad in localidadesConActual(profile.zonaResidencia)" :key="localidad" :value="localidad">{{ localidad }}</option>
           </select>
         </label>
-        <footer><AppButton :loading="saving" type="submit">Guardar datos personales</AppButton></footer>
+        <footer class="personal-profile__form-footer"><AppButton :loading="saving" type="submit">Guardar datos personales</AppButton></footer>
       </form>
       <form class="personal-profile__form" aria-labelledby="applicant-password-title" @submit.prevent="updatePassword">
         <h3 id="applicant-password-title">Cambiar contraseña</h3>
         <p>Para cambiarla necesitás tu contraseña actual. Si creaste tu cuenta solo con Google y no tenés una contraseña local, seguí ingresando con Google.</p>
-        <label for="applicant-current-password">Contraseña actual *</label>
-        <PasswordInput id="applicant-current-password" v-model="password.current" autocomplete="current-password" required :disabled="passwordBusy" />
-        <label for="applicant-new-password">Nueva contraseña *</label>
-        <PasswordInput id="applicant-new-password" v-model="password.next" autocomplete="new-password" required :minlength="8" :disabled="passwordBusy" />
-        <small>{{ PASSWORD_HINT }}</small>
-        <label for="applicant-repeat-password">Repetir contraseña *</label>
-        <PasswordInput id="applicant-repeat-password" v-model="password.repeat" autocomplete="new-password" required :disabled="passwordBusy" />
-        <small v-if="password.repeat && !passwordsMatch">Las contraseñas no coinciden.</small>
+        <label class="personal-profile__form-label" for="applicant-current-password">Contraseña actual *</label>
+        <PasswordInput id="applicant-current-password" v-model="password.current" input-class="personal-profile__form-input" autocomplete="current-password" required :disabled="passwordBusy" />
+        <label class="personal-profile__form-label" for="applicant-new-password">Nueva contraseña *</label>
+        <PasswordInput id="applicant-new-password" v-model="password.next" input-class="personal-profile__form-input" autocomplete="new-password" required :minlength="8" :disabled="passwordBusy" />
+        <small class="personal-profile__form-note">{{ PASSWORD_HINT }}</small>
+        <label class="personal-profile__form-label" for="applicant-repeat-password">Repetir contraseña *</label>
+        <PasswordInput id="applicant-repeat-password" v-model="password.repeat" input-class="personal-profile__form-input" autocomplete="new-password" required :disabled="passwordBusy" />
+        <small v-if="password.repeat && !passwordsMatch" class="personal-profile__form-note">Las contraseñas no coinciden.</small>
         <AppAlert v-if="passwordError" tone="error">{{ passwordError }}</AppAlert>
         <AppAlert v-if="passwordMessage" tone="success">{{ passwordMessage }}</AppAlert>
-        <footer>
+        <footer class="personal-profile__form-footer">
           <AppButton type="submit" :disabled="!canUpdatePassword" :loading="passwordBusy">
             {{ passwordBusy ? 'Actualizando...' : 'Actualizar contraseña' }}
           </AppButton>

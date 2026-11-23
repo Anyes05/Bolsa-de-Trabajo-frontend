@@ -500,13 +500,13 @@ function paymentLabel(method: MetodoPago | null) {
         :aria-label="`Filtrar por ${metric.label}`"
         @click="applyMetricFilter(metric.filterKey)"
       >
-        <span class="cash-metric__icon" :class="`cash-metric__icon--${metric.tone}`"><component :is="metric.icon" :size="20" /></span>
-        <div><strong>{{ metric.value }}</strong><span>{{ metric.label }}</span></div>
+        <span class="cash-metric__icon cash-metric__inline" :class="`cash-metric__icon--${metric.tone}`"><component :is="metric.icon" :size="20" /></span>
+        <div class="cash-metric__box"><strong class="cash-metric__strong">{{ metric.value }}</strong><span class="cash-metric__inline">{{ metric.label }}</span></div>
       </button>
     </section>
 
     <section class="cash-toolbar">
-      <label class="cash-search"><Search :size="17" /><input v-model="query" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro..."></label>
+      <label class="cash-search"><Search :size="17" /><input v-model="query" class="cash-search__input" aria-label="Buscar socios por razón social, RUT, cédula o rubro" placeholder="Buscar por razón social, RUT / Cédula o rubro..."></label>
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
@@ -521,35 +521,35 @@ function paymentLabel(method: MetodoPago | null) {
         <table class="cash-table">
           <thead>
             <tr>
-              <th>N°</th>
-              <th>Razón social</th>
-              <th>BPS / Cédula</th>
-              <th>Rubro</th>
-              <th>Saldo</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th class="cash-table__header-cell">N°</th>
+              <th class="cash-table__header-cell">Razón social</th>
+              <th class="cash-table__header-cell">BPS / Cédula</th>
+              <th class="cash-table__header-cell">Rubro</th>
+              <th class="cash-table__header-cell">Saldo</th>
+              <th class="cash-table__header-cell">Estado</th>
+              <th class="cash-table__header-cell">Acciones</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="company in companies" :key="company.socioId">
-              <td class="cash-table__number">#S{{ String(company.socioId).padStart(3, '0') }}</td>
-              <td class="cash-table__company">{{ company.razonSocial }}</td>
-              <td>{{ company.bps || '-' }}</td>
-              <td>{{ company.nombreRubro || '-' }}</td>
-              <td :class="{ 'cash-balance-credit': company.saldo < 0 }">{{ company.saldo < 0 ? '+' : '' }}{{ balanceLabel(company.saldo) }}</td>
-              <td>
+          <tbody class="cash-table__tbody">
+            <tr v-for="company in companies" :key="company.socioId" class="cash-table__row">
+              <td class="cash-table__number cash-table__cell">#S{{ String(company.socioId).padStart(3, '0') }}</td>
+              <td class="cash-table__company cash-table__cell">{{ company.razonSocial }}</td>
+              <td class="cash-table__cell">{{ company.bps || '-' }}</td>
+              <td class="cash-table__cell">{{ company.nombreRubro || '-' }}</td>
+              <td class="cash-table__cell" :class="{ 'cash-table__cell--credit': company.saldo < 0 }">{{ company.saldo < 0 ? '+' : '' }}{{ balanceLabel(company.saldo) }}</td>
+              <td class="cash-table__cell">
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`">
-                  <i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}
+                  <i class="cash-status__italic" />{{ estadoMorosidadLabel[company.estadoMorosidad] }}
                 </span>
               </td>
-              <td class="cash-table__actions">
-                <button v-if="canChargeCompany(company)" class="cash-charge" type="button" @click="openCharge(company)">
+              <td class="cash-table__actions cash-table__cell">
+                <button v-if="canChargeCompany(company)" class="cash-charge cash-table__actions-button" type="button" @click="openCharge(company)">
                   <Plus :size="12" /> Cobro
                 </button>
-                <button v-if="company.estadoMorosidad !== 'INACTIVO'" class="cash-history" type="button" @click="openExpense(company)">
+                <button v-if="company.estadoMorosidad !== 'INACTIVO'" class="cash-history cash-table__actions-button" type="button" @click="openExpense(company)">
                   <Plus :size="12" /> Reintegro
                 </button>
-                <button class="cash-history" type="button" @click="openHistory(company)">Historial</button>
+                <button class="cash-history cash-table__actions-button" type="button" @click="openHistory(company)">Historial</button>
               </td>
             </tr>
           </tbody>
@@ -568,45 +568,45 @@ function paymentLabel(method: MetodoPago | null) {
     <div v-if="exportOpen" class="cash-modal-layer" @click.self="closeExcelExport" @keydown.esc.stop.prevent="closeExcelExport">
       <section class="cash-modal excel-modal" role="dialog" aria-modal="true" aria-labelledby="excel-modal-title" :aria-busy="exporting">
         <header class="cash-modal__header">
-          <div><h2 id="excel-modal-title">Exportar control de caja</h2></div>
-          <button type="button" aria-label="Cerrar" :disabled="exporting" @click="closeExcelExport"><X :size="18" /></button>
+          <div><h2 id="excel-modal-title" class="cash-modal__header-heading">Exportar control de caja</h2></div>
+          <button class="cash-modal__header-button" type="button" aria-label="Cerrar" :disabled="exporting" @click="closeExcelExport"><X :size="18" /></button>
         </header>
         <div class="cash-modal__body">
           <fieldset class="excel-options" :disabled="exporting">
-            <legend>Período de los movimientos</legend>
+            <legend class="excel-options__legend">Período de los movimientos</legend>
             <div class="excel-date-range">
-              <label>Desde<input v-model="exportFrom" type="date" :max="exportTo || undefined" :aria-invalid="!!exportRangeError"></label>
-              <label>Hasta<input v-model="exportTo" type="date" :min="exportFrom || undefined" :aria-invalid="!!exportRangeError"></label>
+              <label class="excel-date-range__label excel-options__label">Desde<input v-model="exportFrom" class="excel-date-range__input excel-options__input" type="date" :max="exportTo || undefined" :aria-invalid="!!exportRangeError"></label>
+              <label class="excel-date-range__label excel-options__label">Hasta<input v-model="exportTo" class="excel-date-range__input excel-options__input" type="date" :min="exportFrom || undefined" :aria-invalid="!!exportRangeError"></label>
             </div>
             <small>Ambas fechas se incluyen. Dejá los campos vacíos para exportar todo el historial. Los saldos y pendientes son actuales, no un cierre histórico del período.</small>
             <AppAlert v-if="exportRangeError">{{ exportRangeError }}</AppAlert>
           </fieldset>
           <fieldset class="excel-options" :disabled="exporting">
-            <legend>Estado de los socios</legend>
+            <legend class="excel-options__legend">Estado de los socios</legend>
             <div class="excel-states">
-              <label v-for="(label, state) in estadoMorosidadLabel" :key="state">
-                <input v-model="exportStates" type="checkbox" :value="state">
-                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(state)}`"><i />{{ label }}</span>
+              <label v-for="(label, state) in estadoMorosidadLabel" :key="state" class="excel-options__label">
+                <input v-model="exportStates" class="excel-options__input" type="checkbox" :value="state">
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(state)}`"><i class="cash-status__italic" />{{ label }}</span>
               </label>
             </div>
           </fieldset>
           <fieldset class="excel-options" :disabled="exporting">
-            <legend>Socios a incluir</legend>
-            <label><input v-model="exportMode" type="radio" name="excel-scope" value="TODOS"> Todos los socios de los estados elegidos</label>
-            <label><input v-model="exportMode" type="radio" name="excel-scope" value="SELECCIONADOS"> Elegir socios</label>
+            <legend class="excel-options__legend">Socios a incluir</legend>
+            <label class="excel-options__label"><input v-model="exportMode" class="excel-options__input" type="radio" name="excel-scope" value="TODOS"> Todos los socios de los estados elegidos</label>
+            <label class="excel-options__label"><input v-model="exportMode" class="excel-options__input" type="radio" name="excel-scope" value="SELECCIONADOS"> Elegir socios</label>
           </fieldset>
           <fieldset v-if="exportMode === 'SELECCIONADOS'" class="excel-options" :disabled="exporting">
-            <legend>Seleccionar socios</legend>
-            <label class="cash-search excel-search"><Search :size="17" /><input v-model="exportSearch" type="search" placeholder="Buscar por razón social, RUT / Cédula o rubro..." aria-label="Buscar socios para exportar"></label>
-            <label class="excel-select-all">
-              <input type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
+            <legend class="excel-options__legend">Seleccionar socios</legend>
+            <label class="cash-search excel-search excel-options__label"><Search class="excel-search__icon" :size="17" /><input v-model="exportSearch" class="cash-search__input excel-options__input" type="search" placeholder="Buscar por razón social, RUT / Cédula o rubro..." aria-label="Buscar socios para exportar"></label>
+            <label class="excel-select-all excel-options__label">
+              <input class="excel-options__input" type="checkbox" :checked="exportAllVisibleSelected" :indeterminate="exportSomeVisibleSelected" :disabled="!exportCandidates.length" @change="toggleExportVisible">
               Seleccionar todos los resultados ({{ exportCandidates.length }})
             </label>
             <div class="excel-company-list" aria-label="Socios disponibles">
-              <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company">
-                <input v-model="exportSelectedIds" type="checkbox" :value="company.socioId">
-                <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.bps || 'Sin identificador' }}</small></span>
-                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
+              <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company excel-options__label excel-options__excel-company">
+                <input v-model="exportSelectedIds" class="excel-options__input" type="checkbox" :value="company.socioId">
+                <span class="excel-company__name"><strong class="excel-company__name-strong">{{ company.razonSocial }}</strong><small class="excel-company__name-note excel-company__note">{{ company.bps || 'Sin identificador' }}</small></span>
+                <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i class="cash-status__italic" />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
               </label>
               <p v-if="exportLoading" class="excel-empty" role="status">Buscando socios...</p>
               <p v-else-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
@@ -616,10 +616,10 @@ function paymentLabel(method: MetodoPago | null) {
           <AppAlert v-if="exportError">{{ exportError }}</AppAlert>
         </div>
         <footer class="cash-modal__footer excel-footer">
-          <span role="status">{{ exportCompanies.length }} socios seleccionados</span>
-          <div>
-            <button class="cash-history" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
-            <button class="cash-modal__confirm" type="button" :disabled="exporting || exportLoading || !exportCompanies.length || !!exportRangeError" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
+          <span class="excel-footer__inline" role="status">{{ exportCompanies.length }} socios seleccionados</span>
+          <div class="excel-footer__box">
+            <button class="cash-history cash-modal__footer-button cash-modal__footer-cash-history excel-footer__cash-history excel-footer__button" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
+            <button class="cash-modal__confirm cash-modal__footer-button excel-footer__button excel-footer__cash-modal-confirm" type="button" :disabled="exporting || exportLoading || !exportCompanies.length || !!exportRangeError" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
           </div>
         </footer>
       </section>
@@ -627,70 +627,71 @@ function paymentLabel(method: MetodoPago | null) {
 
     <div v-if="selectedCompany" class="cash-modal-layer" @click.self="closeCharge">
       <section class="cash-modal" role="dialog" aria-modal="true" aria-labelledby="cash-modal-title">
-        <header class="cash-modal__header"><div><h2 id="cash-modal-title">Registrar Cobro</h2><p>{{ selectedCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="chargeBusy || chargeLoading" @click="closeCharge"><X :size="18" /></button></header>
+        <header class="cash-modal__header"><div><h2 id="cash-modal-title" class="cash-modal__header-heading">Registrar Cobro</h2><p class="cash-modal__header-text">{{ selectedCompany.razonSocial }}</p></div><button class="cash-modal__header-button" type="button" aria-label="Cerrar" :disabled="chargeBusy || chargeLoading" @click="closeCharge"><X :size="18" /></button></header>
         <div class="cash-modal__body">
           <p v-if="chargeLoading" role="status">Cargando estado de cuenta...</p>
           <template v-if="chargeHistory?.estadoMorosidad === 'INACTIVO'">
             <AppAlert tone="info">Este cobro se aplica a la deuda pendiente. El socio seguirá inactivo y no se reanudará su suscripción.</AppAlert>
-            <dl class="account-summary"><div><dt>Deuda pendiente total</dt><dd>{{ formatMoney(Math.max(0, chargeHistory.saldo)) }}</dd></div></dl>
+            <dl class="account-summary"><div class="account-summary__box"><dt class="account-summary__term">Deuda pendiente total</dt><dd class="account-summary__value">{{ formatMoney(Math.max(0, chargeHistory.saldo)) }}</dd></div></dl>
           </template>
           <dl v-else-if="chargeHistory" class="account-summary">
-            <div>
-              <dt>Reintegro de este mes</dt>
-              <dd>{{ !chargeTotals.tieneReintegros ? 'Sin reintegros' : chargeTotals.reintegros === 0 ? 'Pagado' : formatMoney(chargeTotals.reintegros) }}</dd>
+            <div class="account-summary__box">
+              <dt class="account-summary__term">Reintegro de este mes</dt>
+              <dd class="account-summary__value">{{ !chargeTotals.tieneReintegros ? 'Sin reintegros' : chargeTotals.reintegros === 0 ? 'Pagado' : formatMoney(chargeTotals.reintegros) }}</dd>
             </div>
-            <div>
-              <dt>Cuota a pagar</dt>
-              <dd>{{ !chargeTotals.cuotaEmitida && !chargeTotals.cuotaAnteriorPaga ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
+            <div class="account-summary__box">
+              <dt class="account-summary__term">Cuota a pagar</dt>
+              <dd class="account-summary__value">{{ !chargeTotals.cuotaEmitida && !chargeTotals.cuotaAnteriorPaga ? 'Sin cuota emitida' : chargeTotals.cuotas === 0 ? 'Paga' : formatMoney(chargeTotals.cuotas) }}</dd>
             </div>
-            <div><dt>Total</dt><dd>{{ formatMoney(chargeTotals.total) }}</dd></div>
+            <div class="account-summary__box"><dt class="account-summary__term">Total</dt><dd class="account-summary__value">{{ formatMoney(chargeTotals.total) }}</dd></div>
           </dl>
           <fieldset class="cash-payment">
-            <legend>Metodo de pago</legend>
-            <div>
+            <legend class="cash-payment__legend">Metodo de pago</legend>
+            <div class="cash-payment__box">
               <button
                 v-for="method in paymentMethods"
                 :key="method.key"
+                class="cash-payment__button"
                 type="button"
-                :class="{ 'cash-payment__option--active': paymentMethod === method.key }"
+                :class="{ 'cash-payment__button--active': paymentMethod === method.key }"
                 @click="paymentMethod = method.key"
               >
                 {{ method.label }}
               </button>
             </div>
           </fieldset>
-          <label class="cash-amount">Monto recibido<input v-model="receivedAmount" type="number" min="0.01" max="9999999999.99" step="0.01" :disabled="chargeLoading || chargeBusy"></label>
+          <label class="cash-amount">Monto recibido<input v-model="receivedAmount" class="cash-amount__input" type="number" min="0.01" max="9999999999.99" step="0.01" :disabled="chargeLoading || chargeBusy"></label>
           <p v-if="validAmount(receivedAmount)" class="account-result" role="status">Saldo después del pago: <strong>{{ balanceLabel(balanceAfterPayment) }}</strong></p>
-          <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" maxlength="80" placeholder="Opcional"></label>
-          <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" maxlength="2000" placeholder="Opcional"></textarea></label>
-          <dl class="cash-receipt-detail"><div><dt>Socio N°</dt><dd>#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div><dt>BPS / Cédula</dt><dd>{{ selectedCompany.bps || '-' }}</dd></div></dl>
+          <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" class="cash-payment-detail__input" maxlength="80" placeholder="Opcional"></label>
+          <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" class="cash-payment-detail__textarea" maxlength="2000" placeholder="Opcional"></textarea></label>
+          <dl class="cash-receipt-detail"><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">Socio N°</dt><dd class="cash-receipt-detail__value">#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">BPS / Cédula</dt><dd class="cash-receipt-detail__value">{{ selectedCompany.bps || '-' }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
-        <footer class="cash-modal__footer"><button class="cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
+        <footer class="cash-modal__footer"><button class="cash-history cash-modal__footer-button cash-modal__footer-cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm cash-modal__footer-button" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
       </section>
     </div>
 
     <div v-if="historyBusy || selectedHistory || historyError" class="cash-modal-layer" @click.self="closeHistory">
       <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <header class="history-modal__header"><div><p>BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span>{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
+        <header class="history-modal__header"><div><p class="history-modal__header-text">BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title" class="history-modal__header-heading">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span class="history-modal__header-inline">{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button class="history-modal__header-button" type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
         <AppAlert v-if="historyError">{{ historyError }}</AppAlert>
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
           <div class="history-summary">
-            <div><span>Saldo actual</span><strong>{{ balanceLabel(selectedHistory.saldo) }}</strong></div>
-            <div><span>Deuda vencida</span><b>{{ formatMoney(selectedHistory.deudaVencida) }}</b></div>
-            <em><LockKeyhole :size="11" /> Registro inmutable</em>
+            <div class="history-summary__box"><span class="history-summary__inline">Saldo actual</span><strong class="history-summary__strong">{{ balanceLabel(selectedHistory.saldo) }}</strong></div>
+            <div class="history-summary__box"><span class="history-summary__inline">Deuda vencida</span><b class="history-summary__bold">{{ formatMoney(selectedHistory.deudaVencida) }}</b></div>
+            <em class="history-summary__emphasis"><LockKeyhole :size="11" /> Registro inmutable</em>
           </div>
           <div class="history-date-filters">
-            <label>
+            <label class="history-date-filters__label">
               Desde
-              <input v-model="historyFrom" type="date" :max="historyTo || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
+              <input v-model="historyFrom" class="history-date-filters__input" type="date" :max="historyTo || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
             </label>
-            <label>
+            <label class="history-date-filters__label">
               Hasta
-              <input v-model="historyTo" type="date" :min="historyFrom || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
+              <input v-model="historyTo" class="history-date-filters__input" type="date" :min="historyFrom || undefined" :aria-invalid="historyRangeInvalid" :aria-describedby="historyRangeInvalid ? 'history-date-error' : undefined">
             </label>
-            <button type="button" title="Limpiar filtro de fechas" aria-label="Limpiar filtro de fechas" :disabled="!historyFrom && !historyTo" @click="clearHistoryDates">
+            <button class="history-date-filters__button" type="button" title="Limpiar filtro de fechas" aria-label="Limpiar filtro de fechas" :disabled="!historyFrom && !historyTo" @click="clearHistoryDates">
               <X :size="16" />
             </button>
           </div>
@@ -701,7 +702,7 @@ function paymentLabel(method: MetodoPago | null) {
                 class="history-entry__dot"
                 :class="movement.tipo === 'PAGO' ? 'history-entry__dot--green' : 'history-entry__dot--red'"
               />
-              <div>
+              <div class="history-entry__box">
                 <span
                   class="history-entry__tag"
                   :class="movement.tipo === 'PAGO' ? 'history-entry__tag--green' : 'history-entry__tag--red'"
@@ -714,18 +715,18 @@ function paymentLabel(method: MetodoPago | null) {
                 >
                   {{ movement.recurrente ? 'Recurrente' : 'Puntual' }}
                 </span>
-                <strong>{{ movement.concepto }}</strong>
-                <p>{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p>
-                <p v-if="movement.referencia">Referencia: {{ movement.referencia }}</p>
-                <p v-if="movement.observaciones">{{ movement.observaciones }}</p>
-                <time>{{ formatDate(movement.fecha) }}</time>
-                <p>Saldo anterior: {{ balanceLabel(movement.saldoAnterior) }}</p>
-                <p>Saldo resultante: {{ balanceLabel(movement.saldoResultante) }}</p>
-                <p v-if="movement.saldoFavorUtilizado > 0" class="account-credit">Saldo a favor utilizado: {{ formatMoney(movement.saldoFavorUtilizado) }}</p>
-                <p v-if="movement.tipo !== 'PAGO'">Pendiente: {{ formatMoney(movement.pendiente) }}</p>
+                <strong class="history-entry__strong">{{ movement.concepto }}</strong>
+                <p class="history-entry__text">{{ movement.metodoPago ? paymentLabel(movement.metodoPago) : `Vence ${formatDate(movement.fechaVencimiento)}` }}</p>
+                <p v-if="movement.referencia" class="history-entry__text">Referencia: {{ movement.referencia }}</p>
+                <p v-if="movement.observaciones" class="history-entry__text">{{ movement.observaciones }}</p>
+                <time class="history-entry__time">{{ formatDate(movement.fecha) }}</time>
+                <p class="history-entry__text">Saldo anterior: {{ balanceLabel(movement.saldoAnterior) }}</p>
+                <p class="history-entry__text">Saldo resultante: {{ balanceLabel(movement.saldoResultante) }}</p>
+                <p v-if="movement.saldoFavorUtilizado > 0" class="account-credit history-entry__text">Saldo a favor utilizado: {{ formatMoney(movement.saldoFavorUtilizado) }}</p>
+                <p v-if="movement.tipo !== 'PAGO'" class="history-entry__text">Pendiente: {{ formatMoney(movement.pendiente) }}</p>
               </div>
-              <aside>
-                <b :class="movement.tipo === 'PAGO' ? 'account-credit' : 'account-debt'">
+              <aside class="history-entry__aside">
+                <b class="history-entry__bold" :class="movement.tipo === 'PAGO' ? 'account-credit' : 'account-debt'">
                   {{ movement.tipo === 'PAGO' ? '-' : '+' }}{{ formatMoney(movement.monto) }}
                 </b>
               </aside>
@@ -736,16 +737,17 @@ function paymentLabel(method: MetodoPago | null) {
             <HistorialContable :socio-id="selectedHistory.socioId" @actualizado="refreshAfterAnnulment" />
           </div>
         </template>
-        <footer class="history-modal__footer"><span>Saldo operativo y registro contable con originales y anulaciones.</span><button type="button" @click="closeHistory">Cerrar</button></footer>
+        <footer class="history-modal__footer"><span class="history-modal__footer-inline">Saldo operativo y registro contable con originales y anulaciones.</span><button class="history-modal__footer-button" type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
     </div>
 
     <div v-if="expenseCompany" class="cash-modal-layer" @click.self="closeExpense">
       <section class="cash-modal expense-modal" role="dialog" aria-modal="true" aria-labelledby="expense-title">
-        <header class="cash-modal__header"><div><h2 id="expense-title">Reintegros</h2><p>{{ expenseCompany.razonSocial }}</p></div><button type="button" aria-label="Cerrar" :disabled="expenseBusy || expenseLoading" @click="closeExpense"><X :size="18" /></button></header>
+        <header class="cash-modal__header"><div><h2 id="expense-title" class="cash-modal__header-heading">Reintegros</h2><p class="cash-modal__header-text">{{ expenseCompany.razonSocial }}</p></div><button class="cash-modal__header-button" type="button" aria-label="Cerrar" :disabled="expenseBusy || expenseLoading" @click="closeExpense"><X :size="18" /></button></header>
         <div class="expense-tabs" role="tablist" aria-label="Tipo de reintegro">
           <button
             id="expense-tab-gastos"
+            class="expense-tabs__button"
             type="button"
             role="tab"
             aria-controls="expense-panel-gastos"
@@ -757,6 +759,7 @@ function paymentLabel(method: MetodoPago | null) {
           </button>
           <button
             id="expense-tab-recurrentes"
+            class="expense-tabs__button"
             type="button"
             role="tab"
             aria-controls="expense-panel-recurrentes"
@@ -775,15 +778,15 @@ function paymentLabel(method: MetodoPago | null) {
             aria-labelledby="expense-tab-gastos"
             @submit.prevent="saveExpense"
           >
-            <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
-            <label class="cash-payment-detail">Importe<input v-model="expenseAmount" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
+            <label class="cash-payment-detail">Concepto<input v-model="expenseConcept" class="cash-payment-detail__input" maxlength="200" required placeholder="Timbre, fotocopias, trámite..."></label>
+            <label class="cash-payment-detail">Importe<input v-model="expenseAmount" class="cash-payment-detail__input" type="number" min="0.01" max="9999999999.99" step="0.01" required></label>
             <label class="expense-recurring">
-              <input v-model="expenseRecurring" type="checkbox">
+              <input v-model="expenseRecurring" class="expense-recurring__input" type="checkbox">
               Recurrente mensual
             </label>
             <p class="expense-type-hint" role="note">
               Tipo a guardar:
-              <strong>{{ expenseRecurring ? 'Recurrente' : 'Puntual' }}</strong>
+              <strong class="expense-type-hint__strong">{{ expenseRecurring ? 'Recurrente' : 'Puntual' }}</strong>
               — {{ expenseRecurring
                 ? 'se crea el cargo de este mes y queda programado para los siguientes.'
                 : 'solo se crea el cargo de este mes.' }}
@@ -796,12 +799,12 @@ function paymentLabel(method: MetodoPago | null) {
             role="tabpanel"
             aria-labelledby="expense-tab-recurrentes"
           >
-            <h3 v-if="!expenseLoading">
+            <h3 v-if="!expenseLoading" class="expense-programmed__subheading">
               Reintegros registrados
               <span class="expense-programmed__count">{{ programmed.filter((entry) => entry.activo).length }} activos · {{ programmed.filter((entry) => !entry.activo).length }} inactivos</span>
             </h3>
             <p class="expense-programmed__notice" role="note">
-              <AlertCircle :size="16" aria-hidden="true" />
+              <AlertCircle class="expense-programmed__notice-icon" :size="16" aria-hidden="true" />
               <span>Las modificaciones y la activación o desactivación se aplican desde el próximo mes. El reintegro de este mes y los gastos anteriores no cambian.</span>
             </p>
             <p v-if="expenseLoading" role="status">Cargando reintegros recurrentes...</p>
@@ -813,10 +816,11 @@ function paymentLabel(method: MetodoPago | null) {
             >
               <div class="expense-programmed__header">
                 <div class="expense-programmed__detail">
-                  <strong>{{ entry.concepto }}</strong>
+                  <strong class="expense-programmed__detail-strong">{{ entry.concepto }}</strong>
                   <span>{{ formatMoney(entry.monto) }}</span>
                   <label class="expense-programmed__toggle" :class="{ 'expense-programmed__status--active': entry.activo }">
                     <input
+                      class="expense-programmed__toggle-input"
                       type="checkbox"
                       :checked="entry.activo"
                       :disabled="expenseBusy"
@@ -828,7 +832,7 @@ function paymentLabel(method: MetodoPago | null) {
                 </div>
                 <div class="expense-programmed__actions">
                   <button
-                    class="expense-programmed__edit"
+                    class="expense-programmed__edit expense-programmed__button"
                     type="button"
                     :disabled="expenseBusy"
                     :aria-label="`Modificar ${entry.concepto}`"
@@ -838,7 +842,7 @@ function paymentLabel(method: MetodoPago | null) {
                     <Pencil :size="16" />
                   </button>
                   <button
-                    class="expense-programmed__delete"
+                    class="expense-programmed__delete expense-programmed__button"
                     type="button"
                     :disabled="expenseBusy"
                     :aria-label="`Eliminar ${entry.concepto}`"
@@ -855,19 +859,19 @@ function paymentLabel(method: MetodoPago | null) {
               >
                 <label class="cash-payment-detail">
                   Concepto
-                  <input v-model="programmedEditing.concepto" maxlength="200" required :disabled="expenseBusy">
+                  <input v-model="programmedEditing.concepto" class="cash-payment-detail__input" maxlength="200" required :disabled="expenseBusy">
                 </label>
                 <label class="cash-payment-detail">
                   Importe mensual
-                  <input v-model.number="programmedEditing.monto" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy">
+                  <input v-model.number="programmedEditing.monto" class="cash-payment-detail__input" type="number" min="0.01" max="9999999999.99" step="0.01" required :disabled="expenseBusy">
                 </label>
                 <label class="expense-recurring">
-                  <input v-model="programmedEditing.activo" type="checkbox" :disabled="expenseBusy">
+                  <input v-model="programmedEditing.activo" class="expense-recurring__input" type="checkbox" :disabled="expenseBusy">
                   Activo
                 </label>
                 <div class="expense-programmed__actions">
-                  <button class="cash-history" type="button" :disabled="expenseBusy" @click="programmedEditing = null">Cancelar</button>
-                  <button class="cash-history" type="submit" :disabled="expenseBusy">
+                  <button class="cash-history expense-programmed__button" type="button" :disabled="expenseBusy" @click="programmedEditing = null">Cancelar</button>
+                  <button class="cash-history expense-programmed__button" type="submit" :disabled="expenseBusy">
                     <Save :size="14" /> {{ expenseBusy ? 'Guardando...' : 'Guardar cambios' }}
                   </button>
                 </div>
@@ -875,8 +879,8 @@ function paymentLabel(method: MetodoPago | null) {
               <div v-if="programmedToDelete === entry.id" class="expense-programmed__confirmation">
                 <p>¿Estás seguro de que querés eliminar el reintegro recurrente «{{ entry.concepto }}»? No se generarán cargos desde el próximo mes. El reintegro de este mes y los gastos anteriores se conservarán. Esta acción no se puede deshacer.</p>
                 <div class="expense-programmed__actions">
-                  <button class="cash-history" type="button" :disabled="expenseBusy" @click="programmedToDelete = null">Cancelar</button>
-                  <button class="expense-programmed__delete" type="button" :disabled="expenseBusy" @click="deleteProgrammed(entry)">
+                  <button class="cash-history expense-programmed__button" type="button" :disabled="expenseBusy" @click="programmedToDelete = null">Cancelar</button>
+                  <button class="expense-programmed__delete expense-programmed__button" type="button" :disabled="expenseBusy" @click="deleteProgrammed(entry)">
                     <Trash2 :size="14" /> Sí, eliminar
                   </button>
                 </div>
@@ -887,10 +891,10 @@ function paymentLabel(method: MetodoPago | null) {
           <p v-if="expenseSuccess" class="expense-success" role="status">{{ expenseSuccess }}</p>
         </div>
         <footer class="cash-modal__footer expense-modal__footer">
-          <button class="cash-history" type="button" :disabled="expenseBusy || expenseLoading" @click="closeExpense">Cerrar</button>
+          <button class="cash-history cash-modal__footer-button cash-modal__footer-cash-history expense-modal__footer-button" type="button" :disabled="expenseBusy || expenseLoading" @click="closeExpense">Cerrar</button>
           <button
             v-if="expenseTab === 'GASTOS'"
-            class="cash-history"
+            class="cash-history cash-modal__footer-button cash-modal__footer-cash-history expense-modal__footer-button"
             type="submit"
             form="expense-panel-gastos"
             :disabled="expenseBusy || expenseLoading"
@@ -905,77 +909,77 @@ function paymentLabel(method: MetodoPago | null) {
 
 <style scoped>
 .excel-date-range { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-.excel-date-range label { display: grid; gap: 6px; min-width: 0; }
-.excel-date-range input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--t-line-cfd9d3); border-radius: 8px; padding: 10px 12px; background: var(--t-bg-ffffff); color: var(--t-fg-24352b); font: inherit; }
-.excel-date-range input:focus-visible { outline: 2px solid var(--t-line-078844); outline-offset: 2px; }
+.excel-date-range__label { display: grid; gap: 6px; min-width: 0; }
+.excel-date-range__input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--t-line-cfd9d3); border-radius: 8px; padding: 10px 12px; background: var(--t-bg-ffffff); color: var(--t-fg-24352b); font: inherit; }
+.excel-date-range__input:focus-visible { outline: 2px solid var(--t-line-078844); outline-offset: 2px; }
 .excel-modal { width: min(100%, 640px); }
 .excel-options { min-width: 0; margin: 0 0 20px; padding: 0; border: 0; }
-.excel-options legend { margin-bottom: 10px; color: var(--t-fg-34473b); font-size: 0.95rem; font-weight: 700; }
-.excel-options label { display: flex; align-items: center; gap: 10px; min-height: 42px; color: var(--t-fg-445249); font-size: 0.95rem; cursor: pointer; }
-.excel-options input[type="checkbox"], .excel-options input[type="radio"] { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: var(--t-fg-07974e); }
-.excel-options input:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: 2px; }
+.excel-options__legend { margin-bottom: 10px; color: var(--t-fg-34473b); font-size: 0.95rem; font-weight: 700; }
+.excel-options__label { display: flex; align-items: center; gap: 10px; min-height: 42px; color: var(--t-fg-445249); font-size: 0.95rem; cursor: pointer; }
+.excel-options__input[type="checkbox"],.excel-options__input[type="radio"] { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: var(--t-fg-07974e); }
+.excel-options__input:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: 2px; }
 .excel-states { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .excel-search { box-sizing: border-box; width: 100%; margin-bottom: 8px; }
-.excel-search svg { flex-shrink: 0; }
+.excel-search__icon { flex-shrink: 0; }
 .excel-select-all { padding: 6px 0; font-size: 0.95rem; }
 .excel-company-list { max-height: 250px; overflow-y: auto; border-top: 1px solid var(--t-line-e0e6eb); border-bottom: 1px solid var(--t-line-e0e6eb); }
-.excel-options .excel-company { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--t-line-edf0f3); }
+.excel-options__excel-company { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--t-line-edf0f3); }
 .excel-company:last-child { border-bottom: 0; }
 .excel-company__name { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
-.excel-company__name strong { color: var(--t-fg-34473b); font-size: 0.95rem; font-weight: 600; }
-.excel-company__name small { color: var(--t-fg-526159); font-size: 0.875rem; }
+.excel-company__name-strong { color: var(--t-fg-34473b); font-size: 0.95rem; font-weight: 600; }
+.excel-company__name-note { color: var(--t-fg-526159); font-size: 0.875rem; }
 .excel-empty { margin: 12px 0; color: var(--t-fg-526159); font-size: 0.95rem; line-height: 1.5; }
 .excel-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.excel-footer > span { color: var(--t-fg-526159); font-size: 0.95rem; }
-.excel-footer > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.excel-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 44px; font-size: 0.95rem; }
+.excel-footer__inline { color: var(--t-fg-526159); font-size: 0.95rem; }
+.excel-footer__box { display: flex; flex-wrap: wrap; gap: 8px; }
+.excel-footer__button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-height: 44px; font-size: 0.95rem; }
 .cash-modal, .history-modal { display: flex; flex-direction: column; max-height: calc(100dvh - 40px); border-radius: 8px; }
 .cash-modal__body, .history-list { overflow-y: auto; min-height: 0; }
 .cash-modal__header, .cash-modal__footer, .history-modal__header, .history-modal__footer { flex-shrink: 0; }
-.cash-table__actions button, .expense-programmed button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.cash-table__actions-button,.expense-programmed__button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .cash-table__actions { min-width: 260px; }
 .account-summary { display: grid; gap: 9px; margin: 0 0 20px; font-size: 12px; }
-.account-summary div { display: flex; justify-content: space-between; gap: 12px; }
-.account-summary dt { color: var(--t-fg-68737c); }
-.account-summary dd { margin: 0; font-weight: 700; text-align: right; }
+.account-summary__box { display: flex; justify-content: space-between; gap: 12px; }
+.account-summary__term { color: var(--t-fg-68737c); }
+.account-summary__value { margin: 0; font-weight: 700; text-align: right; }
 .account-result { color: var(--t-fg-34473b); background: var(--t-bg-eef8f2); padding: 10px; font-size: 12px; line-height: 1.5; }
 .account-credit { color: var(--t-fg-08775f) !important; }
-.cash-table td.cash-balance-credit { color: var(--t-fg-005c36) !important; font-weight: 800; }
+.cash-table__cell--credit { color: var(--t-fg-005c36) !important; font-weight: 800; }
 .account-debt { color: var(--t-fg-a52c32) !important; }
 .history-summary { grid-template-columns: 1fr 1fr; }
-.history-summary span { font-size: 0.875rem; }
-.history-summary strong { font-size: 1.25rem; }
+.history-summary__inline { font-size: 0.875rem; }
+.history-summary__strong { font-size: 1.25rem; }
 .history-date-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) 40px; align-items: end; gap: 14px; width: calc(100% - 48px); max-width: 520px; margin: 8px auto 24px; flex-shrink: 0; }
-.history-date-filters label { display: grid; gap: 6px; min-width: 0; color: var(--t-fg-445249); font-size: 0.95rem; font-weight: 600; }
-.history-date-filters input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--t-line-e0e6eb); border-radius: 6px; background: var(--t-bg-ffffff); color: var(--t-fg-34473b); font: inherit; font-size: 0.95rem; }
-.history-date-filters button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 42px; border: 1px solid var(--t-line-e0e6eb); border-radius: 6px; background: var(--t-bg-ffffff); color: var(--t-fg-526159); cursor: pointer; }
-.history-date-filters input:focus-visible, .history-date-filters button:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: 2px; }
+.history-date-filters__label { display: grid; gap: 6px; min-width: 0; color: var(--t-fg-445249); font-size: 0.95rem; font-weight: 600; }
+.history-date-filters__input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid var(--t-line-e0e6eb); border-radius: 6px; background: var(--t-bg-ffffff); color: var(--t-fg-34473b); font: inherit; font-size: 0.95rem; }
+.history-date-filters__button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 42px; border: 1px solid var(--t-line-e0e6eb); border-radius: 6px; background: var(--t-bg-ffffff); color: var(--t-fg-526159); cursor: pointer; }
+.history-date-filters__input:focus-visible,.history-date-filters__button:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: 2px; }
 .history-date-error { width: calc(100% - 48px); max-width: 520px; margin: 0 auto 16px; color: var(--t-fg-a52c32); font-size: 0.95rem; }
 .history-entry { padding-bottom: 18px; grid-template-columns: 16px minmax(0, 1fr) auto; }
-.history-entry p, .history-entry strong, .history-entry time, .history-entry aside span { overflow-wrap: anywhere; font-size: 0.95rem; }
-.history-entry strong { font-size: 1rem; font-weight: 600; }
-.history-entry aside b { font-size: 1.05rem; }
+.history-entry__text,.history-entry__strong,.history-entry__time { overflow-wrap: anywhere; font-size: 0.95rem; }
+.history-entry__strong { font-size: 1rem; font-weight: 600; }
+.history-entry__aside .history-entry__bold { font-size: 1.05rem; }
 .expense-modal { width: min(100%, 480px); }
 .expense-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; border-bottom: 1px solid var(--t-line-e0e6eb); }
-.expense-tabs button { min-height: 48px; padding: 12px 8px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--t-fg-526159); font: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
-.expense-tabs button[aria-selected="true"] { border-bottom-color: var(--t-line-07974e); color: var(--t-fg-08775f); background: var(--t-bg-eef8f2); }
-.expense-tabs button:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: -4px; }
+.expense-tabs__button { min-height: 48px; padding: 12px 8px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--t-fg-526159); font: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
+.expense-tabs__button[aria-selected="true"] { border-bottom-color: var(--t-line-07974e); color: var(--t-fg-08775f); background: var(--t-bg-eef8f2); }
+.expense-tabs__button:focus-visible { outline: 2px solid var(--t-line-07974e); outline-offset: -4px; }
 .expense-recurring { display: flex; align-items: center; gap: 8px; margin: 16px 0; color: var(--t-fg-526159); font-size: 12px; }
-.expense-recurring input { accent-color: var(--t-fg-07974e); }
+.expense-recurring__input { accent-color: var(--t-fg-07974e); }
 .expense-modal__footer { display: flex; gap: 12px; }
-.expense-modal__footer button { flex: 1; min-width: 0; width: auto; min-height: 36px; white-space: normal; }
+.expense-modal__footer-button.expense-modal__footer-button { flex: 1; min-width: 0; width: auto; min-height: 36px; white-space: normal; }
 .expense-programmed { margin-top: 0; }
-.expense-programmed h3 { margin: 16px 0; font-size: 14px; line-height: 1.5; }
+.expense-programmed__subheading { margin: 16px 0; font-size: 14px; line-height: 1.5; }
 .expense-programmed__count { display: block; color: var(--t-fg-68737c); font-size: 12px; font-weight: 400; }
 .expense-programmed__notice { display: flex; align-items: flex-start; gap: 8px; margin: 16px 0; padding: 12px 0; border-top: 1px solid var(--t-line-e0e6eb); border-bottom: 1px solid var(--t-line-e0e6eb); color: var(--t-fg-526159); font-size: 12px; line-height: 1.5; }
-.expense-programmed__notice svg { flex-shrink: 0; margin-top: 2px; }
+.expense-programmed__notice-icon { flex-shrink: 0; margin-top: 2px; }
 .expense-programmed__entry { padding: 16px 0; border-bottom: 1px solid var(--t-line-e0e6eb); }
 .expense-programmed__header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .expense-programmed__detail { display: grid; gap: 4px; min-width: 0; font-size: 12px; overflow-wrap: anywhere; }
-.expense-programmed__detail strong { font-size: 13px; }
+.expense-programmed__detail-strong { font-size: 13px; }
 .expense-programmed__header .expense-programmed__actions { flex-shrink: 0; }
 .expense-programmed__toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--t-fg-68737c); font-size: 12px; font-weight: 600; cursor: pointer; }
-.expense-programmed__toggle input { margin: 0; accent-color: var(--t-fg-07974e); }
+.expense-programmed__toggle-input { margin: 0; accent-color: var(--t-fg-07974e); }
 .expense-programmed__status--active { color: var(--t-fg-08775f); }
 .expense-programmed__edit, .expense-programmed__delete { min-width: 36px; min-height: 36px; padding: 6px 10px; border: 1px solid var(--t-line-e0e6eb); border-radius: 6px; background: var(--t-bg-ffffff); font: inherit; font-size: 12px; cursor: pointer; }
 .expense-programmed__edit { color: var(--t-fg-08775f); }
@@ -988,10 +992,10 @@ function paymentLabel(method: MetodoPago | null) {
 button:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 980px) {
   .cash-table__actions { min-width: 0; display: grid; gap: 8px; }
-  .cash-table__actions button { width: 100%; min-height: 40px; }
+  .cash-table__actions-button { width: 100%; min-height: 40px; }
   .excel-footer { flex-direction: column; align-items: stretch; }
-  .excel-footer > div { width: 100%; }
-  .excel-footer button { flex: 1; }
+  .excel-footer__box { width: 100%; }
+  .excel-footer__button { flex: 1; }
 }
 
 @media (max-width: 450px) {
@@ -1000,6 +1004,6 @@ button:disabled { opacity: .55; cursor: not-allowed; }
   .history-date-filters, .history-date-error { width: 100%; max-width: none; }
   .history-date-filters { gap: 10px; grid-template-columns: 1fr; }
   .history-entry { grid-template-columns: 12px minmax(0, 1fr); }
-  .history-entry aside { grid-column: 2; justify-items: start; padding-top: 0; }
+  .history-entry__aside { grid-column: 2; justify-items: start; padding-top: 0; }
 }
 </style>

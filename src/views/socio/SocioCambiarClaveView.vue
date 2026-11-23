@@ -63,18 +63,18 @@ function logout() {
           Por seguridad, debes definir tu contraseña definitiva dentro de las primeras 24 horas desde el alta.
         </p>
         <form class="access-form" @submit.prevent="submit">
-          <label>
+          <label class="access-form__label">
             Contraseña provisional *
-            <PasswordInput v-model="form.currentPassword" required autocomplete="current-password" />
+            <PasswordInput v-model="form.currentPassword" input-class="access-form__input" required autocomplete="current-password" />
           </label>
-          <label>
+          <label class="access-form__label">
             Nueva contraseña *
-            <PasswordInput v-model="form.newPassword" required :minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
+            <PasswordInput v-model="form.newPassword" input-class="access-form__input" required :minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres" />
             <small>{{ PASSWORD_HINT }}</small>
           </label>
-          <label>
+          <label class="access-form__label">
             Confirmar nueva contraseña *
-            <PasswordInput v-model="form.confirmPassword" required :minlength="8" autocomplete="new-password" />
+            <PasswordInput v-model="form.confirmPassword" input-class="access-form__input" required :minlength="8" autocomplete="new-password" />
           </label>
           <AppAlert v-if="error">{{ error }}</AppAlert>
           <AppButton type="submit" :disabled="busy || !canSubmit">
@@ -94,7 +94,7 @@ function logout() {
   margin-top: 18px;
 }
 
-.access-form label {
+.access-form__label {
   display: grid;
   gap: 6px;
   color: var(--t-fg-405063);
@@ -102,7 +102,7 @@ function logout() {
   font-weight: 600;
 }
 
-.access-form input {
+.access-form__input {
   height: 42px;
   padding: 0 12px;
   border: 1px solid var(--t-line-d5dde6);

@@ -47,8 +47,8 @@ onUnmounted(() => {
             <template v-if="profile.age"> · {{ profile.age }} años</template>
           </p>
           <ul class="profile-modal__pills">
-            <li>{{ availabilityLabel[profile.availability] }}</li>
-            <li>
+            <li class="profile-modal__pills-item">{{ availabilityLabel[profile.availability] }}</li>
+            <li class="profile-modal__pills-item">
               <Car :size="12" aria-hidden="true" />
               {{ profile.hasVehicle ? 'Con vehículo propio' : 'Sin vehículo' }}
             </li>
@@ -59,41 +59,41 @@ onUnmounted(() => {
 
       <div class="profile-modal__body">
         <section class="profile-modal__block">
-          <h3>Áreas de interés</h3>
+          <h3 class="profile-modal__block-subheading">Áreas de interés</h3>
           <ul class="profile-modal__tags">
-            <li v-for="interest in profile.interests" :key="interest">{{ interest }}</li>
+            <li v-for="interest in profile.interests" :key="interest" class="profile-modal__tags-item">{{ interest }}</li>
           </ul>
         </section>
 
         <section class="profile-modal__block">
-          <h3>Resumen de experiencia</h3>
-          <p :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.experienceSummary) }">
+          <h3 class="profile-modal__block-subheading">Resumen de experiencia</h3>
+          <p class="profile-modal__block-text" :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.experienceSummary) }">
             {{ profile.hasApplication ? (profile.experienceSummary || 'Todavía no informó un resumen de experiencia.') : 'Disponible después de una postulación a una oferta propia.' }}
           </p>
         </section>
 
         <section class="profile-modal__block">
-          <h3>Último empleo</h3>
-          <p :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.latestJob) }">
+          <h3 class="profile-modal__block-subheading">Último empleo</h3>
+          <p class="profile-modal__block-text" :class="{ 'profile-modal__muted': !(profile.hasApplication && profile.latestJob) }">
             {{ profile.hasApplication ? (profile.latestJob || 'Todavía no informó su último empleo.') : 'Disponible después de una postulación a una oferta propia.' }}
           </p>
         </section>
 
         <section class="profile-modal__block">
-          <h3>Currículums vitae adjuntos</h3>
-          <p v-if="loadingCvs">Cargando CVs...</p>
-          <p v-else-if="profile.hasApplication && !cvs.length">No se adjuntaron CVs a este perfil.</p>
+          <h3 class="profile-modal__block-subheading">Currículums vitae adjuntos</h3>
+          <p v-if="loadingCvs" class="profile-modal__block-text">Cargando CVs...</p>
+          <p v-else-if="profile.hasApplication && !cvs.length" class="profile-modal__block-text">No se adjuntaron CVs a este perfil.</p>
           <div v-for="cv in cvs" :key="cv.id" class="profile-modal__cv">
             <div class="profile-modal__cv-file">
               <span class="profile-modal__cv-icon" aria-hidden="true">
                 <FileText :size="18" />
               </span>
               <div>
-                <strong>{{ cv.fileName || 'CV asociado al perfil' }}</strong>
-                <small>{{ cv.meta }}</small>
+                <strong class="profile-modal__cv-file-strong">{{ cv.fileName || 'CV asociado al perfil' }}</strong>
+                <small class="profile-modal__cv-file-note">{{ cv.meta }}</small>
               </div>
             </div>
-            <AppButton variant="secondary" type="button" @click="emit('downloadCv', profile.id, cv.id)">
+            <AppButton class="profile-modal__cv-app-button" variant="secondary" type="button" @click="emit('downloadCv', profile.id, cv.id)">
               <Download :size="14" aria-hidden="true" />
               Descargar CV
             </AppButton>
@@ -101,15 +101,15 @@ onUnmounted(() => {
           <div v-if="!profile.hasApplication" class="profile-modal__cv">
             <div class="profile-modal__cv-file">
               <span class="profile-modal__cv-icon" aria-hidden="true"><FileText :size="18" /></span>
-              <div><strong>CV asociado al perfil</strong><small>Disponible después de una postulación a una oferta propia</small></div>
+              <div><strong class="profile-modal__cv-file-strong">CV asociado al perfil</strong><small class="profile-modal__cv-file-note">Disponible después de una postulación a una oferta propia</small></div>
             </div>
           </div>
           <div v-if="profile.hasApplication && !cvs.length && !loadingCvs" class="profile-modal__cv">
             <div class="profile-modal__cv-file">
               <span class="profile-modal__cv-icon" aria-hidden="true"><FileText :size="18" /></span>
-              <div><strong>{{ profile.cvFileName || 'CV asociado al perfil' }}</strong><small>{{ profile.cvMeta || 'No se adjuntó un CV' }}</small></div>
+              <div><strong class="profile-modal__cv-file-strong">{{ profile.cvFileName || 'CV asociado al perfil' }}</strong><small class="profile-modal__cv-file-note">{{ profile.cvMeta || 'No se adjuntó un CV' }}</small></div>
             </div>
-            <AppButton variant="secondary" type="button" :disabled="!profile.hasCv" @click="emit('downloadCv', profile.id)">
+            <AppButton class="profile-modal__cv-app-button" variant="secondary" type="button" :disabled="!profile.hasCv" @click="emit('downloadCv', profile.id)">
               <Download :size="14" aria-hidden="true" /> Descargar CV
             </AppButton>
           </div>
@@ -117,7 +117,7 @@ onUnmounted(() => {
       </div>
 
       <footer class="profile-modal__actions">
-        <AppButton variant="secondary" type="button" @click="emit('close')">Cerrar</AppButton>
+        <AppButton class="profile-modal__actions-app-button" variant="secondary" type="button" @click="emit('close')">Cerrar</AppButton>
       </footer>
     </section>
   </dialog>

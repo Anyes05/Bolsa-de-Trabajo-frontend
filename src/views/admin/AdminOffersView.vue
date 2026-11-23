@@ -106,13 +106,13 @@ onMounted(loadData)
     <div class="admin-toolbar">
       <label class="admin-search">
         <Search :size="16" aria-hidden="true" />
-        <input v-model="search" type="search" placeholder="Buscar oferta o socio..." aria-label="Buscar oferta o socio">
+        <input v-model="search" class="admin-search__input" type="search" placeholder="Buscar oferta o socio..." aria-label="Buscar oferta o socio">
       </label>
-      <div class="cash-filters offers-status-filters" aria-label="Filtrar ofertas por estado">
+      <div class="cash-filters offers-status-filters admin-toolbar__cash-filters" aria-label="Filtrar ofertas por estado">
         <button
           v-for="filter in ['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA']"
           :key="filter"
-          class="cash-filter"
+          class="cash-filter offers-status-filters__cash-filter admin-toolbar__cash-filter"
           :class="{ 'cash-filter--active': statusFilter === filter }"
           type="button"
           @click="statusFilter = filter"
@@ -131,7 +131,7 @@ onMounted(loadData)
       >
         <div class="socio-offer-card__body">
           <header class="socio-offer-card__header">
-            <h2>{{ offer.titulo }}</h2>
+            <h2 class="socio-offer-card__header-heading">{{ offer.titulo }}</h2>
             <span class="socio-offer-card__status">{{ statusLabels[offer.estado] }}</span>
           </header>
           <p class="socio-offer-card__meta">

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import AppAlert from './AppAlert.vue'
-import { loadGoogleIdentity } from '../services/googleIdentity'
+import AppButton from './AppButton.vue'
+import { loadGoogleIdentity, type GoogleButtonOptions } from '../services/googleIdentity'
 import type { GoogleCredential } from '../services/types'
 
 const props = withDefaults(defineProps<{ disabled?: boolean; text?: 'signin_with' | 'signup_with' }>(), {
@@ -11,6 +12,23 @@ const emit = defineEmits<{ credential: [credential: GoogleCredential] }>()
 const container = ref<HTMLDivElement | null>(null)
 const error = ref('')
 let active = true
+
+/** GIS acepta un ancho de hasta 400 px: se iguala al contenedor y, si este es más ancho, se centra. */
+const MAX_BUTTON_WIDTH = 400
+
+function buttonOptions(element: HTMLElement): GoogleButtonOptions {
+  const width = Math.min(element.clientWidth, MAX_BUTTON_WIDTH)
+  const dark = document.documentElement.dataset.theme === 'dark'
+  return {
+    type: 'standard',
+    theme: dark ? 'filled_black' : 'outline',
+    size: 'large',
+    shape: 'rectangular',
+    text: props.text,
+    logo_alignment: 'center',
+    ...(width > 0 ? { width } : {}),
+  }
+}
 
 async function initialize() {
   error.value = ''
@@ -33,7 +51,7 @@ async function initialize() {
       },
     })
     container.value.replaceChildren()
-    google.renderButton(container.value, { type: 'standard', theme: 'outline', size: 'large', text: props.text })
+    google.renderButton(container.value, buttonOptions(container.value))
   } catch (cause) {
     if (active) error.value = cause instanceof Error ? cause.message : 'No se pudo cargar el acceso con Google.'
   }
@@ -45,12 +63,15 @@ onUnmounted(() => { active = false })
 
 <template>
   <div class="google-sign-in">
-    <div ref="container" :inert="disabled" :aria-busy="disabled" />
+    <div ref="container" class="google-sign-in__button" :class="{ 'google-sign-in__button--hidden': error }" :inert="disabled" :aria-busy="disabled" />
     <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
-    <button v-if="error" type="button" :disabled="disabled" @click="initialize">Reintentar acceso con Google</button>
+    <AppButton v-if="error" class="google-sign-in__retry" variant="secondary" :disabled="disabled" @click="initialize">Reintentar acceso con Google</AppButton>
   </div>
 </template>
 
 <style scoped>
-.google-sign-in { display: grid; gap: 10px; margin: 16px 0; }
+.google-sign-in { display: grid; gap: 10px; width: 100%; margin: 16px 0; }
+.google-sign-in__button { display: flex; justify-content: center; width: 100%; min-width: 0; }
+.google-sign-in__button--hidden { display: none; }
+.google-sign-in__retry { width: 100%; }
 </style>

@@ -104,7 +104,7 @@ function logout() {
     <div v-if="open" class="shell-backdrop admin-shell__backdrop" @click="open = false" />
     <aside class="admin-sidebar" :class="{ 'admin-sidebar--open': open }">
       <div class="admin-sidebar__brand">
-        <BrandLogo variant="white" />
+        <BrandLogo class="admin-sidebar__brand-brand-logo" variant="white" />
         <button class="shell-sidebar-close admin-sidebar__close" type="button" aria-label="Cerrar menú" @click="open = false">
           <X :size="18" />
         </button>
@@ -135,15 +135,15 @@ function logout() {
           <Menu :size="20" />
         </button>
         <div class="admin-breadcrumb">
-          <span>CCISJ</span>
-          <strong>/</strong>
-          <b>{{ title }}</b>
+          <span class="admin-breadcrumb__inline">CCISJ</span>
+          <strong class="admin-breadcrumb__strong">/</strong>
+          <b class="admin-breadcrumb__bold">{{ title }}</b>
         </div>
         <div class="admin-topbar__user">
           <ThemeToggle />
           <div class="admin-topbar__identity">
-            <strong>{{ displayName }}</strong>
-            <span>{{ auth.role || 'ADMIN' }}</span>
+            <strong class="admin-topbar__identity-strong">{{ displayName }}</strong>
+            <span class="admin-topbar__identity-inline">{{ auth.role || 'ADMIN' }}</span>
           </div>
           <label title="Cambiar foto de perfil">
             <ProfileAvatar class="admin-topbar__avatar" :src="auth.photoUrl" :initials="avatarInitials" />
@@ -161,8 +161,8 @@ function logout() {
         <header class="admin-page__heading">
           <div>
             <p class="admin-page__eyebrow">Panel administrativo</p>
-            <h1>{{ title }}</h1>
-            <p>{{ subtitle }}</p>
+            <h1 class="admin-page__heading-title">{{ title }}</h1>
+            <p class="admin-page__heading-subtitle">{{ subtitle }}</p>
           </div>
           <slot name="header-actions" />
         </header>

@@ -50,29 +50,29 @@ const applications = [
 
     <section class="applications-list">
       <article v-for="application in applications" :key="application.name" class="application-card">
-        <header class="application-card__header">
+        <header class="application-card__header applications-list__application-card-header">
           <span class="application-avatar">{{ application.initials }}</span>
-          <div>
-            <h2>{{ application.name }}</h2>
-            <p>
+          <div class="application-card__header-box">
+            <h2 class="application-card__header-heading applications-list__application-card-header-application-card-header-heading">{{ application.name }}</h2>
+            <p class="application-card__header-text applications-list__application-card-header-application-card-header-text">
               <MapPin :size="15" aria-hidden="true" /> {{ application.location }}
-              <span class="application-phone">
+              <span class="application-phone applications-list__application-phone">
                 <Phone :size="15" aria-hidden="true" /> {{ application.phone }}
               </span>
             </p>
           </div>
-          <span class="application-status" :class="`application-status--${application.status.toLowerCase()}`">
+          <span class="application-status applications-list__application-status" :class="`application-status--${application.status.toLowerCase()}`">
             {{ application.status }}
             <small v-if="application.status === 'Contactado'"> ✓</small>
           </span>
         </header>
-        <div class="application-card__body">
-          <strong class="application-profile-title">Perfil: {{ application.profile }}</strong>
-          <p>{{ application.description }}</p>
-          <div class="application-tags">
-            <span v-for="tag in application.tags" :key="tag">{{ tag }}</span>
+        <div class="application-card__body applications-list__application-card-body">
+          <strong class="application-profile-title applications-list__application-profile-title">Perfil: {{ application.profile }}</strong>
+          <p class="application-card__body-text applications-list__application-card-body-application-card-body-text">{{ application.description }}</p>
+          <div class="application-tags applications-list__application-tags">
+            <span v-for="tag in application.tags" :key="tag" class="application-tags__inline applications-list__application-tags-application-tags-inline">{{ tag }}</span>
           </div>
-          <button class="application-cv-button" type="button">
+          <button class="application-cv-button applications-list__application-cv-button" type="button">
             <Paperclip :size="15" /> Ver CV Completo
           </button>
         </div>

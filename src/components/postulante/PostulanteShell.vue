@@ -84,7 +84,7 @@ function logout() {
     <div v-if="open" class="shell-backdrop" @click="open = false" />
     <aside class="postulante-sidebar" :class="{ 'postulante-sidebar--open': open }">
       <div class="postulante-sidebar__brand">
-        <BrandLogo variant="white" />
+        <BrandLogo class="postulante-sidebar__brand-logo" variant="white" />
         <button class="shell-sidebar-close" type="button" aria-label="Cerrar menú" @click="open = false">
           <X :size="18" />
         </button>
@@ -152,8 +152,8 @@ function logout() {
             @read="notifications.markOneRead(Number($event))"
           />
           <div class="postulante-header__identity">
-            <strong>{{ auth.fullName || auth.email || 'Postulante' }}</strong>
-            <span>{{ auth.role || 'POSTULANTE' }}</span>
+            <strong class="postulante-header__identity-strong">{{ auth.fullName || auth.email || 'Postulante' }}</strong>
+            <span class="postulante-header__identity-inline">{{ auth.role || 'POSTULANTE' }}</span>
           </div>
           <ProfileAvatar class="postulante-header__avatar" :src="auth.photoUrl" :initials="initials(auth.fullName || auth.email || 'Postulante')" />
           <button type="button" class="shell-exit" @click="logout">
@@ -168,8 +168,8 @@ function logout() {
         <AppAlert v-if="notifications.error" tone="error">{{ notifications.error }}</AppAlert>
         <div v-if="permanencia?.requiereAccion" class="permanencia-banner" role="status">
           <div>
-            <strong>Confirmá tu permanencia en la Bolsa</strong>
-            <p>
+            <strong class="permanencia-banner__strong">Confirmá tu permanencia en la Bolsa</strong>
+            <p class="permanencia-banner__text">
               Llevás más de 2 meses sin actividad.
               <template v-if="permanencia.avisoPendiente && permanencia.deadline">
                 Tenés tiempo hasta el {{ new Date(permanencia.deadline).toLocaleDateString('es-UY') }}.
@@ -203,6 +203,6 @@ function logout() {
   border: 1px solid var(--t-line-efd4a0);
   color: var(--t-fg-5c4316);
 }
-.permanencia-banner strong { display: block; margin-bottom: 4px; }
-.permanencia-banner p { margin: 0; font-size: 0.92rem; line-height: 1.4; }
+.permanencia-banner__strong { display: block; margin-bottom: 4px; }
+.permanencia-banner__text { margin: 0; font-size: 0.92rem; line-height: 1.4; }
 </style>

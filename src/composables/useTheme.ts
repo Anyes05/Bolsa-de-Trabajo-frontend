@@ -4,7 +4,6 @@ export type Theme = 'light' | 'dark'
 
 export const THEME_STORAGE_KEY = 'ccisj-theme'
 const THEME_COLOR: Record<Theme, string> = { light: '#008c45', dark: '#0f1f17' }
-const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 function storedTheme(): Theme | null {
   try {
@@ -13,10 +12,6 @@ function storedTheme(): Theme | null {
   } catch {
     return null
   }
-}
-
-function systemTheme(): Theme {
-  return window.matchMedia?.(DARK_QUERY).matches ? 'dark' : 'light'
 }
 
 const theme = ref<Theme>('light')
@@ -28,14 +23,10 @@ function apply(value: Theme) {
 }
 
 /**
- * Aplica el tema antes de montar la app: el elegido por la persona o, si nunca eligió,
- * el del sistema operativo (y lo sigue mientras no elija uno).
+ * Aplica el tema antes de montar la app: el elegido por la persona o, si nunca eligió, el claro.
  */
 export function initTheme() {
-  apply(storedTheme() ?? systemTheme())
-  window.matchMedia?.(DARK_QUERY).addEventListener?.('change', (event) => {
-    if (!storedTheme()) apply(event.matches ? 'dark' : 'light')
-  })
+  apply(storedTheme() ?? 'light')
 }
 
 export function useTheme() {
