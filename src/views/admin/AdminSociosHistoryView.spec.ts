@@ -197,6 +197,16 @@ describe('historial de suscripción de socios', () => {
       expect(detalle(wrapper).text()).toContain('Historial de suscripción')
       expect(wrapper.text()).not.toContain('Socio no encontrado')
     })
+
+    it('informa el error si falla la consulta del socio de la ruta por otro motivo', async () => {
+      ruta.query = { socio: '1' }
+      servidor([socio(1)])
+      vi.mocked(socioService.getSocioById).mockRejectedValueOnce(errorApi('Servicio de socios no disponible'))
+      const wrapper = montarSinEsperar()
+      await flushPromises()
+      expect(wrapper.text()).toContain('Servicio de socios no disponible')
+      expect(socioService.subscriptionHistory).not.toHaveBeenCalled()
+    })
   })
 
   describe('detalle del historial', () => {

@@ -76,6 +76,78 @@ describe('ofertas de empleo del postulante', () => {
     expect(titulos(wrapper)).toEqual(['Oferta 3'])
   })
 
+  describe('postulación', () => {
+    const perfil = { id: 11, nombre: 'Perfil Ventas', visible: true, rubros: ['Ventas'] }
+    const otroPerfil = { id: 12, nombre: 'Perfil Caja', visible: true, rubros: [] as string[] }
+    const oculto = { id: 13, nombre: 'Oculto', visible: false, rubros: [] as string[] }
+    const cv = { id: 21, perfilLaboralId: 11, nombreArchivo: 'mi-cv.pdf' }
+
+    async function conPerfiles(perfiles: unknown[], cvs: unknown[]) {
+      vi.mocked(postulanteService.listProfiles).mockResolvedValue(perfiles as never)
+      vi.mocked(postulanteService.listCvs).mockResolvedValue(cvs as never)
+      return montar()
+    }
+
+    const postularme = (wrapper: Awaited<ReturnType<typeof montar>>) =>
+      wrapper.findAll('.offer-card')[0].findAll('button').find((b) => b.text() === 'Postularme')!
+
+    it('sin perfil visible con CV avisa y no abre la selección', async () => {
+      const wrapper = await conPerfiles([oculto, otroPerfil], [{ ...cv, perfilLaboralId: 13 }])
+      await postularme(wrapper).trigger('click')
+      expect(wrapper.text()).toContain('Para postularte necesitás al menos un perfil profesional visible con un CV')
+      expect(wrapper.find('#apply-modal-title').exists()).toBe(false)
+    })
+
+    it('elige el perfil, confirma y marca la oferta como postulada', async () => {
+      const wrapper = await conPerfiles([perfil, otroPerfil, oculto], [cv, { ...cv, id: 22, perfilLaboralId: 12, nombreArchivo: null }])
+      const postulacion = { id: 1, ofertaId: 1, ofertaTitulo: 'Oferta 1', socioNombre: 'Empresa', rubro: 'Ventas', fecha: '2026-11-20T12:00:00Z', estado: 'RECIBIDA', perfilId: 12, perfilNombre: 'Perfil Caja', cvId: 22, cvNombre: null }
+      vi.mocked(applicantOfferService.apply).mockResolvedValue(postulacion as never)
+      vi.mocked(applicantOfferService.listApplications).mockResolvedValue([postulacion] as never)
+
+      await postularme(wrapper).trigger('click')
+      expect(wrapper.find('#apply-modal-title').text()).toBe('Seleccionar Perfil')
+      const opciones = wrapper.findAll('.modal-profile')
+      expect(opciones).toHaveLength(2)
+      expect(opciones[0].text()).toContain('Ventas · mi-cv.pdf')
+      expect(opciones[1].text()).toContain('Sin rubros indicados · CV del perfil')
+      await opciones[1].find('input').setValue(true)
+      await wrapper.findAll('button').find((b) => b.text() === 'Confirmar Postulación')!.trigger('click')
+      await flushPromises()
+
+      expect(applicantOfferService.apply).toHaveBeenCalledWith(1, 12)
+      expect(wrapper.text()).toContain('Tu postulación se envió correctamente.')
+      expect(wrapper.find('#apply-modal-title').exists()).toBe(false)
+      expect(wrapper.findAll('.offer-card')[0].text()).toContain('Postulado')
+    })
+
+    it('si el servidor rechaza la postulación muestra el motivo', async () => {
+      const wrapper = await conPerfiles([perfil], [cv])
+      vi.mocked(applicantOfferService.apply).mockRejectedValue(new Error('La oferta ya no recibe postulaciones'))
+      await postularme(wrapper).trigger('click')
+      await wrapper.findAll('button').find((b) => b.text() === 'Confirmar Postulación')!.trigger('click')
+      await flushPromises()
+      expect(wrapper.text()).toContain('La oferta ya no recibe postulaciones')
+      expect(wrapper.find('#apply-modal-title').exists()).toBe(true)
+    })
+
+    it('cancelar y el fondo cierran la selección sin postular', async () => {
+      const wrapper = await conPerfiles([perfil], [cv])
+      await postularme(wrapper).trigger('click')
+      await wrapper.findAll('button').find((b) => b.text() === 'Cancelar')!.trigger('click')
+      expect(wrapper.find('#apply-modal-title').exists()).toBe(false)
+      await postularme(wrapper).trigger('click')
+      await wrapper.find('.modal__backdrop').trigger('click')
+      expect(wrapper.find('#apply-modal-title').exists()).toBe(false)
+      expect(applicantOfferService.apply).not.toHaveBeenCalled()
+    })
+  })
+
+  it('muestra el error si falla la carga de perfiles o postulaciones', async () => {
+    vi.mocked(postulanteService.listProfiles).mockRejectedValue(new Error('Perfiles no disponibles'))
+    const wrapper = await montar()
+    expect(wrapper.text()).toContain('Perfiles no disponibles')
+  })
+
   it('muestra el error de carga de ofertas', async () => {
     vi.mocked(applicantOfferService.list).mockReset().mockRejectedValue(new Error('Ofertas no disponibles'))
     const wrapper = await montar()

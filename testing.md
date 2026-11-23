@@ -208,3 +208,10 @@ tipos y queda en 0/0 líneas ejecutables.
   - `AdminShell`: las props con valor por defecto pasan a ser opcionales.
 - Pendiente fuera de cobertura: `npm run lint` informa 87 errores previos, `no-undef` de globals
   del navegador en `.vue`, porque `eslint.config.js` no declara `globals.browser`. Lint no corre en CI.
+
+## Cobertura tras la paginación en el servidor — 23/11/2026
+
+`npm run test:ci` aprobado: **626 pruebas Vitest**, **27 pruebas Node** y build. `npm run test:ui`:
+**60 pruebas Playwright**. Cobertura: **100% de líneas** y 98,53% de ramas.
+`tests/applicantFilters.test.mjs` se reescribió: el filtrado de postulantes ahora lo hace el backend,
+y el composable solo arma los parámetros.
