@@ -182,3 +182,29 @@ Playwright y el workflow ya están incorporados para el smoke público descrito.
 - Verificado: `npm test -- --run src\services\cajaService.spec.ts src\utils\cajaFilters.spec.ts` (**11 tests**, 0 fallos) y `npm run build` (TypeScript/Vite correcto; persiste aviso de chunks grandes).
 - Pendiente de prueba visual/E2E de este nuevo panel: carga/error/reintento, formulario, rechazo de conciliación, actualización de saldo y navegación entre socios. Los tests del cliente verifican ruta de consulta, POST con motivo y propagación del conflicto; no acreditan interacción DOM ni compliance universal.
 - Límite: los datos migrados muestran autor `MIGRACION`, sin atribuirles un autor histórico desconocido. La protección depende de triggers y permisos de PostgreSQL, no es invulnerable ante propietarios/superusuarios que los alteren. No se ejecutó ni desplegó contra producción.
+
+## Cobertura 100% de líneas — 23/11/2026
+
+`npm run test:ci` aprobado: **609 pruebas Vitest** (79 archivos) y **27 pruebas Node**, más el
+build. `npm run test:ui`: **18 pruebas Playwright** aprobadas. Sin exclusiones en la cobertura:
+
+| Métrica | Cubierto | Total | Porcentaje |
+|---|---:|---:|---:|
+| Líneas / sentencias | 9191 | 9191 | 100% |
+| Ramas | 3158 | 3201 | 98,65% |
+| Funciones | 573 | 577 | 99,30% |
+
+Partida del mismo día: 7% de líneas. Las vistas y componentes se prueban con `@vue/test-utils`
+y `jsdom` (comentario `// @vitest-environment jsdom` en cada spec). `services/types.ts` solo tiene
+tipos y queda en 0/0 líneas ejecutables.
+
+- Cambios de producción hechos junto con los tests:
+  - `SocioBolsaEmpleoView`: se quitó un `<style scoped>` que estaba dentro del `<template>`. Vue
+    nunca lo aplicaba, y en modo dev/test la vista no compilaba.
+  - Caja: el mensaje de reintegro recurrente decía "puntual".
+  - `SocioMisOfertasView`: ahora muestra los errores de carga, guardado y cambio de estado.
+  - Registro: si falla el PDF del CV manual, el alta igual se completa.
+  - Registro: se quitó el estado `checkingAvailability`, que nunca se activaba.
+  - `AdminShell`: las props con valor por defecto pasan a ser opcionales.
+- Pendiente fuera de cobertura: `npm run lint` informa 87 errores previos, `no-undef` de globals
+  del navegador en `.vue`, porque `eslint.config.js` no declara `globals.browser`. Lint no corre en CI.

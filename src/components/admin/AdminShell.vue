@@ -23,9 +23,9 @@ import { useAuthStore } from '../../stores/auth'
 import { userFacingError } from '../../utils/userMessage'
 
 withDefaults(defineProps<{
-  title: string
-  subtitle: string
-  active: string
+  title?: string
+  subtitle?: string
+  active?: string
 }>(), {
   title: 'Panel de administración',
   subtitle: 'Gestiona la plataforma CCISJ',

@@ -323,15 +323,17 @@ async function saveExpense() {
     return
   }
   expenseBusy.value = true
+  // openExpense reinicia el formulario: se guarda el tipo antes para que el mensaje sea el correcto.
+  const recurrente = expenseRecurring.value
   try {
     const account = await cajaService.registrarReintegro(expenseCompany.value.socioId, {
       concepto: expenseConcept.value.trim(),
       monto: Number(expenseAmount.value),
-      recurrente: expenseRecurring.value,
+      recurrente,
     })
     await loadResumen()
     await openExpense(account)
-    expenseSuccess.value = expenseRecurring.value
+    expenseSuccess.value = recurrente
       ? 'Reintegro recurrente registrado. Quedó guardado el tipo recurrente y se cobrará también los meses siguientes.'
       : 'Reintegro puntual registrado. Quedó guardado el tipo puntual (solo este cargo).'
   } catch (exception) {

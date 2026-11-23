@@ -241,9 +241,5 @@ onMounted(loadProfiles)
         @notify="notifyApplicant"
       />
     </template>
-
-    <style scoped>
-    .bolsa.bolsa--shared-filters { display: block; }
-    </style>
   </SocioShell>
 </template>

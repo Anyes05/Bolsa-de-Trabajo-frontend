@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Pencil, Pause, Play, Plus, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
+import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
@@ -86,6 +87,7 @@ function applicationsLabel(total: number) {
 }
 
 async function setStatus(offer: JobOffer, status: JobOffer['estado']) {
+  error.value = ''
   try {
     const updated = await offerService.setStatus(offer.id, status)
     offers.value = offers.value.map((current) => current.id === updated.id ? updated : current)
@@ -113,6 +115,7 @@ function displayStatus(status: JobOffer['estado']) {
     </template>
 
     <section class="socio-offers" aria-label="Mis ofertas">
+      <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
       <div class="offers-status-filters" aria-label="Filtrar ofertas por estado">
         <button
           v-for="filter in (['TODAS', 'ACTIVA', 'PAUSADA', 'CERRADA', 'VENCIDA'] as const)"

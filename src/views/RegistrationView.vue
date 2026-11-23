@@ -391,10 +391,8 @@ function validateStep(current: number) {
 }
 
 const acceptedTerms = ref(false)
-const checkingAvailability = ref(false)
 
 async function next() {
-  if (checkingAvailability.value) return
   if (!validateStep(step.value)) return
   step.value += 1
 }
@@ -405,7 +403,7 @@ function previous() {
 }
 
 async function registerWithGoogle(credential: GoogleCredential) {
-  if (busy.value || checkingAvailability.value) return
+  if (busy.value) return
   busy.value = true
   clearFeedback()
   try {
@@ -553,7 +551,15 @@ async function complete() {
     googleRegistration.clear()
 
     // Intento no bloqueante: si falla, el postulante podrá cargar CV luego en Mis Perfiles.
-    const generatedManualCv = cvMode.value === 'manual' ? buildManualCvFile() : null
+    // La cuenta ya existe: si falla la generación del PDF no se debe bloquear el alta (reintentar daría 409).
+    let generatedManualCv: File | null = null
+    if (cvMode.value === 'manual') {
+      try {
+        generatedManualCv = buildManualCvFile()
+      } catch (pdfError) {
+        logApiFailure('register-manual-cv', pdfError, { email: form.email })
+      }
+    }
     const filesToUpload = cvMode.value === 'upload' ? cvFiles.value : generatedManualCv ? [generatedManualCv] : []
 
     if (filesToUpload.length) {
@@ -623,7 +629,7 @@ async function complete() {
       <section v-if="step === 1" class="registration-card__step" aria-labelledby="step-personal">
         <h2 id="step-personal" ref="stepHeading" tabindex="-1"><span class="registration-card__step-icon" aria-hidden="true"><UserRound :size="24" /></span> Datos Personales</h2>
         <p>Completa la información básica para dar de alta tu ficha de postulante.</p>
-        <GoogleSignInButton text="signup_with" :disabled="busy || checkingAvailability" @credential="registerWithGoogle" />
+        <GoogleSignInButton text="signup_with" :disabled="busy" @credential="registerWithGoogle" />
         <div class="form-grid">
           <AppField id="fullName" label="Nombre completo" required wide :error="fieldErrors.fullName">
             <input id="fullName" v-model="form.fullName" placeholder="Ingresa tu nombre y apellido" autocomplete="name" :aria-invalid="Boolean(fieldErrors.fullName)">
@@ -676,8 +682,8 @@ async function complete() {
               </select>
             </AppField>
           </div>
-          <details><summary>Volver a autenticarme con Google si venció el registro</summary><GoogleSignInButton text="signup_with" :disabled="busy || checkingAvailability" @credential="registerWithGoogle" /></details>
-          <button type="button" :disabled="busy || checkingAvailability" @click="cancelGoogleRegistration">Usar otro correo o registrarme con contraseña</button>
+          <details><summary>Volver a autenticarme con Google si venció el registro</summary><GoogleSignInButton text="signup_with" :disabled="busy" @credential="registerWithGoogle" /></details>
+          <button type="button" :disabled="busy" @click="cancelGoogleRegistration">Usar otro correo o registrarme con contraseña</button>
         </section>
         <aside class="registration-card__notice">
           <Lightbulb :size="17" aria-hidden="true" />
@@ -900,8 +906,8 @@ async function complete() {
           <ArrowLeft :size="14" aria-hidden="true" /> Anterior
         </AppButton>
         <span v-else></span>
-        <AppButton v-if="step < 3" type="submit" :loading="checkingAvailability || busy">
-          {{ checkingAvailability ? 'Verificando...' : 'Continuar' }} <ArrowRight :size="15" aria-hidden="true" />
+        <AppButton v-if="step < 3" type="submit" :loading="busy">
+          Continuar <ArrowRight :size="15" aria-hidden="true" />
         </AppButton>
         <AppButton v-else type="submit" :loading="busy">
           {{ busy ? 'Registrando...' : 'Completar Registro' }}
