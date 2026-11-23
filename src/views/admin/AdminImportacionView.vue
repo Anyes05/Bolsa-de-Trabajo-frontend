@@ -204,9 +204,9 @@ function ficticios(fila: ImportacionFila) {
   gap: 10px;
   margin: 8px 0 16px;
   padding: 10px 14px;
-  border: 1px dashed #b7c4bc;
+  border: 1px dashed var(--t-line-b7c4bc);
   border-radius: 10px;
-  color: #445249;
+  color: var(--t-fg-445249);
   font-weight: 600;
   cursor: pointer;
 }
@@ -224,19 +224,19 @@ function ficticios(fila: ImportacionFila) {
 
 .import-stats article {
   padding: 12px 14px;
-  border: 1px solid #e4e9ee;
+  border: 1px solid var(--t-line-e4e9ee);
   border-radius: 10px;
-  background: #fff;
+  background: var(--t-bg-ffffff);
 }
 
 .import-stats strong {
   display: block;
-  color: #0a7a3e;
+  color: var(--t-fg-0a7a3e);
   font-size: 1.4rem;
 }
 
 .import-stats span {
-  color: #5a6870;
+  color: var(--t-fg-5a6870);
   font-size: 0.85rem;
 }
 
@@ -249,8 +249,8 @@ function ficticios(fila: ImportacionFila) {
 .import-tags b {
   padding: 3px 7px;
   border-radius: 999px;
-  background: #fef9c3;
-  color: #854d0e;
+  background: var(--t-bg-fef9c3);
+  color: var(--t-fg-854d0e);
   font-size: 11px;
   font-weight: 700;
 }
@@ -272,16 +272,16 @@ function ficticios(fila: ImportacionFila) {
   align-items: center;
   gap: 6px;
   padding: 10px 14px;
-  border: 1px solid #c9d4cc;
+  border: 1px solid var(--t-line-c9d4cc);
   border-radius: 10px;
-  background: #fff;
-  color: #445249;
+  background: var(--t-bg-ffffff);
+  color: var(--t-fg-445249);
   font-weight: 600;
   cursor: pointer;
 }
 
 .import-cancel:hover:not(:disabled) {
-  background: #f4f7f5;
+  background: var(--t-bg-f4f7f5);
 }
 
 .import-cancel:disabled {

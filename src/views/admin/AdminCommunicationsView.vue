@@ -296,7 +296,7 @@ function formatNoticeDate(value: string | null | undefined) {
 <style scoped>
 .communication-empty {
   margin: 0;
-  color: #68737c;
+  color: var(--t-fg-68737c);
   font-size: 0.95rem;
 }
 
@@ -313,7 +313,7 @@ function formatNoticeDate(value: string | null | undefined) {
 }
 
 .communication-previous__row--active {
-  background: #f3faf6;
+  background: var(--t-bg-f3faf6);
 }
 
 .communication-previous__view {
@@ -322,10 +322,10 @@ function formatNoticeDate(value: string | null | undefined) {
   gap: 6px;
   min-height: 36px;
   padding: 0 12px;
-  border: 1px solid #0a9d4d;
+  border: 1px solid var(--t-line-0a9d4d);
   border-radius: 8px;
-  background: #fff;
-  color: #078747;
+  background: var(--t-bg-ffffff);
+  color: var(--t-fg-078747);
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
@@ -333,7 +333,7 @@ function formatNoticeDate(value: string | null | undefined) {
 
 .communication-modal__meta {
   margin: 8px 0 0;
-  color: #556070;
+  color: var(--t-fg-556070);
   font-size: 0.9rem;
 }
 
@@ -348,12 +348,12 @@ function formatNoticeDate(value: string | null | undefined) {
   gap: 4px;
   min-width: 0;
   flex: 1;
-  color: #556070;
+  color: var(--t-fg-556070);
   font-size: 0.85rem;
 }
 
 .communication-modal__emails strong {
-  color: #1f2a24;
+  color: var(--t-fg-1f2a24);
 }
 
 .communication-modal__emails span {

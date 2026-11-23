@@ -69,10 +69,10 @@ import BrandLogo from '../components/BrandLogo.vue'
   max-width: 760px;
   margin: 0 auto;
   padding: 32px 20px 64px;
-  color: #24352b;
+  color: var(--t-fg-24352b);
   line-height: 1.6;
 }
 .terms h1 { margin: 12px 0 8px; }
 .terms h2 { margin-top: 28px; font-size: 1.1rem; }
-.terms a { color: #08775f; }
+.terms a { color: var(--t-fg-08775f); }
 </style>

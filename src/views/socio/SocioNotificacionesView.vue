@@ -67,7 +67,7 @@ function openNotice(item: SocioNotificationItem) {
 <style scoped>
 .socio-notifications__empty {
   margin: 12px 0;
-  color: #68737c;
+  color: var(--t-fg-68737c);
   font-size: 0.95rem;
 }
 </style>

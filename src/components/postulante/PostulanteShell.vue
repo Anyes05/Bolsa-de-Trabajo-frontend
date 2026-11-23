@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ThemeToggle from '../ThemeToggle.vue'
 import { Briefcase, ClipboardList, Bell, LogOut, Menu, UserRound, X } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -139,6 +140,7 @@ function logout() {
           <p class="postulante-header__subtitle">{{ subtitle }}</p>
         </div>
         <div class="postulante-header__user">
+          <ThemeToggle />
           <NotificationBell
             :count="notifications.unreadCount"
             label="Notificaciones"
@@ -197,9 +199,9 @@ function logout() {
   margin-bottom: 16px;
   padding: 14px 16px;
   border-radius: 14px;
-  background: #fff7e8;
-  border: 1px solid #efd4a0;
-  color: #5c4316;
+  background: var(--t-bg-fff7e8);
+  border: 1px solid var(--t-line-efd4a0);
+  color: var(--t-fg-5c4316);
 }
 .permanencia-banner strong { display: block; margin-bottom: 4px; }
 .permanencia-banner p { margin: 0; font-size: 0.92rem; line-height: 1.4; }

@@ -29,8 +29,8 @@ const hasNext = computed(() => props.page + 1 < props.totalPages)
 </template>
 
 <style scoped>
-.pagination-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin: 16px 0; color: #526159; font-size: 0.9rem; }
-.pagination-bar button { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 8px 14px; border: 1px solid #d5e0d9; border-radius: 8px; background: #fff; color: #24352b; font: inherit; cursor: pointer; }
+.pagination-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin: 16px 0; color: var(--t-fg-526159); font-size: 0.9rem; }
+.pagination-bar button { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--t-line-d5e0d9); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-24352b); font: inherit; cursor: pointer; }
 .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
-.pagination-bar button:focus-visible { outline: 2px solid #078844; outline-offset: 2px; }
+.pagination-bar button:focus-visible { outline: 2px solid var(--t-line-078844); outline-offset: 2px; }
 </style>

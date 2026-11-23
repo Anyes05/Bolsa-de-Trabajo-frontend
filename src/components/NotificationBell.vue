@@ -184,39 +184,39 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #dce8e0;
+  border: 1px solid var(--t-line-dce8e0);
   border-radius: 16px;
-  background: #fff;
+  background: var(--t-bg-ffffff);
   box-shadow: 0 16px 48px #163c2926, 0 3px 10px #163c2910;
-  color: #24352b;
+  color: var(--t-fg-24352b);
   text-align: left;
 }
-.notification-dropdown__header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #e6eee8; }
+.notification-dropdown__header { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--t-line-e6eee8); }
 .notification-dropdown__header h2 { margin: 0; font-size: 1rem; font-weight: 700; }
-.notification-dropdown__header p { margin: 4px 0 0; color: #688073; font-size: .8rem; }
-.notification-dropdown__icon-button { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 50%; background: #f0f6f2; color: #3d5d4c; cursor: pointer; }
+.notification-dropdown__header p { margin: 4px 0 0; color: var(--t-fg-688073); font-size: .8rem; }
+.notification-dropdown__icon-button { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--t-bg-f0f6f2); color: var(--t-fg-3d5d4c); cursor: pointer; }
 .notification-dropdown__content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .notification-dropdown__list { list-style: none; margin: 0; padding: 0; }
-.notification-dropdown__list li + li { border-top: 1px solid #edf2ee; }
-.notification-dropdown__item { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 16px 20px; border: 0; background: #fff; color: inherit; text-align: left; font: inherit; cursor: pointer; }
-.notification-dropdown__item--unread { background: #f3faf6; }
-.notification-dropdown__item:hover { background: #eaf5ee; }
-.notification-dropdown__notice-icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 10px; background: #e4f1e9; color: #087c42; }
+.notification-dropdown__list li + li { border-top: 1px solid var(--t-line-edf2ee); }
+.notification-dropdown__item { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 16px 20px; border: 0; background: var(--t-bg-ffffff); color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.notification-dropdown__item--unread { background: var(--t-bg-f3faf6); }
+.notification-dropdown__item:hover { background: var(--t-bg-eaf5ee); }
+.notification-dropdown__notice-icon { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 10px; background: var(--t-bg-e4f1e9); color: var(--t-fg-087c42); }
 .notification-dropdown__summary { display: grid; gap: 5px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .notification-dropdown__summary strong { font-size: .875rem; line-height: 1.4; }
-.notification-dropdown__preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #63736a; font-size: .8rem; line-height: 1.5; }
-.notification-dropdown time { color: #708377; font-size: .75rem; }
-.notification-dropdown__dot { width: 7px; height: 7px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: #008d45; }
-.notification-dropdown__empty { display: grid; justify-items: center; gap: 10px; margin: 0; padding: 32px 20px; color: #718177; font-size: .875rem; text-align: center; }
+.notification-dropdown__preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--t-fg-63736a); font-size: .8rem; line-height: 1.5; }
+.notification-dropdown time { color: var(--t-fg-708377); font-size: .75rem; }
+.notification-dropdown__dot { width: 7px; height: 7px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: var(--t-bg-008d45); }
+.notification-dropdown__empty { display: grid; justify-items: center; gap: 10px; margin: 0; padding: 32px 20px; color: var(--t-fg-718177); font-size: .875rem; text-align: center; }
 .notification-dropdown__empty p { margin: 0; }
-.notification-dropdown__footer { display: grid; flex-shrink: 0; gap: 8px; padding: 14px 20px; border-top: 1px solid #e6eee8; background: #f8fbf9; }
-.notification-dropdown__footer small { color: #718177; font-size: .75rem; text-align: center; }
-.notification-dropdown__footer a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; color: #08783e; font-size: .875rem; font-weight: 700; text-decoration: none; }
+.notification-dropdown__footer { display: grid; flex-shrink: 0; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--t-line-e6eee8); background: var(--t-bg-f8fbf9); }
+.notification-dropdown__footer small { color: var(--t-fg-718177); font-size: .75rem; text-align: center; }
+.notification-dropdown__footer a { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 32px; color: var(--t-fg-08783e); font-size: .875rem; font-weight: 700; text-decoration: none; }
 .notification-dropdown__detail { padding: 18px 20px; overflow-wrap: anywhere; }
 .notification-dropdown__detail h3 { margin: 16px 0 8px; font-size: 1rem; line-height: 1.4; }
 .notification-dropdown__detail p { margin: 16px 0 0; white-space: pre-wrap; font-size: .875rem; line-height: 1.65; }
-.notification-dropdown__back { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: #08783e; font: inherit; font-size: .8rem; cursor: pointer; }
-.notification-dropdown__error { margin: 0; padding: 12px 20px; background: #fff4f1; color: #9c3d2c; font-size: .8rem; }
+.notification-dropdown__back { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; color: var(--t-fg-08783e); font: inherit; font-size: .8rem; cursor: pointer; }
+.notification-dropdown__error { margin: 0; padding: 12px 20px; background: var(--t-bg-fff4f1); color: var(--t-fg-9c3d2c); font-size: .8rem; }
 .notification-dropdown__error button { margin-left: 8px; border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; }
-.notification-dropdown :is(button, a):focus-visible { outline: 2px solid #008d45; outline-offset: -3px; }
+.notification-dropdown :is(button, a):focus-visible { outline: 2px solid var(--t-line-008d45); outline-offset: -3px; }
 </style>

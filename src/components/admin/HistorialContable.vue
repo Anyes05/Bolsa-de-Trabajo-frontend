@@ -83,7 +83,7 @@ watch(() => props.socioId, () => {
 </template>
 
 <style scoped>
-.accounting-history { border-top: 1px solid #d5dce5; margin-top: 1rem; padding-top: 1rem; }
+.accounting-history { border-top: 1px solid var(--t-line-d5dce5); margin-top: 1rem; padding-top: 1rem; }
 li { margin: 1rem 0; }
 p { margin: .4rem 0; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; }

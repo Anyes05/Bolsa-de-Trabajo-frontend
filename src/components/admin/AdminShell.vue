@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ThemeToggle from '../ThemeToggle.vue'
 import {
   BriefcaseBusiness,
   Building2,
@@ -139,6 +140,7 @@ function logout() {
           <b>{{ title }}</b>
         </div>
         <div class="admin-topbar__user">
+          <ThemeToggle />
           <div class="admin-topbar__identity">
             <strong>{{ displayName }}</strong>
             <span>{{ auth.role || 'ADMIN' }}</span>

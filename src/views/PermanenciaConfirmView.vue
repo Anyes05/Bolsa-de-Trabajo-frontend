@@ -80,7 +80,7 @@ async function confirmarSesion() {
   justify-items: center;
   gap: 24px;
   padding: 32px 16px 48px;
-  background: linear-gradient(180deg, #eef3f0 0%, #f7f8f7 55%, #fff 100%);
+  background: linear-gradient(180deg, var(--t-bg-eef3f0) 0%, var(--t-bg-f7f8f7) 55%, var(--t-bg-ffffff) 100%);
 }
 .permanencia__brand { width: min(960px, 100%); }
 .permanencia__card {
@@ -89,14 +89,14 @@ async function confirmarSesion() {
   gap: 16px;
   padding: 28px 24px;
   border-radius: 18px;
-  background: #fff;
+  background: var(--t-bg-ffffff);
   box-shadow: 0 18px 40px rgb(16 48 36 / 8%);
 }
 .permanencia__card h1 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
-  color: #16382b;
+  font-family: var(--font-display);
+  color: var(--t-fg-16382b);
   font-size: 1.6rem;
 }
-.permanencia__card p { margin: 0; color: #4d5b55; line-height: 1.45; }
+.permanencia__card p { margin: 0; color: var(--t-fg-4d5b55); line-height: 1.45; }
 </style>

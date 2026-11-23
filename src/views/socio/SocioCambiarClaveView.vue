@@ -97,7 +97,7 @@ function logout() {
 .access-form label {
   display: grid;
   gap: 6px;
-  color: #405063;
+  color: var(--t-fg-405063);
   font-size: 13px;
   font-weight: 600;
 }
@@ -105,7 +105,7 @@ function logout() {
 .access-form input {
   height: 42px;
   padding: 0 12px;
-  border: 1px solid #d5dde6;
+  border: 1px solid var(--t-line-d5dde6);
   border-radius: 10px;
   font-size: 14px;
 }
@@ -113,7 +113,7 @@ function logout() {
 .access-link {
   border: 0;
   background: transparent;
-  color: #5b6b7c;
+  color: var(--t-fg-5b6b7c);
   font-size: 13px;
   text-decoration: underline;
   cursor: pointer;

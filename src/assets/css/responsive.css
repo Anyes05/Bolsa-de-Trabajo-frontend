@@ -108,15 +108,15 @@ canvas {
   .shell-menu-button,
   .admin-menu-button {
     display: inline-grid !important;
-    color: #24352c;
-    background: #eef5f0;
+    color: var(--t-fg-24352c);
+    background: var(--t-bg-eef5f0);
   }
 
   .shell-sidebar-close,
   .admin-sidebar__close {
     display: inline-grid !important;
-    color: #fff;
-    background: rgb(255 255 255 / 14%);
+    color: var(--t-fg-ffffff);
+    background: var(--t-bg-ffffff24);
   }
 
   .shell-backdrop,
@@ -126,7 +126,7 @@ canvas {
     inset: 0;
     z-index: 40;
     border: 0;
-    background: rgb(17 39 27 / 48%);
+    background: var(--t-bg-11271b7a);
   }
 
   .admin-sidebar__footer,

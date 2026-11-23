@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ThemeToggle from '../ThemeToggle.vue'
 import { Bell, Briefcase, Building2, ClipboardList, LogOut, Megaphone, Menu, UserRound, X } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -168,6 +169,7 @@ function closeOpenedModal() {
         </div>
         <div class="socio-header__tools">
           <slot name="header-actions" />
+          <ThemeToggle />
           <NotificationBell
             :count="notifications.unreadCount"
             :to="{ name: 'socio-notificaciones' }"

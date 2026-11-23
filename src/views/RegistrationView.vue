@@ -920,7 +920,7 @@ async function complete() {
 
 <style scoped>
 .registration-google { display: grid; gap: 16px; margin-bottom: 24px; }
-.registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #e8f5ee; color: #087b48; }
-.registration-terms { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; color: #445249; font-size: 0.95rem; }
-.registration-terms a { color: #08775f; }
+.registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--t-bg-e8f5ee); color: var(--t-fg-087b48); }
+.registration-terms { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; color: var(--t-fg-445249); font-size: 0.95rem; }
+.registration-terms a { color: var(--t-fg-08775f); }
 </style>

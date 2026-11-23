@@ -70,10 +70,10 @@ La matriz completa RF-01 a RF-24 y RNF-01 a RNF-07 se mantiene en el plan princi
 | RF-24 | [Directorio](src/views/socio/SocioDirectorioView.vue) exclusivo de directivos. | Backend lista solo activos, no todos los dados de baja. |
 | RNF-03 | Roles, autenticación, Google y bloqueo de rutas. | No se encontraron pantallas/aceptación de términos y privacidad ni workflows SAST/DAST. HTTPS forzado requiere revisar el proxy externo; [Nginx del contenedor](nginx.conf) escucha HTTP 80. |
 | RNF-05 | Consumo de operaciones que disparan correo SMTP del backend. | No hay envío Gmail API; validar recepción real manualmente. |
-| RNF-06 | Interfaz clara responsive con marca CCISJ. | No hay modo oscuro. [CSS](src/assets/css/app.css) usa variables finales de Manrope/verde #078747, no coincidencia literal con Inter/Roboto y los verdes especificados. |
+| RNF-06 | Interfaz clara responsive con marca CCISJ, tipografía Inter y modo claro/oscuro. | Implementado el 23/11/2026: tipografía única Inter; modo oscuro con selector sol/luna ([useTheme](src/composables/useTheme.ts), [ThemeToggle](src/components/ThemeToggle.vue), [tokens](src/assets/css/theme.css)). El modo claro conserva los colores anteriores. Ver `casos de uso/RNF-06-diseno-y-tema.md`. |
 | RNF-07 | Caja, consultas y catálogo existen y se pueden medir. | Falta evidencia del umbral **< 2 s**. No excluir rendimiento como si el flujo no existiera. |
 
-No escribir E2E que intente usar modo oscuro, silenciar correo, importar CSV o editar campos inexistentes. Registrar esas funciones como desarrollo/cambio de alcance pendiente, no como casos aprobados u omitidos silenciosamente.
+No escribir E2E que intente silenciar correo, importar CSV o editar campos inexistentes. Registrar esas funciones como desarrollo/cambio de alcance pendiente, no como casos aprobados u omitidos silenciosamente.
 
 SAST/DAST y Playwright/GreenMail requieren implementación de infraestructura: su ausencia debe quedar trazada; no se consideran controles actuales ejecutados.
 

@@ -58,7 +58,7 @@ onMounted(() => {
 
 <style scoped>
 .postulante-notifications__actions { margin-bottom: 12px; }
-.postulante-notifications__empty { color: #68737c; }
+.postulante-notifications__empty { color: var(--t-fg-68737c); }
 .postulante-notifications { display: grid; gap: 12px; }
 .postulante-notification-card {
   display: grid;
@@ -66,26 +66,26 @@ onMounted(() => {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 14px;
-  background: #fff;
-  border: 1px solid #e4ebe6;
+  background: var(--t-bg-ffffff);
+  border: 1px solid var(--t-line-e4ebe6);
   cursor: pointer;
 }
-.postulante-notification-card--unread { border-color: #9fbfad; background: #f4faf6; }
-.postulante-notification-card h2 { margin: 0 0 6px; font-size: 1rem; color: #16382b; }
+.postulante-notification-card--unread { border-color: var(--t-line-9fbfad); background: var(--t-bg-f4faf6); }
+.postulante-notification-card h2 { margin: 0 0 6px; font-size: 1rem; color: var(--t-fg-16382b); }
 .postulante-notification-card p {
   margin: 0 0 8px;
   white-space: pre-wrap;
-  color: #4d5b55;
+  color: var(--t-fg-4d5b55);
   font-size: 0.92rem;
 }
-.postulante-notification-card time { color: #7a8781; font-size: 0.82rem; }
+.postulante-notification-card time { color: var(--t-fg-7a8781); font-size: 0.82rem; }
 .postulante-notification-card__icon {
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: #e7f2ec;
-  color: #1f5a42;
+  background: var(--t-bg-e7f2ec);
+  color: var(--t-fg-1f5a42);
 }
 </style>

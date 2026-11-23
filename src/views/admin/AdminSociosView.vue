@@ -460,8 +460,8 @@ async function resetClave() {
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: #008d45;
-  color: #fff;
+  background: var(--t-bg-008d45);
+  color: var(--t-fg-ffffff);
   font-weight: 700;
 }
 
@@ -470,21 +470,21 @@ async function resetClave() {
   gap: 10px;
   margin: 4px 0 0;
   padding: 14px;
-  border: 1px solid #e1e6eb;
+  border: 1px solid var(--t-line-e1e6eb);
   border-radius: 12px;
-  background: #f7faf8;
+  background: var(--t-bg-f7faf8);
 }
 
 .socio-reset-clave legend {
   padding: 0 6px;
-  color: #2f3e35;
+  color: var(--t-fg-2f3e35);
   font-size: 12px;
   font-weight: 800;
 }
 
 .socio-reset-clave p,
 .socio-reset-clave small {
-  color: #6a7685;
+  color: var(--t-fg-6a7685);
   font-size: 12px;
   font-weight: 500;
 }
@@ -505,33 +505,33 @@ async function resetClave() {
 }
 
 .socio-incomplete {
-  background: #fef9c3;
-  color: #854d0e;
+  background: var(--t-bg-fef9c3);
+  color: var(--t-fg-854d0e);
 }
 
 .socio-no-access {
-  background: #fff0f0;
-  color: #ad2c31;
+  background: var(--t-bg-fff0f0);
+  color: var(--t-fg-ad2c31);
 }
 
 .company-incomplete-filter {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #445249;
+  color: var(--t-fg-445249);
   font-size: 13px;
   font-weight: 600;
 }
 
 .field-ficticio input,
 .field-ficticio select {
-  border-color: #ca8a04 !important;
-  background: #fffbeb;
+  border-color: var(--t-line-ca8a04) !important;
+  background: var(--t-bg-fffbeb);
 }
 
 .socio-ficticios-list {
   margin: 8px 0 0;
-  color: #854d0e;
+  color: var(--t-fg-854d0e);
   font-size: 13px;
 }
 </style>

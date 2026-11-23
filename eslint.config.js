@@ -15,6 +15,11 @@ export default [
       },
     },
     rules: {
+      // TypeScript (vue-tsc) ya detecta variables inexistentes y conoce los globals del navegador
+      // (window, document, Event...). Recomendación oficial de typescript-eslint.
+      'no-undef': 'off',
+      // Permite excluir campos con desestructuración: const { email, ...resto } = datos
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       'vue/multi-word-component-names': 'off',
       'vue/max-attributes-per-line': 'off',
     },

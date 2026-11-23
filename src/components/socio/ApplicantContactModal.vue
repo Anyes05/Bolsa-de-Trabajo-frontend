@@ -82,5 +82,5 @@ onUnmounted(() => {
 
 <style scoped>
 .contact-offer { display: grid; gap: 8px; margin-top: 16px; }
-.contact-offer select { width: 100%; padding: 10px 12px; border: 1px solid #d8e2db; border-radius: 8px; background: #fff; color: #243028; font: inherit; }
+.contact-offer select { width: 100%; padding: 10px 12px; border: 1px solid var(--t-line-d8e2db); border-radius: 8px; background: var(--t-bg-ffffff); color: var(--t-fg-243028); font: inherit; }
 </style>

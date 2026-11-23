@@ -196,18 +196,18 @@ onMounted(loadProfiles)
   margin: 0 0 16px;
 }
 .admin-applicants__chip {
-  border: 1px solid #cfd9d3;
-  background: #fff;
-  color: #2f4a3d;
+  border: 1px solid var(--t-line-cfd9d3);
+  background: var(--t-bg-ffffff);
+  color: var(--t-fg-2f4a3d);
   border-radius: 999px;
   padding: 6px 12px;
   font-size: 0.88rem;
   cursor: pointer;
 }
 .admin-applicants__chip--active {
-  border-color: #1f5a42;
-  background: #e7f2ec;
-  color: #16382b;
+  border-color: var(--t-line-1f5a42);
+  background: var(--t-bg-e7f2ec);
+  color: var(--t-fg-16382b);
   font-weight: 600;
 }
 </style>
