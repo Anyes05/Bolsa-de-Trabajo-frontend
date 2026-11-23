@@ -1,79 +1,47 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { ref } from 'vue'
 import { useApplicantFilters } from '../src/composables/useApplicantFilters.ts'
 
-function setup() {
-  const source = ref([
-    { id: '1', applicantId: 1, fullName: 'Ana Pérez', email: 'ana@example.test', phone: '091234567', identityCard: '12345678', profileName: 'Ventas', sectors: ['Ventas'], availability: 'FULL_TIME', license: ' A ' },
-    { id: '2', applicantId: 1, fullName: 'Ana Pérez', email: 'ana@example.test', phone: '091234567', identityCard: '12345678', profileName: 'Caja', sectors: ['Comercio'], availability: 'PART_TIME', license: 'Sin libreta' },
-    { id: '3', applicantId: 2, fullName: 'Joel', email: 'joel@example.test', phone: '', identityCard: '87654321', profileName: 'Reparto', sectors: ['Logistica', 'Ventas'], availability: 'INDEFINIDO', license: 'No informada' },
-  ])
-  return { source, ...useApplicantFilters(source) }
-}
+// La búsqueda, los filtros y la paginación de perfiles se resuelven en el servidor
+// (ApplicantListing en el backend). El composable solo guarda el estado de los filtros
+// y arma los parámetros que se envían a la API.
 
-test('search matches every admin field, ignoring case and outer whitespace', () => {
-  const filters = setup()
-  for (const term of ['  ANA PÉREZ  ', 'ANA@EXAMPLE.TEST', '091234567', '12345678']) {
-    filters.search.value = term
-    assert.deepEqual(filters.filteredProfiles.value.map((profile) => profile.id), ['1', '2'])
-  }
-  filters.search.value = 'cAjA'
-  assert.deepEqual(filters.filteredProfiles.value.map((profile) => profile.id), ['2'])
-  filters.search.value = 'missing'
-  assert.equal(filters.filteredProfiles.value.length, 0)
+test('starts without filters and sends empty parameters', () => {
+  const filters = useApplicantFilters()
+  assert.equal(filters.hasFilters.value, false)
+  assert.deepEqual(filters.params(), { q: '', rubro: '', disponibilidad: '', libreta: '' })
 })
 
-test('combines filters on the same profile, not across profiles of one applicant', () => {
-  const filters = setup()
-  filters.search.value = 'Ana'
+test('maps every selected filter to its server parameter without altering the search text', () => {
+  const filters = useApplicantFilters()
+  filters.search.value = '  ANA PÉREZ  '
   filters.selectedSector.value = 'Ventas'
   filters.selectedAvailability.value = 'PART_TIME'
-  assert.equal(filters.filteredProfiles.value.length, 0)
-  filters.selectedAvailability.value = 'FULL_TIME'
-  filters.selectedLicense.value = 'yes'
-  assert.deepEqual(filters.filteredProfiles.value.map((profile) => profile.id), ['1'])
   filters.selectedLicense.value = 'no'
-  assert.equal(filters.filteredProfiles.value.length, 0)
+  assert.deepEqual(filters.params(), { q: '  ANA PÉREZ  ', rubro: 'Ventas', disponibilidad: 'PART_TIME', libreta: 'no' })
 })
 
-test('matches admin license classification including unknown and negative values', () => {
-  const filters = setup()
-  for (const license of ['', 'no', 'sin libreta', 'no tiene', 'no tiene libreta', 'no informada']) {
-    filters.source.value[0].license = ` ${license.toUpperCase()} `
-    filters.selectedLicense.value = 'no'
-    assert.equal(filters.filteredProfiles.value.length, 3)
-    filters.selectedLicense.value = 'yes'
-    assert.equal(filters.filteredProfiles.value.length, 0)
+test('any single filter counts as an active filter', () => {
+  for (const field of ['search', 'selectedSector', 'selectedAvailability', 'selectedLicense']) {
+    const filters = useApplicantFilters()
+    filters[field].value = field === 'selectedLicense' ? 'yes' : 'x'
+    assert.equal(filters.hasFilters.value, true, field)
   }
-  filters.source.value[0].license = 'B'
-  assert.deepEqual(filters.filteredProfiles.value.map((profile) => profile.id), ['1'])
 })
 
-test('generates sorted unique options and includes unrestricted availability', () => {
-  const filters = setup()
-  assert.deepEqual(filters.sectorOptions.value, ['Comercio', 'Logistica', 'Ventas'])
-  assert.deepEqual(filters.availabilityOptions.value, ['FULL_TIME', 'INDEFINIDO', 'PART_TIME'])
-  filters.selectedAvailability.value = 'INDEFINIDO'
-  assert.deepEqual(filters.filteredProfiles.value.map((profile) => profile.id), ['3'])
-  filters.source.value = []
-  assert.deepEqual(filters.sectorOptions.value, [])
-  assert.deepEqual(filters.filteredProfiles.value, [])
+test('exposes only the non-text filters for immediate reload (search is debounced)', () => {
+  const filters = useApplicantFilters()
+  assert.deepEqual(filters.selectFilters, [filters.selectedSector, filters.selectedAvailability, filters.selectedLicense])
+  assert.equal(filters.selectFilters.includes(filters.search), false)
 })
 
-test('clearing resets every filter and restores all profiles', () => {
-  const filters = setup()
-  assert.equal(filters.hasFilters.value, false)
+test('clearing resets every filter and the parameters', () => {
+  const filters = useApplicantFilters()
   filters.search.value = 'Ana'
   filters.selectedSector.value = 'Ventas'
   filters.selectedAvailability.value = 'FULL_TIME'
   filters.selectedLicense.value = 'yes'
-  assert.equal(filters.hasFilters.value, true)
   filters.clearFilters()
   assert.equal(filters.hasFilters.value, false)
-  assert.deepEqual(
-    [filters.search.value, filters.selectedSector.value, filters.selectedAvailability.value, filters.selectedLicense.value],
-    ['', '', '', ''],
-  )
-  assert.equal(filters.filteredProfiles.value.length, 3)
+  assert.deepEqual(filters.params(), { q: '', rubro: '', disponibilidad: '', libreta: '' })
 })

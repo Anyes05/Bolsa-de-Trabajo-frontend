@@ -24,6 +24,19 @@ const PERFIL = {
 const CV = { id: 21, perfilLaboralId: 11, nombreArchivo: 'mi-cv.pdf', activo: true }
 const RUBROS = [{ id: 1, nombreRubro: 'Ventas' }, { id: 2, nombreRubro: 'Logística' }]
 
+/** Contrato de los listados paginados del backend (PageResponse). */
+function pagina<T>(content: T[]) {
+  return { content, page: 0, size: 20, totalElements: content.length, totalPages: content.length ? 1 : 0 }
+}
+
+/** GET /postulante/ofertas: el servidor filtra por rubroId y devuelve una página. */
+function ofertasDelServidor(ofertas: Array<typeof OFERTA>): Manejador {
+  return (route) => {
+    const rubroId = Number(new URL(route.request().url()).searchParams.get('rubroId')) || null
+    return { json: pagina(rubroId ? ofertas.filter((oferta) => oferta.rubroId === rubroId) : ofertas) }
+  }
+}
+
 function sesion(role: 'ADMIN' | 'SOCIO' | 'POSTULANTE', extra: Record<string, unknown> = {}) {
   return { token: `token-${role.toLowerCase()}`, email: `${role.toLowerCase()}@example.test`, role, fullName: 'Persona Prueba', ...extra }
 }
@@ -67,7 +80,7 @@ test.describe('CN-UI ingreso (RF-19)', () => {
     await simularApi(page, {
       'POST /auth/login': () => ({ json: postulante }),
       '/auth/me': () => ({ json: postulante }),
-      '/postulante/ofertas': () => ({ json: [OFERTA] }),
+      'GET /postulante/ofertas': ofertasDelServidor([OFERTA]),
     })
     await completarLogin(page, 'POSTULANTE', 'postulante@example.test', 'Clave-Valida-1')
     await expect(page).toHaveURL(/\/postulante\/ofertas-empleo$/)
@@ -182,7 +195,7 @@ test.describe('CN-UI postulación a ofertas (RF-11)', () => {
     await iniciarSesionComo(page, postulante)
     await simularApi(page, {
       '/auth/me': () => ({ json: postulante }),
-      'GET /postulante/ofertas': () => ({ json: [OFERTA, { ...OFERTA, id: 8, titulo: 'Chofer de reparto', rubroId: 2, rubro: 'Logística' }] }),
+      'GET /postulante/ofertas': ofertasDelServidor([OFERTA, { ...OFERTA, id: 8, titulo: 'Chofer de reparto', rubroId: 2, rubro: 'Logística' }]),
       '/postulante/ofertas/rubros': () => ({ json: RUBROS }),
       'GET /postulante/perfiles': () => ({ json: [PERFIL] }),
       'GET /postulante/cvs': () => ({ json: [CV] }),
