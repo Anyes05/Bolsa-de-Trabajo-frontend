@@ -2,7 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { Landmark, Search } from 'lucide-vue-next'
 import AppAlert from '../../components/AppAlert.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
+import { useServerList } from '../../composables/useServerList'
+import { emptyPage, type Page } from '../../services/pagination'
 import { estadoMorosidadLabel } from '../../services/socioService'
 import { socioDirectorioService, type DirectorioSocio } from '../../services/socioDirectorioService'
 import type { EstadoMorosidad } from '../../services/types'
@@ -12,24 +15,22 @@ import { userFacingError } from '../../utils/userMessage'
 const auth = useAuthStore()
 const query = ref('')
 const status = ref<'Todos' | EstadoMorosidad>('Todos')
-const members = ref<DirectorioSocio[]>([])
-const busy = ref(false)
 const error = ref('')
 
 const statusOptions: Array<'Todos' | EstadoMorosidad> = ['Todos', 'AL_DIA', 'MOROSO', 'INACTIVO']
 
-const filtered = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  return members.value.filter((member) => {
-    const matchesQuery = !term
-      || member.razonSocial.toLowerCase().includes(term)
-      || (member.email ?? '').toLowerCase().includes(term)
-      || (member.rubro ?? '').toLowerCase().includes(term)
-      || (member.telefono ?? '').toLowerCase().includes(term)
-    const matchesStatus = status.value === 'Todos' || member.estadoMorosidad === status.value
-    return matchesQuery && matchesStatus
-  })
+// Búsqueda, estado y paginación: los resuelve el backend (que también valida que sea directivo).
+const listado = useServerList<Page<DirectorioSocio>>({
+  fetch: (page) => socioDirectorioService.list({
+    q: query.value, estado: status.value === 'Todos' ? null : status.value, page,
+  }),
+  filters: [status],
+  search: query,
+  initial: emptyPage(),
+  onError: (exception) => { error.value = userFacingError(exception, 'cargar el directorio de socios') },
 })
+const filtered = computed(() => listado.data.value.content)
+const busy = computed(() => listado.loading.value)
 
 const companyName = computed(() => auth.fullName || 'Socio')
 const companyInitials = computed(() => (
@@ -38,16 +39,9 @@ const companyInitials = computed(() => (
 
 onMounted(load)
 
-async function load() {
-  busy.value = true
+function load() {
   error.value = ''
-  try {
-    members.value = await socioDirectorioService.list()
-  } catch (exception) {
-    error.value = userFacingError(exception, 'cargar el directorio de socios')
-  } finally {
-    busy.value = false
-  }
+  return listado.load(0)
 }
 
 function statusClass(value: EstadoMorosidad) {
@@ -103,12 +97,12 @@ function statusLabel(value: EstadoMorosidad) {
           </select>
         </label>
         <span class="socio-directory__count">
-          {{ filtered.length }} de {{ members.length }} socios
+          {{ listado.data.value.totalElements }} socios
         </span>
       </div>
 
       <AppAlert v-if="error">{{ error }}</AppAlert>
-      <p v-else-if="busy" class="socio-directory__empty">Cargando directorio...</p>
+      <p v-else-if="busy && !filtered.length" class="socio-directory__empty">Cargando directorio...</p>
 
       <div v-else class="socio-directory__table-wrap">
         <table class="socio-directory__table">
@@ -139,6 +133,14 @@ function statusLabel(value: EstadoMorosidad) {
           </tbody>
         </table>
         <p v-if="!filtered.length" class="socio-directory__empty">No hay socios que coincidan con la búsqueda.</p>
+        <PaginationBar
+          :page="listado.page.value"
+          :total-pages="listado.data.value.totalPages"
+          :total-elements="listado.data.value.totalElements"
+          :loading="busy"
+          label="Paginación del directorio"
+          @change="listado.goTo"
+        />
       </div>
     </section>
   </SocioShell>

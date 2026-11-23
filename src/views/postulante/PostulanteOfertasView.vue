@@ -2,8 +2,11 @@
 import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import PostulanteShell from '../../components/postulante/PostulanteShell.vue'
+import { useServerList } from '../../composables/useServerList'
 import { applicantOfferService } from '../../services/applicantOfferService'
+import { emptyPage, type Page } from '../../services/pagination'
 import { postulanteService } from '../../services/postulanteService'
 import type { ApplicantApplication, CvResponse, JobOffer, ProfessionalProfile, RubroOption } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
@@ -14,7 +17,6 @@ const activeTab = ref<'activas' | 'postulaciones'>('activas')
 const showModal = ref(false)
 const selectedOffer = ref<JobOffer | null>(null)
 const selectedProfileId = ref(0)
-const offers = ref<JobOffer[]>([])
 const applications = ref<ApplicantApplication[]>([])
 const profiles = ref<ProfessionalProfile[]>([])
 const cvs = ref<CvResponse[]>([])
@@ -29,23 +31,30 @@ const eligibleProfiles = computed(() => profiles.value.filter((profile) =>
   profile.visible && cvs.value.some((cv) => cv.perfilLaboralId === profile.id),
 ))
 const applicationByOffer = computed(() => new Map(applications.value.map((application) => [application.ofertaId, application])))
-const filteredOffers = computed(() => selectedSectorId.value
-  ? offers.value.filter((offer) => offer.rubroId === selectedSectorId.value)
-  : offers.value)
+// Filtro por rubro y paginación: los resuelve el backend.
+const listado = useServerList<Page<JobOffer>>({
+  fetch: (page) => applicantOfferService.list({ rubroId: selectedSectorId.value, page }),
+  filters: [selectedSectorId],
+  initial: emptyPage(),
+  onError: (error) => {
+    messageTone.value = 'error'
+    message.value = userFacingError(error, 'cargar las ofertas de empleo')
+  },
+})
+const filteredOffers = computed(() => listado.data.value.content)
 const selectedProfileCv = computed(() => cvs.value.find((cv) => cv.perfilLaboralId === selectedProfileId.value) ?? null)
 
 async function load() {
   loading.value = true
   message.value = null
   try {
-    const [loadedOffers, loadedApplications, loadedProfiles, loadedCvs, loadedSectors] = await Promise.all([
-      applicantOfferService.list(),
+    const [, loadedApplications, loadedProfiles, loadedCvs, loadedSectors] = await Promise.all([
+      listado.load(0),
       applicantOfferService.listApplications(),
       postulanteService.listProfiles(auth.token ?? undefined),
       postulanteService.listCvs(auth.token ?? undefined),
       applicantOfferService.listRubros(),
     ])
-    offers.value = loadedOffers
     applications.value = loadedApplications
     profiles.value = loadedProfiles
     cvs.value = loadedCvs
@@ -124,7 +133,7 @@ onMounted(load)
           :class="{ 'postulante-offers__tab--active': activeTab === 'activas' }"
           @click="activeTab = 'activas'"
         >
-          Ofertas activas ({{ filteredOffers.length }})
+          Ofertas activas ({{ listado.data.value.totalElements }})
         </button>
         <button
           type="button"
@@ -169,7 +178,15 @@ onMounted(load)
             </AppButton>
           </footer>
         </article>
-        <AppAlert v-if="!loading && !filteredOffers.length" tone="info">No hay ofertas activas para este rubro.</AppAlert>
+        <AppAlert v-if="!loading && !listado.loading.value && !filteredOffers.length" tone="info">No hay ofertas activas para este rubro.</AppAlert>
+        <PaginationBar
+          :page="listado.page.value"
+          :total-pages="listado.data.value.totalPages"
+          :total-elements="listado.data.value.totalElements"
+          :loading="listado.loading.value"
+          label="Paginación de ofertas"
+          @change="listado.goTo"
+        />
       </div>
 
       <div v-else class="postulante-offers__list">

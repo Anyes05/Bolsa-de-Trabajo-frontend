@@ -7,6 +7,7 @@ import { socioBolsaService, type ContactApplication } from '../../services/socio
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
 import { ApiRequestError } from '../../services/http'
 import type { ApplicantProfileCard } from '../../services/types'
+import { applicantPageOf, waitForSearch } from '../../test/pages'
 
 vi.mock('../../services/socioBolsaService', () => ({
   socioBolsaService: {
@@ -70,9 +71,21 @@ const detalle = (w: VueWrapper) => w.findComponent({ name: 'ProfileDetailModal' 
 const contacto = (w: VueWrapper) => w.findComponent({ name: 'ApplicantContactModal' })
 const alertas = (w: VueWrapper) => w.findAll('.alerta').map((a) => a.text())
 
+// Doble del backend (SocioBolsaController.page): busca, filtra, ordena (recientes = id desc) y agrupa.
+function servidor(perfiles: ApplicantProfileCard[]) {
+  servicio.searchProfiles.mockImplementation(async ({ q = '', rubro = '', orden = 'RECIENTES' } = {}) => {
+    const term = q.trim().toLowerCase()
+    const filtrados = perfiles
+      .filter((p) => (!term || [p.fullName, p.email, p.phone, p.identityCard, p.profileName].some((v) => (v ?? '').toLowerCase().includes(term)))
+        && (!rubro || p.sectors.includes(rubro)))
+      .sort((a, b) => orden === 'NOMBRE' ? a.fullName.localeCompare(b.fullName, 'es') : b.id - a.id)
+    return applicantPageOf(filtrados, perfiles)
+  })
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
-  servicio.searchProfiles.mockResolvedValue([perfil(), perfilIncompleto, segundoPerfilBruno])
+  servidor([perfil(), perfilIncompleto, segundoPerfilBruno])
 })
 
 afterEach(() => {
@@ -84,6 +97,9 @@ describe('SocioBolsaEmpleoView', () => {
   it('carga los perfiles y los agrupa por postulante, ordenados por actualización', async () => {
     const w = await montar()
     expect(servicio.searchProfiles).toHaveBeenCalledTimes(1)
+    expect(servicio.searchProfiles).toHaveBeenCalledWith({
+      q: '', rubro: '', disponibilidad: '', libreta: '', orden: 'RECIENTES', page: 0,
+    })
     expect(w.text()).toContain('3 perfiles visibles')
     const grupos = tarjetas(w).map((t) => t.props('applicant'))
     expect(grupos.map((g) => g.fullName)).toEqual(['Bruno Díaz', 'Ana Pérez'])
@@ -96,19 +112,27 @@ describe('SocioBolsaEmpleoView', () => {
     })
   })
 
-  it('ordena por nombre cuando se elige esa opción', async () => {
+  it('pide al servidor el orden por nombre cuando se elige esa opción', async () => {
     const w = await montar()
     await w.get('select').setValue('name')
+    await flushPromises()
+    expect(servicio.searchProfiles).toHaveBeenLastCalledWith(expect.objectContaining({ orden: 'NOMBRE', page: 0 }))
     expect(tarjetas(w).map((t) => t.props('applicant').fullName)).toEqual(['Ana Pérez', 'Bruno Díaz'])
   })
 
-  it('filtra con ApplicantFilters y muestra el mensaje vacío; limpiar restaura la lista', async () => {
+  it('envía los filtros de ApplicantFilters al servidor y muestra el mensaje vacío; limpiar restaura la lista', async () => {
     const w = await montar()
     const filtros = w.findComponent({ name: 'ApplicantFilters' })
     expect(filtros.props('sectorOptions')).toEqual(['Comercio', 'Logística'])
     await filtros.vm.$emit('update:search', 'no-existe')
+    await waitForSearch()
+    expect(servicio.searchProfiles).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'no-existe', page: 0 }))
     expect(w.text()).toContain('No hay perfiles que coincidan')
+    await filtros.vm.$emit('update:selectedSector', 'Logística')
+    await flushPromises()
+    expect(servicio.searchProfiles).toHaveBeenLastCalledWith(expect.objectContaining({ rubro: 'Logística' }))
     await filtros.vm.$emit('clear')
+    await waitForSearch()
     expect(tarjetas(w)).toHaveLength(2)
   })
 

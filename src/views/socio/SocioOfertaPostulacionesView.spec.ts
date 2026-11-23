@@ -5,12 +5,13 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import SocioOfertaPostulacionesView from './SocioOfertaPostulacionesView.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
+import { ApiRequestError } from '../../services/http'
 import { offerService } from '../../services/offerService'
 import { socioApplicationsService } from '../../services/socioApplicationsService'
 import type { JobOffer, ReceivedApplication } from '../../services/types'
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
 
-vi.mock('../../services/offerService', () => ({ offerService: { list: vi.fn() } }))
+vi.mock('../../services/offerService', () => ({ offerService: { get: vi.fn() } }))
 vi.mock('../../services/socioApplicationsService', () => ({
   socioApplicationsService: { list: vi.fn(), updateStatus: vi.fn(), downloadCv: vi.fn() },
 }))
@@ -80,8 +81,8 @@ describe('postulaciones recibidas para una oferta', () => {
   }
 
   it('mientras carga muestra el aviso y luego las postulaciones de la oferta', async () => {
-    const ofertas = diferido<JobOffer[]>()
-    vi.mocked(offerService.list).mockReturnValueOnce(ofertas.promise)
+    const ofertas = diferido<JobOffer>()
+    vi.mocked(offerService.get).mockReturnValueOnce(ofertas.promise)
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([
       postulacion(1), postulacion(2, { phone: null, status: 'REVISADA' }),
     ])
@@ -91,7 +92,7 @@ describe('postulaciones recibidas para una oferta', () => {
     expect(wrapper.find('.shell').attributes('data-subtitle')).toBe('Cargando postulaciones...')
     expect(socioApplicationsService.list).toHaveBeenCalledWith(3)
 
-    ofertas.resolve([oferta(1), oferta(3)])
+    ofertas.resolve(oferta(3))
     await flushPromises()
     const shell = wrapper.find('.shell')
     expect(shell.attributes('data-title')).toBe('Postulaciones — Vendedor 3')
@@ -114,7 +115,7 @@ describe('postulaciones recibidas para una oferta', () => {
   })
 
   it('muestra las transiciones de los estados contactada, seleccionada y descartada', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([
       postulacion(1, { status: 'CONTACTADA' }), postulacion(2, { status: 'SELECCIONADA' }), postulacion(3, { status: 'DESCARTADA' }),
     ])
@@ -125,12 +126,12 @@ describe('postulaciones recibidas para una oferta', () => {
   })
 
   it('una sola postulación usa singular y sin postulaciones muestra el vacío', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([postulacion(1)])
     const una = await montar()
     expect(una.find('.shell').attributes('data-subtitle')).toBe('1 recibida')
 
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([])
     const ninguna = await montar()
     expect(ninguna.find('.shell').attributes('data-subtitle')).toBe('0 recibidas')
@@ -138,7 +139,7 @@ describe('postulaciones recibidas para una oferta', () => {
   })
 
   it('si la oferta no existe o falla la carga lo indica y permite volver', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(1)])
+    vi.mocked(offerService.get).mockRejectedValueOnce(new ApiRequestError(404, '/ofertas/3', null, 'Oferta no encontrada'))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([])
     const inexistente = await montar()
     expect(inexistente.find('.shell').attributes('data-subtitle')).toBe('Oferta no encontrada')
@@ -147,7 +148,7 @@ describe('postulaciones recibidas para una oferta', () => {
     expect(router.currentRoute.value.name).toBe('socio-mis-ofertas')
 
     await router.push('/ofertas/3')
-    vi.mocked(offerService.list).mockRejectedValueOnce(new Error('Sin conexión al servidor'))
+    vi.mocked(offerService.get).mockRejectedValueOnce(new Error('Sin conexión al servidor'))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([])
     const fallida = await montar()
     expect(fallida.find('.shell').attributes('data-subtitle')).toBe('Sin conexión al servidor')
@@ -156,15 +157,16 @@ describe('postulaciones recibidas para una oferta', () => {
 
   it('sin identificador en la ruta consulta la oferta 0 y no la encuentra', async () => {
     await router.push('/ofertas')
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockRejectedValueOnce(new ApiRequestError(404, '/ofertas/0', null, 'Oferta no encontrada'))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([])
     const wrapper = await montar()
+    expect(offerService.get).toHaveBeenCalledWith(0)
     expect(socioApplicationsService.list).toHaveBeenCalledWith(0)
     expect(wrapper.find('.shell').attributes('data-subtitle')).toBe('Oferta no encontrada')
   })
 
   it('vuelve al listado de ofertas desde una oferta encontrada', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([])
     const wrapper = await montar()
     await wrapper.find('.acciones button').trigger('click')
@@ -173,7 +175,7 @@ describe('postulaciones recibidas para una oferta', () => {
   })
 
   it('abre el perfil del postulante, descarga su CV y cierra el detalle', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([
       postulacion(1),
       postulacion(2, {
@@ -213,7 +215,7 @@ describe('postulaciones recibidas para una oferta', () => {
   })
 
   it('actualiza el estado de una postulación e informa errores', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(3)])
+    vi.mocked(offerService.get).mockResolvedValueOnce(oferta(3))
     vi.mocked(socioApplicationsService.list).mockResolvedValueOnce([postulacion(1)])
     const respuesta = diferido<{ id: number; status: ReceivedApplication['status'] }>()
     vi.mocked(socioApplicationsService.updateStatus).mockReturnValueOnce(respuesta.promise)

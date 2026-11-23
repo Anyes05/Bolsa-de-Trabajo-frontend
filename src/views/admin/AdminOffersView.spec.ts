@@ -5,6 +5,8 @@ import { flushPromises, mount, RouterLinkStub } from '@vue/test-utils'
 import AdminOffersView from './AdminOffersView.vue'
 import { offerService } from '../../services/offerService'
 import type { JobOffer, JobOfferPayload } from '../../services/types'
+import type { Page } from '../../services/pagination'
+import { pageOf, waitForSearch } from '../../test/pages'
 
 vi.mock('../../services/offerService', () => ({
   offerService: {
@@ -106,8 +108,13 @@ function titulos(wrapper: ReturnType<typeof montar>) {
   return wrapper.findAll('.socio-offer-card h2').map((titulo) => titulo.text())
 }
 
+// Doble del backend (OfertaEmpleoController.page): busca en título, socio y rubro y filtra por estado.
 function cargarCatalogos(ofertas: JobOffer[]) {
-  vi.mocked(offerService.list).mockResolvedValueOnce(ofertas)
+  vi.mocked(offerService.list).mockImplementation(async ({ q = '', estado = null } = {}) => {
+    const term = q.trim().toLowerCase()
+    return pageOf(ofertas.filter((o) => (!estado || o.estado === estado)
+      && (!term || `${o.titulo} ${o.socioNombre} ${o.rubro}`.toLowerCase().includes(term))))
+  })
   vi.mocked(offerService.listRubros).mockResolvedValueOnce([{ id: 3, nombreRubro: 'Comercio' }])
   vi.mocked(offerService.listActiveSocios).mockResolvedValueOnce([{ id: 5, razonSocial: 'Almacén Central' }])
 }
@@ -118,7 +125,7 @@ describe('ofertas laborales (administración)', () => {
   })
 
   it('muestra el estado de carga y luego las ofertas con sus datos', async () => {
-    const lista = deferred<JobOffer[]>()
+    const lista = deferred<Page<JobOffer>>()
     vi.mocked(offerService.list).mockReturnValueOnce(lista.promise)
     vi.mocked(offerService.listRubros).mockResolvedValueOnce([])
     vi.mocked(offerService.listActiveSocios).mockResolvedValueOnce([])
@@ -126,10 +133,10 @@ describe('ofertas laborales (administración)', () => {
     await nextTick()
     expect(wrapper.text()).toContain('Cargando ofertas...')
 
-    lista.resolve([
+    lista.resolve(pageOf([
       oferta(1, { zona: 'Libertad', salario: '$ 40.000', fechaCierre: '2026-12-31', vacantes: 2, postulaciones: 3, disponibilidadHoraria: 'PART_TIME' }),
       oferta(2, { estado: 'VENCIDA', disponibilidadHoraria: 'INDEFINIDO' }),
-    ])
+    ]))
     await flushPromises()
 
     expect(wrapper.find('[data-active]').attributes('data-active')).toBe('ofertas')
@@ -171,7 +178,7 @@ describe('ofertas laborales (administración)', () => {
     expect(cerrada!.find('.socio-offer-card__actions button').exists()).toBe(false)
   })
 
-  it('filtra por texto y por estado', async () => {
+  it('envía texto y estado al servidor y muestra el resultado', async () => {
     cargarCatalogos([
       oferta(1, { titulo: 'Cajero', estado: 'ACTIVA' }),
       oferta(2, { titulo: 'Chofer', socioNombre: 'Transportes Sur', estado: 'PAUSADA' }),
@@ -179,22 +186,31 @@ describe('ofertas laborales (administración)', () => {
     ])
     const wrapper = montar()
     await flushPromises()
+    expect(offerService.list).toHaveBeenCalledWith({ q: '', estado: null, page: 0 })
     expect(titulos(wrapper)).toEqual(['Cajero', 'Chofer', 'Vendedor'])
 
     await wrapper.find('input[type="search"]').setValue('TRANSPORTES')
+    await waitForSearch()
+    expect(offerService.list).toHaveBeenLastCalledWith({ q: 'TRANSPORTES', estado: null, page: 0 })
     expect(titulos(wrapper)).toEqual(['Chofer'])
     await wrapper.find('input[type="search"]').setValue('ventas')
+    await waitForSearch()
     expect(titulos(wrapper)).toEqual(['Vendedor'])
     await wrapper.find('input[type="search"]').setValue('')
+    await waitForSearch()
 
     const filtros = wrapper.findAll('.cash-filter')
     expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Abiertas', 'Pausada', 'Cerrada', 'Vencida'])
     await filtros[2]!.trigger('click')
+    await flushPromises()
+    expect(offerService.list).toHaveBeenLastCalledWith({ q: '', estado: 'PAUSADA', page: 0 })
     expect(filtros[2]!.classes()).toContain('cash-filter--active')
     expect(titulos(wrapper)).toEqual(['Chofer'])
     await filtros[4]!.trigger('click')
+    await flushPromises()
     expect(wrapper.text()).toContain('No hay ofertas para mostrar.')
     await filtros[0]!.trigger('click')
+    await flushPromises()
     expect(titulos(wrapper)).toHaveLength(3)
   })
 

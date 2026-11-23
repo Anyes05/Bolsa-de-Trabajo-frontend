@@ -16,12 +16,14 @@ describe('servicios administrativos de catálogos y comunicados', () => {
     expect(request).toHaveBeenCalledWith('/sectors')
   })
 
-  it('lista rubros incluyendo o excluyendo inactivos', async () => {
+  it('lista rubros incluyendo o excluyendo inactivos, con búsqueda y página en el servidor', async () => {
     await rubroService.list()
-    await rubroService.list(false)
+    await rubroService.list({ incluirInactivos: false })
+    await rubroService.list({ q: 'Ind & co', page: 2, size: 10 })
 
     expect(request).toHaveBeenNthCalledWith(1, '/admin/rubros?incluirInactivos=true')
     expect(request).toHaveBeenNthCalledWith(2, '/admin/rubros?incluirInactivos=false')
+    expect(request).toHaveBeenNthCalledWith(3, '/admin/rubros?incluirInactivos=true&q=Ind+%26+co&page=2&size=10')
   })
 
   it('crea, renombra y activa rubros con los contratos HTTP esperados', async () => {

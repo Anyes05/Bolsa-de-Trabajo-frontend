@@ -3,16 +3,20 @@ import { Pencil, Pause, Play, Plus, X } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import SocioShell from '../../components/socio/SocioShell.vue'
+import { useServerList } from '../../composables/useServerList'
 import { offerService } from '../../services/offerService'
+import { emptyPage, type Page } from '../../services/pagination'
 import type { JobOffer, JobOfferPayload, RubroOption } from '../../services/types'
 import { userFacingError } from '../../utils/userMessage'
 
-const offers = ref<JobOffer[]>([])
 const sectors = ref<RubroOption[]>([])
-const busy = ref(false)
+const catalogBusy = ref(false)
 const error = ref('')
+/** Si el socio tiene alguna oferta (sin filtro); distingue "sin ofertas" de "ninguna en este estado". */
+const hasAnyOffer = ref(false)
 const formMode = ref<'create' | 'edit' | null>(null)
 const formOffer = ref<JobOffer | null>(null)
 const statusFilter = ref<'TODAS' | JobOffer['estado']>('TODAS')
@@ -28,28 +32,36 @@ const statusLabels: Record<JobOffer['estado'], string> = {
   VENCIDA: 'Vencida',
 }
 
-const filteredOffers = computed(() => (
-  statusFilter.value === 'TODAS'
-    ? offers.value
-    : offers.value.filter((offer) => offer.estado === statusFilter.value)
-))
+// Estado y paginación: los resuelve el backend (el socio solo recibe sus propias ofertas).
+const listado = useServerList<Page<JobOffer>>({
+  fetch: async (page) => {
+    const result = await offerService.list({ estado: statusFilter.value === 'TODAS' ? null : statusFilter.value, page })
+    if (statusFilter.value === 'TODAS') hasAnyOffer.value = result.totalElements > 0
+    else if (result.totalElements > 0) hasAnyOffer.value = true
+    return result
+  },
+  filters: [statusFilter],
+  initial: emptyPage(),
+  onError: (exception) => { error.value = userFacingError(exception, 'cargar tus ofertas') },
+})
+const filteredOffers = computed(() => listado.data.value.content)
+const busy = computed(() => catalogBusy.value || (listado.loading.value && !filteredOffers.value.length))
 
 const subtitle = computed(() => {
-  const total = filteredOffers.value.length
+  const total = listado.data.value.totalElements
   return `${total} ${total === 1 ? 'oferta' : 'ofertas'}${statusFilter.value !== 'TODAS' ? ` · ${statusLabels[statusFilter.value]}` : ''}`
 })
 
 async function load() {
-  busy.value = true
+  catalogBusy.value = true
   error.value = ''
   try {
-    const [loadedOffers, loadedSectors] = await Promise.all([offerService.list(), offerService.listRubros()])
-    offers.value = loadedOffers
+    const [loadedSectors] = await Promise.all([offerService.listRubros(), listado.load()])
     sectors.value = loadedSectors
   } catch (exception) {
     error.value = userFacingError(exception, 'cargar tus ofertas')
   } finally {
-    busy.value = false
+    catalogBusy.value = false
   }
 }
 
@@ -89,8 +101,9 @@ function applicationsLabel(total: number) {
 async function setStatus(offer: JobOffer, status: JobOffer['estado']) {
   error.value = ''
   try {
-    const updated = await offerService.setStatus(offer.id, status)
-    offers.value = offers.value.map((current) => current.id === updated.id ? updated : current)
+    await offerService.setStatus(offer.id, status)
+    // Con un filtro de estado activo la oferta puede salir de la página: se recarga desde el servidor.
+    await listado.load()
   } catch (exception) {
     error.value = userFacingError(exception, 'cambiar el estado de la oferta')
   }
@@ -184,8 +197,16 @@ function displayStatus(status: JobOffer['estado']) {
         </aside>
       </article>
       <p v-if="busy">Cargando ofertas...</p>
-      <p v-else-if="!offers.length">No tienes ofertas laborales todavía.</p>
+      <p v-else-if="!hasAnyOffer">No tienes ofertas laborales todavía.</p>
       <p v-else-if="!filteredOffers.length">No hay ofertas en este estado.</p>
+      <PaginationBar
+        :page="listado.page.value"
+        :total-pages="listado.data.value.totalPages"
+        :total-elements="listado.data.value.totalElements"
+        :loading="listado.loading.value"
+        label="Paginación de mis ofertas"
+        @change="listado.goTo"
+      />
     </section>
 
     <template #overlay>

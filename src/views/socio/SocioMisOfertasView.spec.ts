@@ -7,6 +7,20 @@ import SocioMisOfertasView from './SocioMisOfertasView.vue'
 import OfferFormModal from '../../components/socio/OfferFormModal.vue'
 import { offerService } from '../../services/offerService'
 import type { JobOffer, JobOfferPayload, RubroOption } from '../../services/types'
+import type { Page } from '../../services/pagination'
+import { pageOf } from '../../test/pages'
+
+// Doble del backend: filtra por estado como OfertaEmpleoController.page; setStatus modifica su estado.
+let db: JobOffer[] = []
+function servidor(lista: JobOffer[]) {
+  db = [...lista]
+  vi.mocked(offerService.list).mockImplementation(async ({ estado = null } = {}) =>
+    pageOf(db.filter((o) => !estado || o.estado === estado)))
+  vi.mocked(offerService.setStatus).mockImplementation(async (id, estado) => {
+    db = db.map((o) => o.id === id ? { ...o, estado } : o)
+    return db.find((o) => o.id === id)!
+  })
+}
 
 vi.mock('../../services/offerService', () => ({
   offerService: { list: vi.fn(), listRubros: vi.fn(), create: vi.fn(), update: vi.fn(), setStatus: vi.fn() },
@@ -76,20 +90,21 @@ describe('gestión de ofertas del socio', () => {
   }
 
   it('muestra la carga y luego las ofertas con sus datos', async () => {
-    const pendiente = diferido<JobOffer[]>()
+    const pendiente = diferido<Page<JobOffer>>()
     vi.mocked(offerService.list).mockReturnValueOnce(pendiente.promise)
     const wrapper = mount(SocioMisOfertasView, { global: { plugins: [router], stubs: { SocioShell: SocioShellStub } } })
     await flushPromises()
     expect(wrapper.text()).toContain('Cargando ofertas...')
     expect(wrapper.find('.shell').attributes('data-active')).toBe('ofertas')
 
-    pendiente.resolve([
+    pendiente.resolve(pageOf([
       oferta(1, 'ACTIVA'),
       oferta(2, 'PAUSADA', { zona: null, salario: null, fechaCierre: null, mostrarNombreEmpresa: false, postulaciones: 1, disponibilidadHoraria: 'PART_TIME' }),
       oferta(3, 'CERRADA', { disponibilidadHoraria: 'INDEFINIDO' }),
       oferta(4, 'VENCIDA'),
-    ])
+    ]))
     await flushPromises()
+    expect(offerService.list).toHaveBeenCalledWith({ estado: null, page: 0 })
     expect(subtitulo(wrapper)).toBe('4 ofertas')
 
     const activa = tarjeta(wrapper, 1)
@@ -120,29 +135,35 @@ describe('gestión de ofertas del socio', () => {
     expect(tarjeta(wrapper, 4).find('.socio-offer-card__status').text()).toBe('Vencida')
   })
 
-  it('filtra por estado y ajusta el subtítulo', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(1, 'ACTIVA'), oferta(2, 'ACTIVA'), oferta(3, 'PAUSADA')])
+  it('pide al servidor el estado elegido y ajusta el subtítulo', async () => {
+    servidor([oferta(1, 'ACTIVA'), oferta(2, 'ACTIVA'), oferta(3, 'PAUSADA')])
     const wrapper = await montar()
     const filtros = wrapper.findAll('.cash-filter')
     expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Abiertas', 'Pausada', 'Cerrada', 'Vencida'])
     expect(filtros[0]!.classes()).toContain('cash-filter--active')
 
     await filtros[1]!.trigger('click')
+    await flushPromises()
+    expect(offerService.list).toHaveBeenLastCalledWith({ estado: 'ACTIVA', page: 0 })
     expect(subtitulo(wrapper)).toBe('2 ofertas · Activa')
     expect(filtros[1]!.classes()).toContain('cash-filter--active')
     await filtros[2]!.trigger('click')
+    await flushPromises()
     expect(subtitulo(wrapper)).toBe('1 oferta · Pausada')
     await filtros[3]!.trigger('click')
+    await flushPromises()
     expect(subtitulo(wrapper)).toBe('0 ofertas · Cerrada')
     expect(wrapper.text()).toContain('No hay ofertas en este estado.')
     await filtros[4]!.trigger('click')
+    await flushPromises()
     expect(subtitulo(wrapper)).toBe('0 ofertas · Vencida')
     await filtros[0]!.trigger('click')
+    await flushPromises()
     expect(subtitulo(wrapper)).toBe('3 ofertas')
   })
 
   it('avisa cuando no hay ofertas o falla la carga', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([])
+    vi.mocked(offerService.list).mockResolvedValueOnce(pageOf([]))
     const vacia = await montar()
     expect(vacia.text()).toContain('No tienes ofertas laborales todavía.')
 
@@ -156,7 +177,7 @@ describe('gestión de ofertas del socio', () => {
   })
 
   it('publica una oferta nueva y recarga el listado', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([]).mockResolvedValueOnce([oferta(9, 'ACTIVA')])
+    vi.mocked(offerService.list).mockResolvedValueOnce(pageOf([])).mockResolvedValueOnce(pageOf([oferta(9, 'ACTIVA')]))
     vi.mocked(offerService.create).mockResolvedValueOnce(oferta(9, 'ACTIVA'))
     const wrapper = await montar()
     expect(wrapper.findComponent(OfferFormModal).exists()).toBe(false)
@@ -175,7 +196,7 @@ describe('gestión de ofertas del socio', () => {
 
   it('edita una oferta existente, informa errores y permite cerrar el formulario', async () => {
     const original = oferta(1, 'ACTIVA')
-    vi.mocked(offerService.list).mockResolvedValue([original])
+    vi.mocked(offerService.list).mockResolvedValue(pageOf([original]))
     vi.mocked(offerService.update).mockRejectedValueOnce(new Error('Título duplicado')).mockResolvedValueOnce(original)
     const wrapper = await montar()
 
@@ -206,23 +227,20 @@ describe('gestión de ofertas del socio', () => {
     expect(wrapper.findComponent(OfferFormModal).exists()).toBe(false)
   })
 
-  it('pausa, reactiva y cierra ofertas, informando errores', async () => {
-    vi.mocked(offerService.list).mockResolvedValueOnce([oferta(1, 'ACTIVA'), oferta(2, 'PAUSADA')])
+  it('pausa, reactiva y cierra ofertas recargando desde el servidor, informando errores', async () => {
+    servidor([oferta(1, 'ACTIVA'), oferta(2, 'PAUSADA')])
     const wrapper = await montar()
 
-    vi.mocked(offerService.setStatus).mockResolvedValueOnce(oferta(1, 'PAUSADA'))
     await tarjeta(wrapper, 1).find('.socio-offer-card__pause').trigger('click')
     await flushPromises()
     expect(offerService.setStatus).toHaveBeenLastCalledWith(1, 'PAUSADA')
     expect(tarjeta(wrapper, 1).find('.socio-offer-card__status').text()).toBe('Pausada')
 
-    vi.mocked(offerService.setStatus).mockResolvedValueOnce(oferta(2, 'ACTIVA'))
     await tarjeta(wrapper, 2).find('.socio-offer-card__resume').trigger('click')
     await flushPromises()
     expect(offerService.setStatus).toHaveBeenLastCalledWith(2, 'ACTIVA')
     expect(tarjeta(wrapper, 2).find('.socio-offer-card__status').text()).toBe('Activa')
 
-    vi.mocked(offerService.setStatus).mockResolvedValueOnce(oferta(2, 'CERRADA'))
     await tarjeta(wrapper, 2).find('.socio-offer-card__close').trigger('click')
     await flushPromises()
     expect(offerService.setStatus).toHaveBeenLastCalledWith(2, 'CERRADA')

@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import AdminRubrosView from './AdminRubrosView.vue'
-import { rubroService, type RubroAdmin } from '../../services/rubroService'
+import { rubroService, type RubroAdmin, type RubroPage } from '../../services/rubroService'
+import { pageOf, waitForSearch } from '../../test/pages'
 
 vi.mock('../../services/rubroService', () => ({
   rubroService: { list: vi.fn(), create: vi.fn(), update: vi.fn(), setActivo: vi.fn() },
@@ -27,6 +28,22 @@ function deferred<T>() {
   return { promise, resolve }
 }
 
+// Doble del backend: filtra, ordena y pagina como RubroAdminController; las mutaciones alteran su estado.
+let db: RubroAdmin[] = []
+function respuesta(q = '', page = 0, size = 20): RubroPage {
+  const term = q.trim().toLowerCase()
+  const filtrados = [...db].sort((a, b) => a.nombreRubro.localeCompare(b.nombreRubro, 'es'))
+    .filter((r) => !term || r.nombreRubro.toLowerCase().includes(term))
+  return {
+    pagina: pageOf(filtrados.slice(page * size, page * size + size), page, size, filtrados.length),
+    activos: db.filter((r) => r.activo).length,
+  }
+}
+function servidor(lista: RubroAdmin[]) {
+  db = [...lista]
+  vi.mocked(rubroService.list).mockImplementation(async (params = {}) => respuesta(params.q, params.page, params.size))
+}
+
 function montar() {
   return mount(AdminRubrosView, { global: { stubs: { AdminShell: AdminShellStub } } })
 }
@@ -44,16 +61,17 @@ describe('gestión de rubros', () => {
   })
 
   it('carga el catálogo incluyendo inactivos y muestra los contadores', async () => {
-    const carga = deferred<RubroAdmin[]>()
+    db = [rubro(1, 'Comercio'), rubro(2, 'Industria', false)]
+    const carga = deferred<RubroPage>()
     vi.mocked(rubroService.list).mockReturnValueOnce(carga.promise)
     const wrapper = montar()
     await nextTick()
     expect(wrapper.text()).toContain('Cargando rubros...')
 
-    carga.resolve([rubro(1, 'Comercio'), rubro(2, 'Industria', false)])
+    carga.resolve(respuesta())
     await flushPromises()
 
-    expect(rubroService.list).toHaveBeenCalledWith(true)
+    expect(rubroService.list).toHaveBeenCalledWith({ incluirInactivos: true, q: '', page: 0 })
     expect(wrapper.find('[data-active]').attributes('data-active')).toBe('rubros')
     expect(wrapper.text()).toContain('1 activos · 2 listados')
     expect(nombres(wrapper)).toEqual(['Comercio', 'Industria'])
@@ -68,18 +86,34 @@ describe('gestión de rubros', () => {
     expect(toggles[1]!.attributes('aria-label')).toBe('Activar rubro')
   })
 
-  it('filtra por nombre sin distinguir mayúsculas y avisa cuando no hay coincidencias', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio'), rubro(2, 'Industria')])
+  it('envía la búsqueda al servidor y avisa cuando no hay coincidencias', async () => {
+    servidor([rubro(1, 'Comercio'), rubro(2, 'Industria')])
     const wrapper = montar()
     await flushPromises()
 
     await wrapper.find('.company-search input').setValue('  INDUS ')
+    await waitForSearch()
+    expect(rubroService.list).toHaveBeenLastCalledWith({ incluirInactivos: true, q: '  INDUS ', page: 0 })
     expect(nombres(wrapper)).toEqual(['Industria'])
     expect(wrapper.text()).toContain('2 activos · 1 listados')
 
     await wrapper.find('.company-search input').setValue('construcción')
+    await waitForSearch()
     expect(wrapper.text()).toContain('No hay rubros para mostrar.')
     expect(wrapper.find('table').exists()).toBe(false)
+  })
+
+  it('pagina en el servidor', async () => {
+    servidor(Array.from({ length: 25 }, (_, i) => rubro(i + 1, `Rubro ${String(i + 1).padStart(2, '0')}`)))
+    const wrapper = montar()
+    await flushPromises()
+    expect(nombres(wrapper)).toHaveLength(20)
+    expect(wrapper.find('.pagination-bar').text()).toContain('Página 1 de 2 · 25 resultados')
+
+    await wrapper.find('button[aria-label="Página siguiente"]').trigger('click')
+    await flushPromises()
+    expect(rubroService.list).toHaveBeenLastCalledWith({ incluirInactivos: true, q: '', page: 1 })
+    expect(nombres(wrapper)).toEqual(['Rubro 21', 'Rubro 22', 'Rubro 23', 'Rubro 24', 'Rubro 25'])
   })
 
   it('muestra el error de carga', async () => {
@@ -92,7 +126,7 @@ describe('gestión de rubros', () => {
   })
 
   it('valida que el nombre no esté vacío antes de crear', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([])
+    servidor([])
     const wrapper = montar()
     await flushPromises()
 
@@ -106,8 +140,8 @@ describe('gestión de rubros', () => {
     expect(rubroService.create).not.toHaveBeenCalled()
   })
 
-  it('crea un rubro, lo inserta ordenado y cierra el formulario', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio'), rubro(3, 'Servicios')])
+  it('crea un rubro, recarga la página del servidor y cierra el formulario', async () => {
+    servidor([rubro(1, 'Comercio'), rubro(3, 'Servicios')])
     const creacion = deferred<RubroAdmin>()
     vi.mocked(rubroService.create).mockReturnValueOnce(creacion.promise)
     const wrapper = montar()
@@ -121,15 +155,19 @@ describe('gestión de rubros', () => {
     expect(wrapper.find('.new-company-submit').text()).toBe('Guardando...')
     expect(wrapper.find('.new-company-submit').attributes('disabled')).toBeDefined()
 
+    db.push(rubro(2, 'Industria'))
     creacion.resolve(rubro(2, 'Industria'))
     await flushPromises()
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(nombres(wrapper)).toEqual(['Comercio', 'Industria', 'Servicios'])
   })
 
-  it('edita un rubro existente reemplazándolo en la lista', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio'), rubro(2, 'Industria')])
-    vi.mocked(rubroService.update).mockResolvedValueOnce(rubro(2, 'Industria pesada'))
+  it('edita un rubro existente y recarga la página', async () => {
+    servidor([rubro(1, 'Comercio'), rubro(2, 'Industria')])
+    vi.mocked(rubroService.update).mockImplementationOnce(async (id, nombre) => {
+      db = db.map((r) => r.id === id ? { ...r, nombreRubro: nombre } : r)
+      return rubro(id, nombre)
+    })
     const wrapper = montar()
     await flushPromises()
 
@@ -148,7 +186,7 @@ describe('gestión de rubros', () => {
   })
 
   it('muestra el error al guardar y mantiene abierto el formulario', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio')])
+    servidor([rubro(1, 'Comercio')])
     vi.mocked(rubroService.create).mockRejectedValueOnce(new Error('Ya existe un rubro con ese nombre'))
     const wrapper = montar()
     await flushPromises()
@@ -163,7 +201,7 @@ describe('gestión de rubros', () => {
   })
 
   it('cierra el formulario con Cancelar o con el fondo y lo reinicia', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio')])
+    servidor([rubro(1, 'Comercio')])
     const wrapper = montar()
     await flushPromises()
 
@@ -180,9 +218,12 @@ describe('gestión de rubros', () => {
     expect((wrapper.find('.new-company-form input').element as HTMLInputElement).value).toBe('')
   })
 
-  it('activa y desactiva rubros actualizando la fila', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(1, 'Comercio'), rubro(2, 'Industria', false)])
-    vi.mocked(rubroService.setActivo).mockResolvedValueOnce(rubro(1, 'Comercio', false))
+  it('activa y desactiva rubros y recarga desde el servidor', async () => {
+    servidor([rubro(1, 'Comercio'), rubro(2, 'Industria', false)])
+    vi.mocked(rubroService.setActivo).mockImplementationOnce(async (id, activo) => {
+      db = db.map((r) => r.id === id ? { ...r, activo } : r)
+      return rubro(id, 'Comercio', activo)
+    })
     const wrapper = montar()
     await flushPromises()
 
@@ -195,7 +236,7 @@ describe('gestión de rubros', () => {
   })
 
   it('muestra el error si no se puede cambiar el estado', async () => {
-    vi.mocked(rubroService.list).mockResolvedValueOnce([rubro(2, 'Industria', false)])
+    servidor([rubro(2, 'Industria', false)])
     vi.mocked(rubroService.setActivo).mockRejectedValueOnce(new Error('Sin permiso'))
     const wrapper = montar()
     await flushPromises()

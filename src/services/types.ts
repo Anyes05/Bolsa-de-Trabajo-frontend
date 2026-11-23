@@ -109,7 +109,6 @@ export type CajaResumen = {
   alDia: number
   pendiente: number
   inactivos: number
-  cuentas: CuentaCaja[]
 }
 
 export type MovimientoCaja = {

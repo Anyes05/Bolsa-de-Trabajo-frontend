@@ -22,6 +22,21 @@ describe('historial contable API', () => {
     })
   })
 
+  it('sends search, filter and page of accounts to the server', async () => {
+    await cajaService.listarCuentas()
+    await cajaService.listarCuentas({ q: 'Ñandú & Cía', filtro: 'DEUDA', page: 2, size: 50 })
+    expect(request).toHaveBeenNthCalledWith(1, '/admin/caja/cuentas')
+    expect(request).toHaveBeenNthCalledWith(2, '/admin/caja/cuentas?q=%C3%91and%C3%BA+%26+C%C3%ADa&filtro=DEUDA&page=2&size=50')
+  })
+
+  it('asks the server for export accounts by states and search, and skips the call without states', async () => {
+    await cajaService.cuentasExportacion(['AL_DIA', 'MOROSO'], 'acme')
+    expect(request).toHaveBeenCalledWith('/admin/caja/cuentas/exportacion?estados=AL_DIA&estados=MOROSO&q=acme')
+    vi.mocked(request).mockClear()
+    await expect(cajaService.cuentasExportacion([])).resolves.toEqual([])
+    expect(request).not.toHaveBeenCalled()
+  })
+
   it('propagates reconciliation conflicts instead of hiding a failed correction', async () => {
     vi.mocked(request).mockRejectedValueOnce(new Error('Requiere conciliación'))
     await expect(cajaService.anularCuota(42, 7, 'Error')).rejects.toThrow('Requiere conciliación')

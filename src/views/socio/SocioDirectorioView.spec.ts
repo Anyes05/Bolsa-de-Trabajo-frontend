@@ -7,6 +7,8 @@ import SocioDirectorioView from './SocioDirectorioView.vue'
 import { socioDirectorioService, type DirectorioSocio } from '../../services/socioDirectorioService'
 import type { EstadoMorosidad } from '../../services/types'
 import { useAuthStore } from '../../stores/auth'
+import type { Page } from '../../services/pagination'
+import { pageOf, waitForSearch } from '../../test/pages'
 
 vi.mock('../../services/socioDirectorioService', () => ({ socioDirectorioService: { list: vi.fn() } }))
 
@@ -56,7 +58,7 @@ describe('directorio de socios para directivos', () => {
 
   it('muestra la carga y luego la tabla con estados y fechas formateadas', async () => {
     useAuthStore().setSession({ token: 't', email: 'd@ejemplo.test', role: 'SOCIO', fullName: 'Constructora Palleiro SRL', esDirectivo: true })
-    const pendiente = diferido<DirectorioSocio[]>()
+    const pendiente = diferido<Page<DirectorioSocio>>()
     vi.mocked(socioDirectorioService.list).mockReturnValueOnce(pendiente.promise)
     const wrapper = mount(SocioDirectorioView, { global: { plugins: [pinia], stubs: { SocioShell: SocioShellStub } } })
     await flushPromises()
@@ -67,16 +69,17 @@ describe('directorio de socios para directivos', () => {
     expect(shell.attributes('data-role')).toBe('SOCIO DIRECTIVO')
     expect(wrapper.text()).toContain('Cargando directorio...')
 
-    pendiente.resolve([
+    pendiente.resolve(pageOf([
       socio(1),
       socio(2, { estadoMorosidad: 'MOROSO', rubro: '', telefono: null, email: null, fechaAlta: null }),
       socio(3, { estadoMorosidad: 'INACTIVO', fechaAlta: 'fecha-rota' }),
       socio(4, { estadoMorosidad: 'DESCONOCIDO' as EstadoMorosidad }),
-    ])
+    ]))
     await flushPromises()
+    expect(socioDirectorioService.list).toHaveBeenCalledWith({ q: '', estado: null, page: 0 })
     const lista = filas(wrapper)
     expect(lista).toHaveLength(4)
-    expect(wrapper.find('.socio-directory__count').text()).toBe('4 de 4 socios')
+    expect(wrapper.find('.socio-directory__count').text()).toBe('4 socios')
 
     const celdas = (indice: number) => lista[indice]!.findAll('td').map((td) => td.text())
     expect(celdas(0)[0]).toContain('Empresa 1')
@@ -98,47 +101,61 @@ describe('directorio de socios para directivos', () => {
   })
 
   it('sin nombre en sesión usa "Socio" como empresa', async () => {
-    vi.mocked(socioDirectorioService.list).mockResolvedValueOnce([])
+    vi.mocked(socioDirectorioService.list).mockResolvedValueOnce(pageOf([]))
     const wrapper = await montar()
     expect(wrapper.find('.shell').attributes('data-name')).toBe('Socio')
     expect(wrapper.find('.shell').attributes('data-initials')).toBe('S')
     expect(wrapper.find('.socio-directory__empty').text()).toBe('No hay socios que coincidan con la búsqueda.')
   })
 
-  it('busca por razón social, email, rubro o teléfono y filtra por estado', async () => {
-    vi.mocked(socioDirectorioService.list).mockResolvedValueOnce([
+  it('envía búsqueda y estado al servidor y muestra lo que devuelve', async () => {
+    const todos = [
       socio(1, { razonSocial: 'Panadería Sol', email: 'sol@ejemplo.test', rubro: 'Alimentos', telefono: '111' }),
       socio(2, { razonSocial: 'Taller Norte', email: null, rubro: 'Mecánica', telefono: null, estadoMorosidad: 'MOROSO' }),
-      // El backend puede omitir el rubro aunque el tipo lo declare obligatorio.
-      socio(4, { razonSocial: 'Kiosco Sur', email: null, rubro: null as unknown as string, telefono: null, estadoMorosidad: 'MOROSO' }),
       socio(3, { razonSocial: 'Farmacia Luz', email: 'luz@ejemplo.test', rubro: 'Salud', telefono: '222333', estadoMorosidad: 'INACTIVO' }),
-    ])
+    ]
+    // Doble del backend (SocioService.pageDirectorio).
+    vi.mocked(socioDirectorioService.list).mockImplementation(async ({ q = '', estado = null } = {}) => {
+      const term = q.trim().toLowerCase()
+      return pageOf(todos.filter((s) => (!estado || s.estadoMorosidad === estado)
+        && (!term || [s.razonSocial, s.email, s.rubro, s.telefono].some((v) => (v ?? '').toLowerCase().includes(term)))))
+    })
     const wrapper = await montar()
     const buscador = wrapper.find('input[type="search"]')
     const nombres = () => filas(wrapper).map((fila) => fila.find('strong').text())
 
-    await buscador.setValue('  PANADERÍA ')
-    expect(nombres()).toEqual(['Panadería Sol'])
     await buscador.setValue('luz@')
-    expect(nombres()).toEqual(['Farmacia Luz'])
-    await buscador.setValue('mecánica')
-    expect(nombres()).toEqual(['Taller Norte'])
-    await buscador.setValue('kiosco')
-    expect(nombres()).toEqual(['Kiosco Sur'])
-    await buscador.setValue('222')
+    await waitForSearch()
+    expect(socioDirectorioService.list).toHaveBeenLastCalledWith({ q: 'luz@', estado: null, page: 0 })
     expect(nombres()).toEqual(['Farmacia Luz'])
     await buscador.setValue('inexistente')
+    await waitForSearch()
     expect(nombres()).toEqual([])
-    expect(wrapper.find('.socio-directory__count').text()).toBe('0 de 4 socios')
+    expect(wrapper.find('.socio-directory__count').text()).toBe('0 socios')
     expect(wrapper.find('.socio-directory__empty').exists()).toBe(true)
 
     await buscador.setValue('')
+    await waitForSearch()
     const estado = wrapper.find('select')
     expect(estado.findAll('option').map((option) => option.text())).toEqual(['Todos', 'Al día', 'Moroso', 'Inactivo'])
     await estado.setValue('MOROSO')
-    expect(nombres()).toEqual(['Taller Norte', 'Kiosco Sur'])
+    await flushPromises()
+    expect(socioDirectorioService.list).toHaveBeenLastCalledWith({ q: '', estado: 'MOROSO', page: 0 })
+    expect(nombres()).toEqual(['Taller Norte'])
     await estado.setValue('Todos')
-    expect(nombres()).toHaveLength(4)
+    await flushPromises()
+    expect(nombres()).toHaveLength(3)
+  })
+
+  it('pagina en el servidor', async () => {
+    vi.mocked(socioDirectorioService.list).mockImplementation(async ({ page = 0 } = {}) =>
+      pageOf([socio(page * 20 + 1)], page, 20, 21))
+    const wrapper = await montar()
+    expect(wrapper.find('.pagination-bar').text()).toContain('Página 1 de 2 · 21 resultados')
+    await wrapper.find('button[aria-label="Página siguiente"]').trigger('click')
+    await flushPromises()
+    expect(socioDirectorioService.list).toHaveBeenLastCalledWith({ q: '', estado: null, page: 1 })
+    expect(filas(wrapper)[0]!.find('strong').text()).toBe('Empresa 21')
   })
 
   it('informa el error de carga en lugar de la tabla', async () => {

@@ -12,26 +12,30 @@ vi.mock('./http', () => ({ request: vi.fn() }))
 describe('employment marketplace API services', () => {
   beforeEach(() => vi.mocked(request).mockReset())
 
-  it('loads admin applicants and their CV resources', async () => {
+  it('loads admin applicants with server-side filters and their CV resources', async () => {
     await adminApplicantService.list()
+    await adminApplicantService.list({ q: 'ana', rubro: 'Ventas', disponibilidad: '', libreta: 'yes', estado: 'ACTIVO', page: 1 })
     await adminApplicantService.listProfileCvs(12)
     await adminApplicantService.downloadCv(12, 34)
 
     expect(request).toHaveBeenNthCalledWith(1, '/admin/postulantes')
-    expect(request).toHaveBeenNthCalledWith(2, '/admin/postulantes/12/cvs')
-    expect(request).toHaveBeenNthCalledWith(3, '/admin/postulantes/12/cvs/34')
+    expect(request).toHaveBeenNthCalledWith(2, '/admin/postulantes?q=ana&rubro=Ventas&libreta=yes&estado=ACTIVO&page=1')
+    expect(request).toHaveBeenNthCalledWith(3, '/admin/postulantes/12/cvs')
+    expect(request).toHaveBeenNthCalledWith(4, '/admin/postulantes/12/cvs/34')
   })
 
-  it('lists applicant offers with optional rubro filtering', async () => {
+  it('lists applicant offers with optional rubro filtering and pagination', async () => {
     await applicantOfferService.list()
-    await applicantOfferService.list(7)
+    await applicantOfferService.list({ rubroId: 7 })
+    await applicantOfferService.list({ rubroId: null, page: 2 })
     await applicantOfferService.listRubros()
     await applicantOfferService.listApplications()
 
     expect(request).toHaveBeenNthCalledWith(1, '/postulante/ofertas')
     expect(request).toHaveBeenNthCalledWith(2, '/postulante/ofertas?rubroId=7')
-    expect(request).toHaveBeenNthCalledWith(3, '/postulante/ofertas/rubros')
-    expect(request).toHaveBeenNthCalledWith(4, '/postulante/ofertas/postulaciones')
+    expect(request).toHaveBeenNthCalledWith(3, '/postulante/ofertas?page=2')
+    expect(request).toHaveBeenNthCalledWith(4, '/postulante/ofertas/rubros')
+    expect(request).toHaveBeenNthCalledWith(5, '/postulante/ofertas/postulaciones')
   })
 
   it('submits an application with its selected professional profile', async () => {
@@ -43,14 +47,16 @@ describe('employment marketplace API services', () => {
     })
   })
 
-  it('loads offer administration catalogs', async () => {
+  it('loads offer administration catalogs and sends search/status to the server', async () => {
     await offerService.list()
+    await offerService.list({ q: 'vendedor', estado: 'PAUSADA', page: 1 })
     await offerService.listActiveSocios()
     await offerService.listRubros()
 
     expect(request).toHaveBeenNthCalledWith(1, '/ofertas')
-    expect(request).toHaveBeenNthCalledWith(2, '/ofertas/socios-activos')
-    expect(request).toHaveBeenNthCalledWith(3, '/ofertas/rubros')
+    expect(request).toHaveBeenNthCalledWith(2, '/ofertas?q=vendedor&estado=PAUSADA&page=1')
+    expect(request).toHaveBeenNthCalledWith(3, '/ofertas/socios-activos')
+    expect(request).toHaveBeenNthCalledWith(4, '/ofertas/rubros')
   })
 
   it('creates, edits and changes offer status with the expected HTTP contracts', async () => {
@@ -88,12 +94,12 @@ describe('employment marketplace API services', () => {
 
   it('searches the socio job board and encodes rubro names safely', async () => {
     await socioBolsaService.searchProfiles()
-    await socioBolsaService.searchProfiles('Atención al público & ventas')
+    await socioBolsaService.searchProfiles({ rubro: 'Atención al público & ventas', orden: 'NOMBRE', page: 1 })
 
     expect(request).toHaveBeenNthCalledWith(1, '/socio/bolsa')
     expect(request).toHaveBeenNthCalledWith(
       2,
-      '/socio/bolsa?rubro=Atenci%C3%B3n%20al%20p%C3%BAblico%20%26%20ventas',
+      '/socio/bolsa?rubro=Atenci%C3%B3n+al+p%C3%BAblico+%26+ventas&orden=NOMBRE&page=1',
     )
   })
 

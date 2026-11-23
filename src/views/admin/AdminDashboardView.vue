@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Pencil, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import HistorialContable from '../../components/admin/HistorialContable.vue'
 import AppAlert from '../../components/AppAlert.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
+import { SEARCH_DEBOUNCE_MS, useServerList } from '../../composables/useServerList'
 import { cajaService } from '../../services/cajaService'
 import { cajaExcelService } from '../../services/cajaExcelService'
+import { emptyPage, type Page } from '../../services/pagination'
 import { estadoMorosidadLabel, estadoMorosidadTone } from '../../services/socioService'
 import type { CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, MetodoPago, ReintegroProgramado } from '../../services/types'
-import { matchesCajaFilter, matchesCajaQuery, nextCajaFilterFromMetric, type CajaFilter } from '../../utils/cajaFilters'
+import { nextCajaFilterFromMetric, type CajaFilter } from '../../utils/cajaFilters'
 import { userFacingError } from '../../utils/userMessage'
 import { cajaExportRangeError } from '../../utils/cajaExportRange'
 
@@ -16,7 +19,7 @@ const resumen = ref<CajaResumen | null>(null)
 const query = ref('')
 const filter = ref<CajaFilter>('TODOS')
 const error = ref('')
-const busy = ref(false)
+const resumenBusy = ref(false)
 const exporting = ref(false)
 const exportOpen = ref(false)
 const exportStates = ref<EstadoMorosidad[]>(['AL_DIA', 'MOROSO', 'INACTIVO'])
@@ -79,24 +82,62 @@ function applyMetricFilter(next: CajaFilter) {
   filter.value = nextCajaFilterFromMetric(filter.value, next)
 }
 
-const companies = computed(() => {
-  return (resumen.value?.cuentas ?? []).filter((company) =>
-    matchesCajaFilter(company, filter.value) && matchesCajaQuery(company, query.value))
+// Búsqueda, filtro y paginación de cuentas: los resuelve el backend.
+const cuentas = useServerList<Page<CuentaCaja>>({
+  fetch: (page) => cajaService.listarCuentas({ q: query.value, filtro: filter.value, page }),
+  filters: [filter],
+  search: query,
+  initial: emptyPage(),
+  onError: (exception) => { error.value = userFacingError(exception, 'cargar el control de caja') },
 })
+const companies = computed(() => cuentas.data.value.content)
+const busy = computed(() => resumenBusy.value || cuentas.loading.value)
 
 const canCharge = computed(() => !!selectedCompany.value && !!chargeHistory.value
   && canChargeCompany(chargeHistory.value) && !chargeLoading.value && validAmount(receivedAmount.value))
-const exportEligible = computed(() => (resumen.value?.cuentas ?? [])
-  .filter((company) => exportStates.value.includes(company.estadoMorosidad)))
-const exportCandidates = computed(() => {
-  const term = exportSearch.value.trim().toLowerCase()
-  return exportEligible.value.filter((company) => !term
-    || [company.razonSocial, company.rut, company.cedula, company.nombreRubro]
-      .some((value) => (value ?? '').toLowerCase().includes(term)))
+
+// Exportación: el servidor filtra por estados (elegibles) y por estados + búsqueda (candidatos).
+const exportEligible = ref<CuentaCaja[]>([])
+const exportCandidates = ref<CuentaCaja[]>([])
+const exportLoading = ref(false)
+let exportRevision = 0
+let exportSearchTimer: ReturnType<typeof globalThis.setTimeout> | undefined
+
+async function loadExportOptions() {
+  const revision = ++exportRevision
+  exportLoading.value = true
+  exportError.value = ''
+  try {
+    const states = [...exportStates.value]
+    const [eligible, candidates] = await Promise.all([
+      cajaService.cuentasExportacion(states),
+      exportSearch.value.trim() ? cajaService.cuentasExportacion(states, exportSearch.value) : null,
+    ])
+    if (revision !== exportRevision) return
+    exportEligible.value = eligible
+    exportCandidates.value = candidates ?? eligible
+    const eligibleIds = new Set(eligible.map((company) => company.socioId))
+    exportSelectedIds.value = exportSelectedIds.value.filter((id) => eligibleIds.has(id))
+  } catch (exception) {
+    if (revision === exportRevision) exportError.value = userFacingError(exception, 'cargar los socios a exportar')
+  } finally {
+    if (revision === exportRevision) exportLoading.value = false
+  }
+}
+
+watch(exportStates, () => { if (exportOpen.value) void loadExportOptions() })
+watch(exportSearch, () => {
+  if (!exportOpen.value) return
+  if (exportSearchTimer) globalThis.clearTimeout(exportSearchTimer)
+  exportSearchTimer = globalThis.setTimeout(() => { void loadExportOptions() }, SEARCH_DEBOUNCE_MS)
 })
-const exportCompanies = computed(() => exportMode.value === 'TODOS'
-  ? exportEligible.value
-  : exportEligible.value.filter((company) => exportSelectedIds.value.includes(company.socioId)))
+onBeforeUnmount(() => { if (exportSearchTimer) globalThis.clearTimeout(exportSearchTimer) })
+
+const exportCompanies = computed(() => {
+  if (exportMode.value === 'TODOS') return exportEligible.value
+  const selected = new Set(exportSelectedIds.value)
+  return exportEligible.value.filter((company) => selected.has(company.socioId))
+})
 const exportAllVisibleSelected = computed(() => exportCandidates.value.length > 0
   && exportCandidates.value.every((company) => exportSelectedIds.value.includes(company.socioId)))
 const exportSomeVisibleSelected = computed(() => !exportAllVisibleSelected.value
@@ -145,15 +186,17 @@ const chargeTotals = computed(() => {
 
 onMounted(loadResumen)
 
+/** Métricas + página actual del listado (tras un cobro o reintegro cambian ambas). */
 async function loadResumen() {
-  busy.value = true
+  resumenBusy.value = true
   error.value = ''
   try {
-    resumen.value = await cajaService.getResumen()
+    const [summary] = await Promise.all([cajaService.getResumen(), cuentas.load()])
+    resumen.value = summary
   } catch (exception) {
     error.value = userFacingError(exception, 'cargar el control de caja')
   } finally {
-    busy.value = false
+    resumenBusy.value = false
   }
 }
 
@@ -166,6 +209,7 @@ function openExcelExport() {
   exportSelectedIds.value = []
   exportError.value = ''
   exportOpen.value = true
+  void loadExportOptions()
 }
 
 function closeExcelExport() {
@@ -180,7 +224,7 @@ function toggleExportVisible() {
 }
 
 async function downloadExcel() {
-  if (exporting.value || busy.value || !exportCompanies.value.length) return
+  if (exporting.value || exportLoading.value || !exportCompanies.value.length) return
   if (exportRangeError.value) {
     exportError.value = exportRangeError.value
     return
@@ -466,13 +510,13 @@ function paymentLabel(method: MetodoPago | null) {
       <div class="cash-filters">
         <button v-for="option in filters" :key="option.key" class="cash-filter" :class="{ 'cash-filter--active': filter === option.key }" type="button" @click="filter = option.key">{{ option.label }}</button>
       </div>
-      <button class="cash-download" type="button" :disabled="exporting || busy || !resumen?.cuentas.length" @click="openExcelExport"><Download :size="16" /> Descargar Excel</button>
+      <button class="cash-download" type="button" :disabled="exporting || busy || !resumen?.totalSocios" @click="openExcelExport"><Download :size="16" /> Descargar Excel</button>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
-    <p v-else-if="busy" class="company-empty">Cargando control de caja...</p>
+    <p v-else-if="busy && !companies.length" class="company-empty">Cargando control de caja...</p>
     <p v-else-if="!companies.length" class="company-empty">No hay socios para mostrar.</p>
-    <section v-else class="cash-table-card">
+    <section v-else class="cash-table-card" :aria-busy="busy">
       <div class="cash-table-wrap">
         <table class="cash-table">
           <thead>
@@ -511,6 +555,14 @@ function paymentLabel(method: MetodoPago | null) {
           </tbody>
         </table>
       </div>
+      <PaginationBar
+        :page="cuentas.page.value"
+        :total-pages="cuentas.data.value.totalPages"
+        :total-elements="cuentas.data.value.totalElements"
+        :loading="busy"
+        label="Paginación de cuentas"
+        @change="cuentas.goTo"
+      />
     </section>
 
     <div v-if="exportOpen" class="cash-modal-layer" @click.self="closeExcelExport" @keydown.esc.stop.prevent="closeExcelExport">
@@ -556,7 +608,8 @@ function paymentLabel(method: MetodoPago | null) {
                 <span class="excel-company__name"><strong>{{ company.razonSocial }}</strong><small>{{ company.bps || 'Sin identificador' }}</small></span>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
               </label>
-              <p v-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
+              <p v-if="exportLoading" class="excel-empty" role="status">Buscando socios...</p>
+              <p v-else-if="!exportCandidates.length" class="excel-empty">No hay socios que coincidan con los estados y la búsqueda.</p>
             </div>
           </fieldset>
           <p v-if="!exportStates.length" class="excel-empty" role="status">Selecciona al menos un estado.</p>
@@ -566,7 +619,7 @@ function paymentLabel(method: MetodoPago | null) {
           <span role="status">{{ exportCompanies.length }} socios seleccionados</span>
           <div>
             <button class="cash-history" type="button" :disabled="exporting" @click="closeExcelExport">Cancelar</button>
-            <button class="cash-modal__confirm" type="button" :disabled="exporting || !exportCompanies.length || !!exportRangeError" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
+            <button class="cash-modal__confirm" type="button" :disabled="exporting || exportLoading || !exportCompanies.length || !!exportRangeError" @click="downloadExcel"><Download :size="16" /> {{ exporting ? 'Generando...' : 'Descargar Excel' }}</button>
           </div>
         </footer>
       </section>

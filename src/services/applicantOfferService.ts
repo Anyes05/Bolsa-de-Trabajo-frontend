@@ -1,10 +1,11 @@
 import { request } from './http'
+import { buildQuery, type Page } from './pagination'
 import type { ApplicantApplication, JobOffer, RubroOption } from './types'
 
 export const applicantOfferService = {
-  list(rubroId?: number) {
-    const query = rubroId ? `?rubroId=${rubroId}` : ''
-    return request<JobOffer[]>(`/postulante/ofertas${query}`)
+  /** Ofertas activas filtradas por rubro y paginadas en el servidor. */
+  list(params: { rubroId?: number | null; page?: number; size?: number } = {}) {
+    return request<Page<JobOffer>>(`/postulante/ofertas${buildQuery({ ...params, rubroId: params.rubroId || null })}`)
   },
 
   listRubros() {

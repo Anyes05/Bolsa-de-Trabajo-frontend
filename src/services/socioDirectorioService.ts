@@ -1,4 +1,5 @@
 import { request } from './http'
+import { buildQuery, type Page } from './pagination'
 import type { EstadoMorosidad } from './types'
 
 export type DirectorioSocio = {
@@ -13,7 +14,8 @@ export type DirectorioSocio = {
 }
 
 export const socioDirectorioService = {
-  list() {
-    return request<DirectorioSocio[]>('/socio/directorio')
+  /** Búsqueda, estado y paginación resueltos en el servidor. */
+  list(params: { q?: string; estado?: EstadoMorosidad | null; page?: number; size?: number } = {}) {
+    return request<Page<DirectorioSocio>>(`/socio/directorio${buildQuery(params)}`)
   },
 }

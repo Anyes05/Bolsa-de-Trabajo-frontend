@@ -2,7 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import AppAlert from '../../components/AppAlert.vue'
 import ApplicantFilters from '../../components/ApplicantFilters.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { useApplicantFilters } from '../../composables/useApplicantFilters'
+import { useServerList } from '../../composables/useServerList'
+import { emptyApplicantPage, type ApplicantGroupPage } from '../../services/pagination'
 import ApplicantGroupCard from '../../components/socio/ApplicantGroupCard.vue'
 import ApplicantContactModal from '../../components/socio/ApplicantContactModal.vue'
 import ProfileDetailModal from '../../components/socio/ProfileDetailModal.vue'
@@ -21,8 +24,6 @@ const selectedProfile = ref<MockApplicantProfile | null>(null)
 const selectedCvs = ref<SocioProfileCv[]>([])
 const loadingCvs = ref(false)
 const expandedApplicantId = ref<number | null>(null)
-const applicantProfiles = ref<ApplicantProfileCard[]>([])
-const loading = ref(false)
 const error = ref<string | null>(null)
 const contactSuccess = ref<string | null>(null)
 const notifying = ref(false)
@@ -70,16 +71,27 @@ function toDisplayProfile(profile: ApplicantProfileCard): MockApplicantProfile {
   }
 }
 
-async function loadProfiles() {
-  loading.value = true
+const {
+  search, selectedSector, selectedAvailability, selectedLicense, selectFilters, hasFilters, clearFilters, params,
+} = useApplicantFilters()
+
+// Búsqueda, filtros, orden y paginación (por postulante): los resuelve el backend.
+const listado = useServerList<ApplicantGroupPage<ApplicantProfileCard>>({
+  fetch: (page) => socioBolsaService.searchProfiles({
+    ...params(), orden: sortBy.value === 'name' ? 'NOMBRE' : 'RECIENTES', page,
+  }),
+  filters: [...selectFilters, sortBy],
+  search,
+  initial: emptyApplicantPage(),
+  onError: (cause) => { error.value = userFacingError(cause, 'cargar los perfiles') },
+})
+const loading = computed(() => listado.loading.value && !listado.data.value.pagina.content.length)
+const sectorOptions = computed(() => listado.data.value.rubros)
+const availabilityOptions = computed(() => listado.data.value.disponibilidades)
+
+function loadProfiles() {
   error.value = null
-  try {
-    applicantProfiles.value = await socioBolsaService.searchProfiles()
-  } catch (cause) {
-    error.value = userFacingError(cause, 'cargar los perfiles')
-  } finally {
-    loading.value = false
-  }
+  return listado.load(0)
 }
 
 async function openProfile(profile: MockApplicantProfile) {
@@ -105,35 +117,20 @@ async function downloadCv(profileId: string, cvId?: number) {
   }
 }
 
-const displayProfiles = computed(() => applicantProfiles.value.map(toDisplayProfile))
-const {
-  search, selectedSector, selectedAvailability, selectedLicense,
-  sectorOptions, availabilityOptions, hasFilters, clearFilters, filteredProfiles,
-} = useApplicantFilters(displayProfiles)
-
-const profiles = computed(() => {
-  return [...filteredProfiles.value].sort((left, right) => {
-    if (sortBy.value === 'name') return left.fullName.localeCompare(right.fullName, 'es')
-    return right.updatedAt.localeCompare(left.updatedAt)
-  })
-})
-
-const applicants = computed(() => {
-  const groups = new Map<number, ApplicantGroup>()
-  profiles.value.forEach((profile) => {
-    const group = groups.get(profile.applicantId)
-    if (group) group.profiles.push(profile)
-    else groups.set(profile.applicantId, {
-      id: profile.applicantId,
-      fullName: profile.fullName,
-      email: profile.email,
-      phone: profile.phone || '',
-      initials: profile.initials,
-      profiles: [profile],
-    })
-  })
-  return [...groups.values()]
-})
+// Los grupos ya vienen filtrados, ordenados y paginados por el servidor; solo se adaptan para la tarjeta.
+const applicants = computed<ApplicantGroup[]>(() => listado.data.value.pagina.content
+  .filter((group) => group.profiles.length > 0)
+  .map((group) => {
+    const first = group.profiles[0]!
+    return {
+      id: group.applicantId,
+      fullName: first.fullName,
+      email: first.email,
+      phone: first.phone || '',
+      initials: first.initials,
+      profiles: group.profiles.map(toDisplayProfile),
+    }
+  }))
 
 async function openContact(applicant: ApplicantGroup) {
   contactSuccess.value = null
@@ -194,7 +191,7 @@ onMounted(loadProfiles)
         <AppAlert v-if="contactSuccess" tone="success">{{ contactSuccess }}</AppAlert>
         <header class="bolsa__toolbar">
           <h2 id="bolsa-results-title" class="bolsa__count">
-            Resultados: <b>{{ profiles.length }} perfiles visibles</b>
+            Resultados: <b>{{ listado.data.value.perfiles }} perfiles visibles</b>
           </h2>
           <label class="bolsa__sort">
             Ordenar por:
@@ -218,6 +215,14 @@ onMounted(loadProfiles)
           />
         </div>
         <p v-else class="bolsa__empty">No hay perfiles que coincidan con la búsqueda y los filtros.</p>
+        <PaginationBar
+          :page="listado.page.value"
+          :total-pages="listado.data.value.pagina.totalPages"
+          :total-elements="listado.data.value.pagina.totalElements"
+          :loading="listado.loading.value"
+          label="Paginación de postulantes"
+          @change="listado.goTo"
+        />
       </section>
     </div>
     <template #overlay>

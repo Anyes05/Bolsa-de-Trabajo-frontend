@@ -3,10 +3,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, nextTick, type PropType } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import AdminApplicantsView from './AdminApplicantsView.vue'
-import { adminApplicantService } from '../../services/adminApplicantService'
+import { adminApplicantService, type AdminApplicantPage } from '../../services/adminApplicantService'
+import type { ApplicantFilterParams } from '../../services/pagination'
 import { openCvInNewTab } from '../../utils/openCvInNewTab'
 import type { MockApplicantProfile } from '../../data/mockSocioBolsa'
 import type { AdminApplicantProfile, SocioProfileCv } from '../../services/types'
+import { applicantPageOf, waitForSearch } from '../../test/pages'
+
+// Doble del backend (AdminPostulanteController.page + ApplicantListing): la vista no filtra.
+const sinLibreta = ['', 'no', 'sin libreta', 'no tiene', 'no tiene libreta', 'no informada']
+function respuesta(perfiles: AdminApplicantProfile[], p: ApplicantFilterParams & { estado?: string } = {}): AdminApplicantPage {
+  const estadoDe = new Map<number, string>()
+  perfiles.forEach((x) => { if (!estadoDe.has(x.applicantId)) estadoDe.set(x.applicantId, x.estado === 'ACTIVO' ? 'ACTIVO' : 'INACTIVO') })
+  const term = (p.q ?? '').trim().toLowerCase()
+  const filtrados = perfiles.filter((x) =>
+    (!term || [x.fullName, x.email, x.phone, x.identityCard, x.profileName].some((v) => (v ?? '').toLowerCase().includes(term)))
+    && (!p.rubro || x.sectors.includes(p.rubro))
+    && (!p.disponibilidad || x.availability === p.disponibilidad)
+    && (!p.libreta || (!sinLibreta.includes((x.license ?? '').trim().toLowerCase())) === (p.libreta === 'yes'))
+    && (!p.estado || p.estado === 'TODOS' || estadoDe.get(x.applicantId) === p.estado))
+  const activos = [...estadoDe.values()].filter((e) => e === 'ACTIVO').length
+  return { resultado: applicantPageOf(filtrados, perfiles), activos, inactivos: estadoDe.size - activos, totalPerfiles: perfiles.length }
+}
+function servidor(perfiles: AdminApplicantProfile[]) {
+  vi.mocked(adminApplicantService.list).mockImplementation(async (params = {}) => respuesta(perfiles, params))
+}
 
 vi.mock('../../services/adminApplicantService', () => ({
   adminApplicantService: { list: vi.fn(), listProfileCvs: vi.fn(), downloadCv: vi.fn() },
@@ -138,14 +159,14 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('muestra la carga y agrupa los perfiles por postulante con su estado', async () => {
-    const lista = deferred<AdminApplicantProfile[]>()
+    const lista = deferred<AdminApplicantPage>()
     vi.mocked(adminApplicantService.list).mockReturnValueOnce(lista.promise)
     const wrapper = montar()
     await nextTick()
     expect(wrapper.text()).toContain('Cargando postulantes...')
     expect(wrapper.findAll('select').every((select) => select.attributes('disabled') !== undefined)).toBe(true)
 
-    lista.resolve([
+    lista.resolve(respuesta([
       perfil(1, { applicantId: 1 }),
       perfil(2, { applicantId: 1, profileName: 'Cajera' }),
       perfil(3, {
@@ -153,8 +174,11 @@ describe('postulantes registrados (administración)', () => {
         estado: 'INACTIVO', cuentaActiva: false, location: null, identityCard: null, age: null, license: null,
         experienceSummary: null, latestJob: null, cvFileName: null, cvMeta: null,
       }),
-    ])
+    ]))
     await flushPromises()
+    expect(adminApplicantService.list).toHaveBeenCalledWith({
+      q: '', rubro: '', disponibilidad: '', libreta: '', estado: 'TODOS', page: 0,
+    })
 
     const shell = wrapper.find('[data-active]')
     expect(shell.attributes('data-active')).toBe('postulantes')
@@ -181,7 +205,7 @@ describe('postulantes registrados (administración)', () => {
     [{ visibleEnBolsa: false }, 'Oculto en la bolsa (retención / no confirmó permanencia)', false],
     [{ perfilVisible: false }, 'Activo en bolsa; este perfil laboral está oculto por el postulante', false],
   ] as const)('describe el estado de visibilidad %o', async (overrides, detalle, pausada) => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(1, overrides)])
+    servidor([perfil(1, overrides)])
     const wrapper = montar()
     await flushPromises()
 
@@ -189,7 +213,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('una cuenta desactivada no se marca como búsqueda pausada', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([
+    servidor([
       perfil(1, { cuentaActiva: false, busquedaPausada: true, estado: 'INACTIVO' }),
     ])
     const wrapper = montar()
@@ -198,8 +222,8 @@ describe('postulantes registrados (administración)', () => {
     expect(grupos(wrapper)[0]).toMatchObject({ estadoDetalle: 'Cuenta de usuario desactivada', busquedaPausada: false })
   })
 
-  it('filtra por estado en la bolsa', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([
+  it('envía el estado en la bolsa al servidor', async () => {
+    servidor([
       perfil(1, { applicantId: 1 }),
       perfil(2, { applicantId: 2, fullName: 'Bruno Silva', estado: 'INACTIVO' }),
     ])
@@ -208,16 +232,20 @@ describe('postulantes registrados (administración)', () => {
     const chips = wrapper.findAll('.admin-applicants__chip')
 
     await chips[1]!.trigger('click')
+    await flushPromises()
+    expect(adminApplicantService.list).toHaveBeenLastCalledWith(expect.objectContaining({ estado: 'ACTIVO', page: 0 }))
     expect(chips[1]!.classes()).toContain('admin-applicants__chip--active')
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Ana Pérez'])
     await chips[2]!.trigger('click')
+    await flushPromises()
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Bruno Silva'])
     await chips[0]!.trigger('click')
+    await flushPromises()
     expect(grupos(wrapper)).toHaveLength(2)
   })
 
-  it('usa los filtros de búsqueda y permite limpiarlos', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([
+  it('envía búsqueda y filtros al servidor, usa sus opciones y permite limpiarlos', async () => {
+    servidor([
       perfil(1, { applicantId: 1, sectors: ['Ventas'], availability: 'FULL_TIME' }),
       perfil(2, { applicantId: 2, fullName: 'Bruno Silva', sectors: ['Logística'], availability: 'PART_TIME', license: 'No tiene' }),
     ])
@@ -231,28 +259,37 @@ describe('postulantes registrados (administración)', () => {
     expect(disponibilidad!.findAll('option').map((opcion) => opcion.text())).toEqual(['Todas las disponibilidades', 'FULL_TIME', 'PART_TIME'])
 
     await wrapper.find('input[aria-label^="Buscar"]').setValue('bruno')
+    await waitForSearch()
+    expect(adminApplicantService.list).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'bruno', page: 0 }))
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Bruno Silva'])
     expect(limpiar.attributes('disabled')).toBeUndefined()
 
     await limpiar.trigger('click')
+    await waitForSearch()
     expect((wrapper.find('input[aria-label^="Buscar"]').element as HTMLInputElement).value).toBe('')
     expect(grupos(wrapper)).toHaveLength(2)
 
     await rubro!.setValue('Ventas')
+    await flushPromises()
+    expect(adminApplicantService.list).toHaveBeenLastCalledWith(expect.objectContaining({ rubro: 'Ventas' }))
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Ana Pérez'])
     await rubro!.setValue('')
     await disponibilidad!.setValue('PART_TIME')
+    await flushPromises()
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Bruno Silva'])
     await disponibilidad!.setValue('')
     await libreta!.setValue('yes')
+    await flushPromises()
+    expect(adminApplicantService.list).toHaveBeenLastCalledWith(expect.objectContaining({ libreta: 'yes' }))
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Ana Pérez'])
 
     await wrapper.find('input[aria-label^="Buscar"]').setValue('inexistente')
+    await waitForSearch()
     expect(wrapper.text()).toContain('No hay postulantes que coincidan con la búsqueda y los filtros.')
   })
 
-  it('busca por cédula aunque el postulante no tenga teléfono', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([
+  it('muestra lo que devuelve el servidor para una búsqueda por cédula', async () => {
+    servidor([
       perfil(1, { applicantId: 1, phone: null }),
       perfil(2, { applicantId: 2, fullName: 'Bruno Silva', identityCard: '9.999.999-9' }),
     ])
@@ -260,8 +297,23 @@ describe('postulantes registrados (administración)', () => {
     await flushPromises()
 
     await wrapper.find('input[aria-label^="Buscar"]').setValue('1.234')
+    await waitForSearch()
     expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Ana Pérez'])
     expect(grupos(wrapper)[0]!.phone).toBe('')
+  })
+
+  it('pagina por postulante en el servidor', async () => {
+    vi.mocked(adminApplicantService.list).mockImplementation(async ({ page = 0 } = {}) => {
+      const base = respuesta([perfil(page + 1, { applicantId: page + 1, fullName: `Postulante ${page + 1}` })])
+      return { ...base, resultado: { ...base.resultado, pagina: { ...base.resultado.pagina, page, totalElements: 21, totalPages: 2 } } }
+    })
+    const wrapper = montar()
+    await flushPromises()
+    expect(wrapper.find('.pagination-bar').text()).toContain('Página 1 de 2 · 21 resultados')
+    await wrapper.find('button[aria-label="Página siguiente"]').trigger('click')
+    await flushPromises()
+    expect(adminApplicantService.list).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }))
+    expect(grupos(wrapper).map((grupo) => grupo.fullName)).toEqual(['Postulante 2'])
   })
 
   it('muestra el error si no se pueden cargar los postulantes', async () => {
@@ -274,7 +326,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('expande y contrae el grupo de un postulante', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(1)])
+    servidor([perfil(1)])
     const wrapper = montar()
     await flushPromises()
     const tarjeta = () => wrapper.findComponent(ApplicantGroupCardStub)
@@ -289,7 +341,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('abre el detalle de un perfil cargando sus CVs y lo cierra', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(8)])
+    servidor([perfil(8)])
     const cvs = deferred<SocioProfileCv[]>()
     vi.mocked(adminApplicantService.listProfileCvs).mockReturnValueOnce(cvs.promise)
     const wrapper = montar()
@@ -312,7 +364,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('muestra el error si fallan los CVs del perfil', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(8)])
+    servidor([perfil(8)])
     vi.mocked(adminApplicantService.listProfileCvs).mockRejectedValueOnce(new Error('CVs no disponibles'))
     const wrapper = montar()
     await flushPromises()
@@ -324,7 +376,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('descarga un CV abriéndolo en una pestaña nueva', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(8)])
+    servidor([perfil(8)])
     vi.mocked(adminApplicantService.listProfileCvs).mockResolvedValueOnce([cv(31)])
     vi.mocked(adminApplicantService.downloadCv).mockResolvedValueOnce({ url: 'https://cdn.test/cv.pdf' })
     vi.mocked(openCvInNewTab).mockImplementationOnce(async (obtener) => { await obtener() })
@@ -341,7 +393,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('ignora la descarga cuando no hay CV seleccionado', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(8)])
+    servidor([perfil(8)])
     vi.mocked(adminApplicantService.listProfileCvs).mockResolvedValueOnce([])
     const wrapper = montar()
     await flushPromises()
@@ -355,7 +407,7 @@ describe('postulantes registrados (administración)', () => {
   })
 
   it('muestra el error si la descarga del CV falla', async () => {
-    vi.mocked(adminApplicantService.list).mockResolvedValueOnce([perfil(8)])
+    servidor([perfil(8)])
     vi.mocked(adminApplicantService.listProfileCvs).mockResolvedValueOnce([cv(31)])
     vi.mocked(openCvInNewTab).mockRejectedValueOnce(new Error('El navegador bloqueó la pestaña de descarga.'))
     const wrapper = montar()

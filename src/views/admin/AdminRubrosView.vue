@@ -3,39 +3,36 @@ import { Pencil, Plus, Search, Tags } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
 import AppAlert from '../../components/AppAlert.vue'
-import { rubroService, type RubroAdmin } from '../../services/rubroService'
+import PaginationBar from '../../components/PaginationBar.vue'
+import { useServerList } from '../../composables/useServerList'
+import { emptyPage } from '../../services/pagination'
+import { rubroService, type RubroAdmin, type RubroPage } from '../../services/rubroService'
 import { userFacingError } from '../../utils/userMessage'
 
-const rubros = ref<RubroAdmin[]>([])
 const query = ref('')
 const error = ref('')
-const busy = ref(false)
 const formBusy = ref(false)
 const formError = ref('')
 const showForm = ref(false)
 const editing = ref<RubroAdmin | null>(null)
 const form = reactive({ nombreRubro: '' })
 
-const filtered = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  if (!term) return rubros.value
-  return rubros.value.filter((rubro) => rubro.nombreRubro.toLowerCase().includes(term))
+// Búsqueda y paginación: las resuelve el backend.
+const listado = useServerList<RubroPage>({
+  fetch: (page) => rubroService.list({ incluirInactivos: true, q: query.value, page }),
+  search: query,
+  initial: { pagina: emptyPage(), activos: 0 },
+  onError: (exception) => { error.value = userFacingError(exception, 'cargar los rubros') },
 })
-
-const activos = computed(() => rubros.value.filter((rubro) => rubro.activo).length)
+const filtered = computed(() => listado.data.value.pagina.content)
+const activos = computed(() => listado.data.value.activos)
+const busy = computed(() => listado.loading.value)
 
 onMounted(load)
 
-async function load() {
-  busy.value = true
+function load(page = listado.page.value) {
   error.value = ''
-  try {
-    rubros.value = await rubroService.list(true)
-  } catch (exception) {
-    error.value = userFacingError(exception, 'cargar los rubros')
-  } finally {
-    busy.value = false
-  }
+  return listado.load(page)
 }
 
 function openCreate() {
@@ -68,14 +65,11 @@ async function save() {
   formBusy.value = true
   formError.value = ''
   try {
-    if (editing.value) {
-      const updated = await rubroService.update(editing.value.id, nombre)
-      rubros.value = rubros.value.map((item) => (item.id === updated.id ? updated : item))
-    } else {
-      const created = await rubroService.create(nombre)
-      rubros.value = [...rubros.value, created].sort((a, b) => a.nombreRubro.localeCompare(b.nombreRubro, 'es'))
-    }
+    if (editing.value) await rubroService.update(editing.value.id, nombre)
+    else await rubroService.create(nombre)
     closeForm()
+    // El orden y la página los define el servidor: se recarga la página actual.
+    await load()
   } catch (exception) {
     formError.value = userFacingError(exception, 'guardar el rubro')
   } finally {
@@ -86,8 +80,8 @@ async function save() {
 async function toggleActivo(rubro: RubroAdmin) {
   error.value = ''
   try {
-    const updated = await rubroService.setActivo(rubro.id, !rubro.activo)
-    rubros.value = rubros.value.map((item) => (item.id === updated.id ? updated : item))
+    await rubroService.setActivo(rubro.id, !rubro.activo)
+    await load()
   } catch (exception) {
     error.value = userFacingError(exception, 'actualizar el rubro')
   }
@@ -107,11 +101,11 @@ async function toggleActivo(rubro: RubroAdmin) {
         <Search :size="17" />
         <input v-model="query" placeholder="Buscar rubro...">
       </label>
-      <span>{{ activos }} activos · {{ filtered.length }} listados</span>
+      <span>{{ activos }} activos · {{ listado.data.value.pagina.totalElements }} listados</span>
     </section>
 
     <AppAlert v-if="error">{{ error }}</AppAlert>
-    <p v-else-if="busy" class="company-empty">Cargando rubros...</p>
+    <p v-else-if="busy && !filtered.length" class="company-empty">Cargando rubros...</p>
     <p v-else-if="!filtered.length" class="company-empty">No hay rubros para mostrar.</p>
 
     <section v-else class="company-table-card">
@@ -156,6 +150,14 @@ async function toggleActivo(rubro: RubroAdmin) {
           </tbody>
         </table>
       </div>
+      <PaginationBar
+        :page="listado.page.value"
+        :total-pages="listado.data.value.pagina.totalPages"
+        :total-elements="listado.data.value.pagina.totalElements"
+        :loading="busy"
+        label="Paginación de rubros"
+        @change="listado.goTo"
+      />
     </section>
 
     <div v-if="showForm" class="admin-modal" role="dialog" aria-modal="true">

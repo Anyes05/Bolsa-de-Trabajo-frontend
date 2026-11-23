@@ -1,5 +1,12 @@
 import { request } from './http'
-import type { CajaResumen, CuentaCaja, HistorialCaja, RegistrarCobroPayload, RegistrarReintegroPayload, ReintegroProgramado } from './types'
+import { buildQuery, type Page } from './pagination'
+import type {
+  CajaResumen, CuentaCaja, EstadoMorosidad, HistorialCaja, RegistrarCobroPayload, RegistrarReintegroPayload, ReintegroProgramado,
+} from './types'
+
+export type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
+
+export type CajaCuentasParams = { q?: string; filtro?: CajaFilter; page?: number; size?: number }
 
 export interface AsientoContable {
   id: number
@@ -28,6 +35,17 @@ export const cajaService = {
 
   getResumen() {
     return request<CajaResumen>('/admin/caja')
+  },
+
+  /** Búsqueda, filtro y paginación resueltos en el servidor. */
+  listarCuentas(params: CajaCuentasParams = {}) {
+    return request<Page<CuentaCaja>>(`/admin/caja/cuentas${buildQuery(params)}`)
+  },
+
+  /** Cuentas para el Excel, filtradas en el servidor por estados y búsqueda. */
+  cuentasExportacion(estados: readonly EstadoMorosidad[], q = '') {
+    if (!estados.length) return Promise.resolve<CuentaCaja[]>([])
+    return request<CuentaCaja[]>(`/admin/caja/cuentas/exportacion${buildQuery({ estados, q })}`)
   },
 
   getHistorial(socioId: number) {

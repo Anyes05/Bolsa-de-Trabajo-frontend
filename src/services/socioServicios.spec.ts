@@ -30,10 +30,10 @@ describe('servicios del módulo socio', () => {
     await socioBolsaService.searchProfiles()
     expect(request).toHaveBeenLastCalledWith('/socio/bolsa')
 
-    await socioBolsaService.searchProfiles('Gastronomía & Hotelería')
-    expect(request).toHaveBeenLastCalledWith('/socio/bolsa?rubro=Gastronom%C3%ADa%20%26%20Hoteler%C3%ADa')
+    await socioBolsaService.searchProfiles({ rubro: 'Gastronomía & Hotelería' })
+    expect(request).toHaveBeenLastCalledWith('/socio/bolsa?rubro=Gastronom%C3%ADa+%26+Hoteler%C3%ADa')
 
-    await socioBolsaService.searchProfiles('')
+    await socioBolsaService.searchProfiles({ rubro: '', q: '  ' })
     expect(request).toHaveBeenLastCalledWith('/socio/bolsa')
   })
 
@@ -57,6 +57,9 @@ describe('servicios del módulo socio', () => {
   it('lista el directorio de socios', async () => {
     await socioDirectorioService.list()
     expect(request).toHaveBeenLastCalledWith('/socio/directorio')
+
+    await socioDirectorioService.list({ q: 'acme', estado: 'MOROSO', page: 3 })
+    expect(request).toHaveBeenLastCalledWith('/socio/directorio?q=acme&estado=MOROSO&page=3')
   })
 
   it('consulta y marca notificaciones del socio', async () => {

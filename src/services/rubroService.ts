@@ -1,4 +1,5 @@
 import { request } from './http'
+import { buildQuery, type Page } from './pagination'
 
 export type RubroAdmin = {
   id: number
@@ -6,9 +7,13 @@ export type RubroAdmin = {
   activo: boolean
 }
 
+/** Página del catálogo; {@code activos} cuenta sobre todo el catálogo, no solo la página. */
+export type RubroPage = { pagina: Page<RubroAdmin>; activos: number }
+
 export const rubroService = {
-  list(incluirInactivos = true) {
-    return request<RubroAdmin[]>(`/admin/rubros?incluirInactivos=${incluirInactivos}`)
+  /** Búsqueda por nombre y paginación resueltas en el servidor. */
+  list(params: { incluirInactivos?: boolean; q?: string; page?: number; size?: number } = {}) {
+    return request<RubroPage>(`/admin/rubros${buildQuery({ incluirInactivos: params.incluirInactivos ?? true, q: params.q, page: params.page, size: params.size })}`)
   },
 
   create(nombreRubro: string) {
