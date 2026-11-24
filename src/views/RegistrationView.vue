@@ -924,8 +924,8 @@ async function complete() {
       <AppAlert v-if="success" class="registration-card__alert" tone="success">{{ success }}</AppAlert>
 
       <label v-if="step === 3 && !registered" class="registration-terms">
-        <input v-model="acceptedTerms" type="checkbox">
-        <span>Acepto los <RouterLink class="registration-terms__link" to="/terminos" target="_blank">términos y condiciones</RouterLink> del CCISJ.</span>
+        <input v-model="acceptedTerms" class="registration-terms__input" type="checkbox">
+        <span class="registration-terms__text">Acepto los <RouterLink class="registration-terms__link" to="/terminos" target="_blank">términos y condiciones</RouterLink> del CCISJ.</span>
       </label>
 
       <footer class="registration-card__actions">
@@ -970,5 +970,8 @@ async function complete() {
 .registration-google { display: grid; gap: 16px; margin-bottom: 24px; }
 .registration-google__avatar { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--t-bg-e8f5ee); color: var(--t-fg-087b48); }
 .registration-terms { display: flex; gap: 10px; align-items: flex-start; margin: 16px 0 0; color: var(--t-fg-445249); font-size: 0.95rem; }
+.registration-terms__input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--t-fg-08775f); }
+.registration-terms__text { margin: 0; }
 .registration-terms__link { color: var(--t-fg-08775f); }
+.registration-terms__link:hover { text-decoration: underline; }
 </style>

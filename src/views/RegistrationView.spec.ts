@@ -146,7 +146,7 @@ describe('vista de registro de postulante', () => {
   }
 
   async function aceptarTerminos() {
-    await wrapper.find('.registration-terms input[type="checkbox"]').setValue(true)
+    await wrapper.find('.registration-terms__input').setValue(true)
   }
 
   function cargarArchivos(input: DOMWrapper<HTMLInputElement>, archivos: File[]) {
@@ -331,7 +331,7 @@ describe('vista de registro de postulante', () => {
   describe('paso 3: CV y alta de la cuenta', () => {
     it('no registra sin aceptar los términos', async () => {
       await llegarAlPaso3()
-      expect(wrapper.find('.registration-terms a').attributes('href')).toBe('/terminos')
+      expect(wrapper.find('.registration-terms__link').attributes('href')).toBe('/terminos')
       await enviar()
       expect(wrapper.text()).toContain('Para crear la cuenta tenés que aceptar los términos y condiciones.')
       expect(authService.registerApplicant).not.toHaveBeenCalled()
