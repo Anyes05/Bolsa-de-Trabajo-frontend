@@ -269,6 +269,12 @@ describe('control de caja del administrador', () => {
       expect(wrapper.find('.pagination-bar').exists()).toBe(false)
     })
 
+    it('muestra el error si no se pueden cargar las cuentas', async () => {
+      vi.mocked(cajaService.listarCuentas).mockReset().mockRejectedValue(new Error('Cuentas no disponibles'))
+      const wrapper = await montar()
+      expect(wrapper.find('[role="alert"]').text()).toContain('Cuentas no disponibles')
+    })
+
     it('muestra el estado de carga y el error del resumen', async () => {
       const pendiente = deferred<CajaResumen>()
       vi.mocked(cajaService.getResumen).mockReturnValueOnce(pendiente.promise)
@@ -293,6 +299,14 @@ describe('control de caja del administrador', () => {
       await flushPromises()
       return wrapper
     }
+
+    it('informa si no se pueden cargar los socios a exportar', async () => {
+      vi.mocked(cajaService.cuentasExportacion).mockReset().mockRejectedValue(new Error('Exportación no disponible'))
+      const wrapper = await abrirExportacion()
+      expect(wrapper.text()).toContain('Exportación no disponible')
+      // El modal sigue abierto para reintentar.
+      expect(wrapper.find('.excel-footer').exists()).toBe(true)
+    })
 
     function contador(wrapper: Wrapper) {
       return wrapper.find('.excel-footer [role="status"]').text()

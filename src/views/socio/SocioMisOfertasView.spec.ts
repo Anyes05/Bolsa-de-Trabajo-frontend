@@ -176,6 +176,12 @@ describe('gestión de ofertas del socio', () => {
     expect(offerService.listRubros).toHaveBeenCalledTimes(2)
   })
 
+  it('informa si no se pueden cargar los rubros', async () => {
+    vi.mocked(offerService.listRubros).mockReset().mockRejectedValueOnce(new Error('Rubros no disponibles'))
+    const wrapper = await montar()
+    expect(wrapper.text()).toContain('Rubros no disponibles')
+  })
+
   it('publica una oferta nueva y recarga el listado', async () => {
     vi.mocked(offerService.list).mockResolvedValueOnce(pageOf([])).mockResolvedValueOnce(pageOf([oferta(9, 'ACTIVA')]))
     vi.mocked(offerService.create).mockResolvedValueOnce(oferta(9, 'ACTIVA'))

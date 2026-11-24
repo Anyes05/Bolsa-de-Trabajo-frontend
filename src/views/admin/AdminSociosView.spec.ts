@@ -155,6 +155,16 @@ describe('gestión de socios del administrador', () => {
       expect(wrapper.find('table').exists()).toBe(false)
     })
 
+    it('informa si falla la carga de los rubros', async () => {
+      vi.mocked(socioService.pageSocios).mockResolvedValueOnce(pageOf([]))
+      vi.mocked(socioService.getRubros).mockRejectedValueOnce(errorApi('Rubros no disponibles'))
+      const wrapper = mount(AdminSociosView, {
+        global: { stubs: { AdminShell: AdminShellStub, RouterLink: RouterLinkStub } },
+      })
+      await flushPromises()
+      expect(wrapper.text()).toContain('Rubros no disponibles')
+    })
+
     it('renderiza cada socio con identificador, etiquetas, estado y fechas', async () => {
       const wrapper = await montar([
         socio(1, {

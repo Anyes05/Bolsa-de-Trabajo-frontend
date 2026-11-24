@@ -152,11 +152,9 @@ function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+// Solo se llama después de validar que hay al menos una referencia (hasManualReference),
+// así que siempre hay contenido para el PDF.
 function buildManualCvFile() {
-  if (!hasManualCvContent()) {
-    return null
-  }
-
   const doc = new jsPDF()
   const pageHeight = doc.internal.pageSize.getHeight()
   const contentWidth = 180
@@ -276,19 +274,6 @@ function buildManualCvFile() {
 
   const blob = doc.output('blob')
   return new File([blob], 'cv-manual.pdf', { type: 'application/pdf' })
-}
-
-function hasManualCvContent() {
-  return Boolean(
-    manualCv.summary.trim()
-    || manualCv.technicalSkills.trim()
-    || manualCv.certifications.trim()
-    || manualCv.experiences.some((item) => item.company.trim() || item.role.trim() || item.description.trim())
-    || manualCv.education.some((item) => item.institution.trim() || item.degree.trim())
-    || manualCv.languages.some((item) => item.name.trim())
-    || manualCv.workReferences.some((item) => item.name.trim())
-    || manualCv.personalReferences.some((item) => item.name.trim()),
-  )
 }
 
 function selectCvMode(mode: 'upload' | 'manual') {
@@ -921,7 +906,6 @@ async function complete() {
       </section>
 
       <AppAlert v-if="error" class="registration-card__alert">{{ error }}</AppAlert>
-      <AppAlert v-if="success" class="registration-card__alert" tone="success">{{ success }}</AppAlert>
 
       <label v-if="step === 3 && !registered" class="registration-terms">
         <input v-model="acceptedTerms" class="registration-terms__input" type="checkbox">

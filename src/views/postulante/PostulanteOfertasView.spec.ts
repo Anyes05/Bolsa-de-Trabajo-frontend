@@ -142,6 +142,41 @@ describe('ofertas de empleo del postulante', () => {
     })
   })
 
+  it('la pestaña "Mis postulaciones" lista cada postulación con su estado, y vuelve a las ofertas', async () => {
+    vi.mocked(applicantOfferService.listApplications).mockResolvedValue([
+      { id: 1, ofertaId: 1, ofertaTitulo: 'Oferta 1', socioNombre: 'Empresa', rubro: 'Ventas', fecha: '2026-11-20T12:00:00Z', estado: 'CONTACTADA', perfilId: 11, perfilNombre: 'Perfil Ventas', cvId: 21, cvNombre: 'mi-cv.pdf' },
+      { id: 2, ofertaId: 2, ofertaTitulo: 'Oferta 2', socioNombre: 'Otra', rubro: 'Logística', fecha: '2026-11-21T12:00:00Z', estado: 'DESCARTADA', perfilId: null, perfilNombre: null, cvId: null, cvNombre: null },
+    ] as never)
+    const wrapper = await montar()
+    const pestañas = wrapper.findAll('.postulante-offers__tab')
+    expect(pestañas[1].text()).toBe('Mis postulaciones (2)')
+
+    await pestañas[1].trigger('click')
+    expect(pestañas[1].classes()).toContain('postulante-offers__tab--active')
+    expect(wrapper.find('.postulante-offers__filter').exists()).toBe(false)
+    const tarjetas = wrapper.findAll('.application-card')
+    expect(tarjetas).toHaveLength(2)
+    expect(tarjetas[0].find('.application-card__title').text()).toBe('Oferta 1')
+    expect(tarjetas[0].find('.application-card__company').text()).toBe('Empresa · Ventas')
+    expect(tarjetas[0].text()).toContain('Perfil Ventas')
+    expect(tarjetas[0].text()).toContain('CV: mi-cv.pdf')
+    expect(tarjetas[0].find('.application-card__status').text()).toBe('Contactada')
+    expect(tarjetas[0].find('.application-card__status').classes()).toContain('application-card__status--contactada')
+    expect(tarjetas[1].text()).toContain('Perfil anterior')
+    expect(tarjetas[1].text()).not.toContain('CV:')
+    expect(tarjetas[1].find('.application-card__status').text()).toBe('Descartada')
+
+    await pestañas[0].trigger('click')
+    expect(wrapper.find('.application-card').exists()).toBe(false)
+    expect(titulos(wrapper)).toEqual(['Oferta 1', 'Oferta 2'])
+  })
+
+  it('sin postulaciones lo indica en su pestaña', async () => {
+    const wrapper = await montar()
+    await wrapper.findAll('.postulante-offers__tab')[1].trigger('click')
+    expect(wrapper.text()).toContain('Todavía no tienes postulaciones.')
+  })
+
   it('muestra el error si falla la carga de perfiles o postulaciones', async () => {
     vi.mocked(postulanteService.listProfiles).mockRejectedValue(new Error('Perfiles no disponibles'))
     const wrapper = await montar()

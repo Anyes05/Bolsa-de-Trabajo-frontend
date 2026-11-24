@@ -225,6 +225,15 @@ describe('ofertas laborales (administración)', () => {
     expect(wrapper.text()).toContain('No hay ofertas para mostrar.')
   })
 
+  it('muestra el error si no se pueden cargar los rubros o los socios', async () => {
+    vi.mocked(offerService.list).mockResolvedValueOnce(pageOf([]))
+    vi.mocked(offerService.listRubros).mockRejectedValueOnce(new Error('Rubros no disponibles'))
+    vi.mocked(offerService.listActiveSocios).mockResolvedValueOnce([])
+    const wrapper = montar()
+    await flushPromises()
+    expect(wrapper.text()).toContain('Rubros no disponibles')
+  })
+
   it('crea una oferta nueva y recarga el listado', async () => {
     cargarCatalogos([])
     const wrapper = montar()

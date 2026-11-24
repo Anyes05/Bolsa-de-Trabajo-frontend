@@ -237,3 +237,36 @@ reglas `#app h1`, `#app input`, etc. son la capa de estilos base global y quedan
   - el campo de contraseña en "Mi perfil", que ahora deja lugar al ícono del ojo (antes el texto
     quedaba debajo).
   `npm run test:ci` (639 Vitest, 27 Node, build), 60 E2E y 100% de líneas.
+
+## Cobertura con Vitest 5 — 24/11/2026
+
+Con el pase a Vitest 5 (commit "pruebas de seguridad"), la cobertura incluye todos los archivos de
+`src/`, aunque ningún test los cargue. Con Vitest 3 esos archivos no aparecían en el informe, así que el
+100% anterior no contaba cinco archivos que nunca tuvieron pruebas: `PostulanteShell`,
+`PostulanteMiPerfilView`, `PostulantePerfilesView`, `PostulanteNotificacionesView` y `utils/moneyAmount.ts`.
+Recién incorporados, la cobertura de líneas bajó a 90,8%.
+
+`npm run test:ci` aprobado: **713 pruebas Vitest** (91 archivos), **27 pruebas Node** y build.
+`npm run test:ui`: **60 pruebas Playwright**.
+
+| Métrica | Cubierto | Total | Porcentaje |
+|---|---:|---:|---:|
+| Líneas | 4060 | 4060 | 100% |
+| Sentencias | 4626 | 4660 | 99,27% |
+| Ramas | 3901 | 3965 | 98,38% |
+| Funciones | 1320 | 1331 | 99,17% |
+
+- Specs nuevos: los cuatro de postulante (shell, mi perfil, perfiles profesionales con CV en PDF y CV
+  manual, notificaciones) y `moneyAmount.spec.ts`.
+- Casos agregados a specs existentes: la pestaña "Mis postulaciones", los errores de carga de catálogos
+  (ofertas, socios, mis ofertas, cuentas de caja y socios a exportar) y los filtros de disponibilidad y
+  libreta de la bolsa de empleo.
+- Código inalcanzable que se quitó, sin cambio de comportamiento:
+  - `AccessView`: la ruta de respaldo `/sesion` para un rol desconocido. `auth.setSession` ya rechaza
+    un rol inválido, así que nunca se llegaba a ella.
+  - `RegistrationView`: el chequeo de contenido del CV manual, porque antes se exige una referencia.
+    También el aviso de éxito dentro del formulario, que se oculta en el mismo momento en que se
+    completa el registro (el éxito se muestra en su propia pantalla).
+- En Windows, Vitest 5 falla en todos los archivos ("Cannot read properties of undefined (reading
+  'config')") si la terminal abre la carpeta con la unidad en minúscula (`c:\...`, como puede hacer
+  VS Code). Desde `C:\...` funciona. En CI (Linux) no pasa.

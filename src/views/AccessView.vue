@@ -28,13 +28,12 @@ const error = ref('')
 const busy = ref(false)
 const detail = computed(() => (role.value ? getRoleOption(role.value) : null))
 
-function routeByRole(roleValue: string) {
-  const normalized = roleValue.trim().toUpperCase()
-  if (normalized === 'POSTULANTE') return { name: 'postulante-bolsa-empleo' as const, path: '/postulante/ofertas-empleo' }
-  if (normalized === 'SOCIO') return { name: 'socio-bolsa-empleo' as const, path: '/socio/bolsa-empleo' }
-  if (normalized === 'ADMIN') return { name: 'admin-dashboard' as const, path: '/admin' }
-  return { name: 'session' as const, path: '/sesion' }
-}
+// Inicio de cada rol. `auth.setSession` ya normaliza el rol y rechaza uno inválido.
+const homeByRole = {
+  POSTULANTE: { name: 'postulante-bolsa-empleo', path: '/postulante/ofertas-empleo' },
+  SOCIO: { name: 'socio-bolsa-empleo', path: '/socio/bolsa-empleo' },
+  ADMIN: { name: 'admin-dashboard', path: '/admin' },
+} as const satisfies Record<Role, { name: string; path: string }>
 
 function selectRole(value: Role) {
   googleLinkCredential.value = null
@@ -91,7 +90,7 @@ async function enterSession(session: AuthResponse) {
       await router.replace({ name: 'socio-cambiar-clave' })
       return
     }
-    const target = routeByRole(session.role)
+    const target = homeByRole[auth.role as Role]
     await router.replace({ name: target.name })
     if (window.location.pathname !== target.path) {
       window.location.assign(target.path)
