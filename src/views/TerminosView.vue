@@ -19,6 +19,7 @@ import BrandLogo from '../components/BrandLogo.vue'
         El uso implica aceptar estas condiciones.
       </p>
     </section>
+    
 
     <section class="terms__section">
       <h2 class="terms__heading">2. Cuentas</h2>
