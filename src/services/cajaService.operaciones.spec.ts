@@ -22,22 +22,6 @@ describe('API operativa de caja', () => {
     expect(request).toHaveBeenCalledWith('/admin/caja/socios/9/historial')
   })
 
-  it('previsualiza e importa un Excel de historial asociado al socio', async () => {
-    const file = new File(['excel'], 'historial.xlsx')
-    await cajaService.previewHistorialImportacion(9, file)
-    await cajaService.importarHistorial(9, file)
-
-    const [previewUrl, previewOptions] = vi.mocked(request).mock.calls[0]!
-    expect(previewUrl).toBe('/admin/caja/socios/9/historial-importacion/preview')
-    expect(previewOptions?.method).toBe('POST')
-    expect((previewOptions?.body as FormData).get('file')).toBe(file)
-
-    const [importUrl, importOptions] = vi.mocked(request).mock.calls[1]!
-    expect(importUrl).toBe('/admin/caja/socios/9/historial-importacion')
-    expect(importOptions?.method).toBe('POST')
-    expect((importOptions?.body as FormData).get('file')).toBe(file)
-  })
-
   it('registra un cobro con POST', async () => {
     const payload = { socioId: 4, metodoPago: 'EFECTIVO' as const, montoRecibido: 500, nroCobranzaExterno: null, observaciones: null }
     await cajaService.registrarCobro(payload)

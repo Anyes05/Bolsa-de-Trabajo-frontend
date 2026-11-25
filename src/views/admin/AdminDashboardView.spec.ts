@@ -639,6 +639,7 @@ describe('control de caja del administrador', () => {
       const modal = modalHistorial(wrapper)
       expect(modal.find('h2').text()).toBe('Socio 1')
       expect(modal.find('.history-summary').text()).toMatch(/500,00.*200,00/)
+      expect(modal.find('.history-summary__strong').classes()).toContain('account-debt')
       const articulos = modal.findAll('article')
       expect(articulos.map((a) => a.find('strong').text())).toEqual(['PAGO 7', 'PAGO 6', 'PAGO 5', 'REINTEGRO 4', 'REINTEGRO 3', 'REINTEGRO 2', 'CUOTA 1'])
       expect(articulos[0]!.text()).toContain('Efectivo')
@@ -648,7 +649,7 @@ describe('control de caja del administrador', () => {
       expect(articulos[2]!.text()).toContain('Pago adelantado')
       expect(articulos[2]!.find('.account-credit').text()).toMatch(/Saldo a favor utilizado.*50,00/)
       expect(articulos[2]!.text()).not.toContain('Pendiente:')
-      expect(articulos[2]!.find('aside').text()).toMatch(/^-/)
+      expect(articulos[2]!.find('aside').text()).toMatch(/^\+/)
       expect(articulos[3]!.find('.history-entry__tag--tipo').exists()).toBe(false)
       expect(articulos[3]!.text()).toContain('Vence -')
       expect(articulos[4]!.find('.history-entry__tag--tipo').text()).toBe('Puntual')
@@ -656,9 +657,14 @@ describe('control de caja del administrador', () => {
       expect(articulos[5]!.find('.history-entry__tag--tipo').text()).toBe('Recurrente')
       expect(articulos[5]!.text()).toMatch(/Pendiente: .*120,00/)
       expect(articulos[6]!.find('.history-entry__dot--red').exists()).toBe(true)
-      expect(articulos[6]!.find('aside').text()).toMatch(/^\+/)
+      expect(articulos[6]!.find('aside').text()).not.toMatch(/^\+/)
       expect(articulos[6]!.find('time').text()).toMatch(/2025/)
       expect(modal.text()).not.toContain('Historial contable')
+    })
+
+    it('muestra en verde el saldo a favor', async () => {
+      const wrapper = await abrirHistorial(historial(1, { saldo: -820 }))
+      expect(modalHistorial(wrapper).find('.history-summary__strong').classes()).toContain('account-credit')
     })
 
     it('filtra por rango de fechas, valida el rango y permite limpiarlo', async () => {

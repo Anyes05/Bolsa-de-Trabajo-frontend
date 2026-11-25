@@ -20,7 +20,7 @@ vi.mock('../../services/authService', () => ({
 const Vacia = defineComponent({ render: () => h('div') })
 
 const rutas = [
-  '/admin', '/admin/socios', '/admin/socios/importacion', '/admin/caja/importar-historial', '/admin/socios/historial', '/admin/rubros',
+  '/admin', '/admin/socios', '/admin/socios/importacion', '/admin/socios/historial', '/admin/rubros',
   '/admin/postulantes', '/admin/ofertas', '/admin/configuracion', '/admin/comunicados', '/admin/perfil',
 ]
 
@@ -90,8 +90,7 @@ describe('layout administrativo', () => {
     expect(wrapper.find('.contenido').exists()).toBe(true)
     expect(wrapper.find('.accion').exists()).toBe(true)
     const enlaces = wrapper.findAll('.admin-nav__item')
-    expect(enlaces).toHaveLength(11)
-    expect(enlaces.map((enlace) => enlace.text())).toContain('Importar historial')
+    expect(enlaces).toHaveLength(10)
     const activos = wrapper.findAll('.admin-nav__item--active')
     expect(activos).toHaveLength(1)
     expect(activos[0]!.text()).toBe('Rubros')

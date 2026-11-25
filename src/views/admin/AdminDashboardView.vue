@@ -669,7 +669,7 @@ function paymentLabel(method: MetodoPago | null) {
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
           <div class="history-summary">
-            <div class="history-summary__box"><span class="history-summary__inline">Saldo actual</span><strong class="history-summary__strong">{{ balanceLabel(selectedHistory.saldo) }}</strong></div>
+            <div class="history-summary__box"><span class="history-summary__inline">Saldo actual</span><strong class="history-summary__strong" :class="selectedHistory.saldo < 0 ? 'account-credit' : 'account-debt'">{{ balanceLabel(selectedHistory.saldo) }}</strong></div>
             <div class="history-summary__box"><span class="history-summary__inline">Deuda vencida</span><b class="history-summary__bold">{{ formatMoney(selectedHistory.deudaVencida) }}</b></div>
             <em class="history-summary__emphasis"><LockKeyhole :size="11" /> Registro inmutable</em>
           </div>
@@ -718,7 +718,7 @@ function paymentLabel(method: MetodoPago | null) {
               </div>
               <aside class="history-entry__aside">
                 <b class="history-entry__bold" :class="movement.tipo === 'PAGO' ? 'account-credit' : 'account-debt'">
-                  {{ movement.tipo === 'PAGO' ? '-' : '+' }}{{ formatMoney(movement.monto) }}
+                  {{ movement.tipo === 'PAGO' ? '+' : '' }}{{ formatMoney(movement.monto) }}
                 </b>
               </aside>
             </article>

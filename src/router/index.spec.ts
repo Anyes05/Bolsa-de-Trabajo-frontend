@@ -72,7 +72,6 @@ describe('router y guards de navegación', () => {
   it('cada rol accede a sus propias rutas', async () => {
     iniciarSesion('ADMIN')
     expect((await ir('/admin/socios')).name).toBe('admin-socios')
-    expect((await ir('/admin/caja/importar-historial')).name).toBe('admin-caja-importar-historial')
     iniciarSesion('POSTULANTE')
     expect((await ir('/postulante/mi-perfil')).name).toBe('postulante-mi-perfil')
   })
