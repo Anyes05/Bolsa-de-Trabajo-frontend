@@ -4,15 +4,8 @@ import { cajaService } from './cajaService'
 
 vi.mock('./http', () => ({ request: vi.fn() }))
 
-describe('historial contable API', () => {
+describe('caja API', () => {
   beforeEach(() => vi.mocked(request).mockReset())
-
-  it('loads the independent immutable journal without replacing the operational balance', async () => {
-    vi.mocked(request).mockResolvedValueOnce([{ id: 8, tipo: 'EMISION' }])
-    const result = await cajaService.historialContable(42)
-    expect(request).toHaveBeenCalledWith('/admin/caja/socios/42/historial-contable')
-    expect(result[0]?.tipo).toBe('EMISION')
-  })
 
   it('sends search, filter and page of accounts to the server', async () => {
     await cajaService.listarCuentas()

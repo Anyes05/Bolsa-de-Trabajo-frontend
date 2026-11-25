@@ -175,13 +175,6 @@ Las funciones no implementadas se mantienen como brechas abiertas hasta desarrol
 
 Playwright y el workflow ya están incorporados para el smoke público descrito. El resto de casillas se cierra únicamente con evidencia de la capacidad correspondiente; configurar el runner no completa por sí solo todos los E2E ni todos los RF/RNF.
 
-## Evidencia adicional RF-05 — 11/11/2026
-
-- En Caja → Historial se mantiene el saldo operativo y se agrega **Historial contable inmutable**, independiente del filtro de fechas operativo. Muestra cada asiento con importe firmado, autor, fecha técnica, motivo y snapshot con fecha de negocio. Es de solo lectura.
-- Verificado: `npm test -- --run src\services\cajaService.spec.ts src\utils\cajaFilters.spec.ts` (**11 tests**, 0 fallos) y `npm run build` (TypeScript/Vite correcto; persiste aviso de chunks grandes).
-- Pendiente de prueba visual/E2E de este panel: carga, error, reintento y navegación entre socios. Los tests del cliente verifican la ruta de consulta; no acreditan interacción DOM ni compliance universal.
-- Límite: los datos migrados muestran autor `MIGRACION`, sin atribuirles un autor histórico desconocido. La protección depende de triggers y permisos de PostgreSQL, no es invulnerable ante propietarios/superusuarios que los alteren. No se ejecutó ni desplegó contra producción.
-
 ## Cobertura 100% de líneas — 23/11/2026
 
 `npm run test:ci` aprobado: **609 pruebas Vitest** (79 archivos) y **27 pruebas Node**, más el
@@ -245,15 +238,15 @@ Con el pase a Vitest 5 (commit "pruebas de seguridad"), la cobertura incluye tod
 `PostulanteMiPerfilView`, `PostulantePerfilesView`, `PostulanteNotificacionesView` y `utils/moneyAmount.ts`.
 Recién incorporados, la cobertura de líneas bajó a 90,8%.
 
-`npm run test:ci` aprobado: **702 pruebas Vitest** (91 archivos), **27 pruebas Node** y build.
+`npm run test:ci` aprobado: **697 pruebas Vitest** (90 archivos), **27 pruebas Node** y build.
 `npm run test:ui`: **60 pruebas Playwright**.
 
 | Métrica | Cubierto | Total | Porcentaje |
 |---|---:|---:|---:|
-| Líneas | 4035 | 4035 | 100% |
-| Sentencias | 4597 | 4631 | 99,26% |
-| Ramas | 3874 | 3938 | 98,37% |
-| Funciones | 1312 | 1323 | 99,16% |
+| Líneas | 4010 | 4010 | 100% |
+| Sentencias | 4568 | 4602 | 99,26% |
+| Ramas | 3853 | 3917 | 98,36% |
+| Funciones | 1306 | 1317 | 99,16% |
 
 - Specs nuevos: los cuatro de postulante (shell, mi perfil, perfiles profesionales con CV en PDF y CV
   manual, notificaciones) y `moneyAmount.spec.ts`.

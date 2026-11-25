@@ -8,23 +8,7 @@ export type CajaFilter = 'TODOS' | 'DEUDA' | EstadoMorosidad
 
 export type CajaCuentasParams = { q?: string; filtro?: CajaFilter; page?: number; size?: number }
 
-export interface AsientoContable {
-  id: number
-  entidad: 'CUOTA' | 'PAGO' | 'REINTEGRO'
-  entidadId: number
-  tipo: 'EMISION'
-  monto: number
-  registradoEn: string
-  autor: string
-  motivo: string
-  datos: string
-}
-
 export const cajaService = {
-  historialContable(socioId: number) {
-    return request<AsientoContable[]>(`/admin/caja/socios/${socioId}/historial-contable`)
-  },
-
   getResumen() {
     return request<CajaResumen>('/admin/caja')
   },

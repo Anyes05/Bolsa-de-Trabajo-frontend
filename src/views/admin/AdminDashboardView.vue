@@ -2,7 +2,6 @@
 import { AlertCircle, CheckCircle2, Clock3, Download, LockKeyhole, Pencil, Plus, Save, Search, Trash2, UsersRound, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AdminShell from '../../components/admin/AdminShell.vue'
-import HistorialContable from '../../components/admin/HistorialContable.vue'
 import AppAlert from '../../components/AppAlert.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import { SEARCH_DEBOUNCE_MS, useServerList } from '../../composables/useServerList'
@@ -722,10 +721,9 @@ function paymentLabel(method: MetodoPago | null) {
             <p v-if="!historyMovements.length && !historyRangeInvalid" class="company-empty">
               {{ selectedHistory.movimientos.length ? 'No hay movimientos en el rango seleccionado.' : 'No hay movimientos registrados.' }}
             </p>
-            <HistorialContable :socio-id="selectedHistory.socioId" />
           </div>
         </template>
-        <footer class="history-modal__footer"><span class="history-modal__footer-inline">Saldo operativo y registro contable inmutable.</span><button class="history-modal__footer-button" type="button" @click="closeHistory">Cerrar</button></footer>
+        <footer class="history-modal__footer"><span class="history-modal__footer-inline">Movimientos de la cuenta del socio.</span><button class="history-modal__footer-button" type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
     </div>
 

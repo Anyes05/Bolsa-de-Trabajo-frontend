@@ -13,7 +13,7 @@ vi.mock('../../services/cajaService', () => ({
   cajaService: {
     getResumen: vi.fn(), listarCuentas: vi.fn(), cuentasExportacion: vi.fn(), getHistorial: vi.fn(),
     registrarCobro: vi.fn(), registrarReintegro: vi.fn(),
-    actualizarProgramado: vi.fn(), eliminarProgramado: vi.fn(), historialContable: vi.fn(),
+    actualizarProgramado: vi.fn(), eliminarProgramado: vi.fn(),
   },
 }))
 vi.mock('../../services/cajaExcelService', () => ({ cajaExcelService: { download: vi.fn() } }))
@@ -23,15 +23,6 @@ const AdminShellStub = defineComponent({
   props: { title: String, subtitle: String, active: String },
   setup(props, { slots }) {
     return () => h('div', { 'data-active': props.active }, slots.default?.())
-  },
-})
-
-// El historial contable tiene su propio spec; acá solo importa que reciba el socio.
-const HistorialContableStub = defineComponent({
-  name: 'HistorialContable',
-  props: { socioId: Number },
-  setup(props) {
-    return () => h('div', { class: 'historial-contable-stub' }, `contable ${props.socioId}`)
   },
 })
 
@@ -108,7 +99,7 @@ type Wrapper = VueWrapper<InstanceType<typeof AdminDashboardView>>
 async function montar(datos: CajaResumen = resumen()) {
   vi.mocked(cajaService.getResumen).mockResolvedValueOnce(datos)
   const wrapper = mount(AdminDashboardView, {
-    global: { stubs: { AdminShell: AdminShellStub, HistorialContable: HistorialContableStub } },
+    global: { stubs: { AdminShell: AdminShellStub } },
   }) as Wrapper
   await flushPromises()
   return wrapper
@@ -278,7 +269,7 @@ describe('control de caja del administrador', () => {
       const pendiente = deferred<CajaResumen>()
       vi.mocked(cajaService.getResumen).mockReturnValueOnce(pendiente.promise)
       const wrapper = mount(AdminDashboardView, {
-        global: { stubs: { AdminShell: AdminShellStub, HistorialContable: HistorialContableStub } },
+        global: { stubs: { AdminShell: AdminShellStub } },
       })
       await nextTick()
       expect(wrapper.text()).toContain('Cargando control de caja...')
@@ -661,7 +652,7 @@ describe('control de caja del administrador', () => {
       expect(articulos[6]!.find('.history-entry__dot--red').exists()).toBe(true)
       expect(articulos[6]!.find('aside').text()).toMatch(/^\+/)
       expect(articulos[6]!.find('time').text()).toMatch(/2025/)
-      expect(modal.find('.historial-contable-stub').text()).toBe('contable 1')
+      expect(modal.text()).not.toContain('Historial contable')
     })
 
     it('filtra por rango de fechas, valida el rango y permite limpiarlo', async () => {
