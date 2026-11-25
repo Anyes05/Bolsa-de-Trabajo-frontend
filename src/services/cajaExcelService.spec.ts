@@ -86,7 +86,7 @@ describe('exportación Excel del control de caja', () => {
   it('genera resumen y detalle mensual con estados del mes y saldos con signo', async () => {
     vi.mocked(cajaService.getHistorial)
       .mockResolvedValueOnce(historial(1, {
-        cedula: '1.234.567-8', saldo: 300, deudaVencida: 100, estadoMorosidad: 'MOROSO',
+        rut: '21.111.111.111-1', cedula: '1.234.567-8', saldo: 300, deudaVencida: 100, estadoMorosidad: 'MOROSO',
         movimientos: [
           movimiento(1, 'CUOTA', '2025-03-01T10:00:00', 1000, 300, 1000),
           movimiento(2, 'REINTEGRO', '2025-03-02', 200, 0, 1200),
@@ -119,8 +119,9 @@ describe('exportación Excel del control de caja', () => {
     const resumen = libro.getWorksheet('Resumen')!
     const filas = valores(resumen)
     expect(filas[0]![0]).toBe('Socio')
-    // Socio 1: deuda 300, mes con cuota parcial y reintegro pagado.
-    expect(filas[1]).toEqual(['Socio 1', 'BPS-1', 'Comercio', '099', 'Moroso', -300, 300, 100, 0, '2025-03', 1200, 900, 300, 'Pago parcial'])
+    expect(filas[0]![1]).toBe('RUT / Cédula')
+    // Socio 1: RUT precedes cédula; deuda 300, mes con cuota parcial y reintegro pagado.
+    expect(filas[1]).toEqual(['Socio 1', '21.111.111.111-1', 'Comercio', '099', 'Moroso', -300, 300, 100, 0, '2025-03', 1200, 900, 300, 'Pago parcial'])
     // Socio 2: saldo a favor y cuota cubierta.
     expect(filas[2]).toEqual(['Socio 2', '', '', '', 'Al día', 50, 0, 0, 50, '2025-03', 1000, 1000, 0, 'Pago total'])
     expect(filas[3]!.slice(4)).toEqual(['Inactivo', -1000, 1000, 0, 0, '2025-03', 1000, 0, 1000, 'Pendiente'])
@@ -129,14 +130,14 @@ describe('exportación Excel del control de caja', () => {
     expect(resumen.getCell(1, 1).font?.bold).toBe(true)
 
     const mensual = valores(libro.getWorksheet('Por mes')!)
-    expect(mensual[0]![0]).toBe('Cédula: 1.234.567-8')
+    expect(mensual[0]![0]).toBe('RUT: 21.111.111.111-1')
     expect(mensual[1]![0]).toBe('Socio 1')
     expect(mensual[2]).toEqual(['Fecha', 'Mes', 'Debe (UYU)', 'Haber (UYU)', 'Saldo (UYU)'])
     expect(mensual[3]!.slice(1)).toEqual(['2025-03', 1000, 0, -1000])
     expect(mensual[5]!.slice(1)).toEqual(['2025-03', 0, 900, -300])
     expect(mensual[6]!.slice(1)).toEqual(['2025-02', 1000, 0, 0])
     const textos = mensual.map((fila) => fila[0])
-    expect(textos).toContain('BPS: -')
+    expect(textos).toContain('RUT/Cédula: -')
     expect(textos).not.toContain('Sin movimientos en el período seleccionado')
   })
 

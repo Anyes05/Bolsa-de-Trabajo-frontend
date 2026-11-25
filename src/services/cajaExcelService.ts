@@ -42,7 +42,7 @@ export const cajaExcelService = {
     const resumen = workbook.addWorksheet('Resumen')
     resumen.columns = [
       { header: 'Socio', key: 'socio', width: 36 },
-      { header: 'BPS / Cédula', key: 'identificador', width: 22 },
+      { header: 'RUT / Cédula', key: 'identificador', width: 22 },
       { header: 'Rubro', key: 'rubro', width: 26 },
       { header: 'Teléfono', key: 'telefono', width: 20 },
       { header: 'Estado', key: 'estado', width: 16 },
@@ -80,14 +80,13 @@ export const cajaExcelService = {
       const movimientos = filterCajaExportMovements(historial.movimientos, range)
       const socio = {
         socio: historial.razonSocial,
-        identificador: historial.bps ?? '',
+        identificador: historial.rut?.trim() || historial.cedula?.trim() || '',
         rubro: historial.nombreRubro ?? '',
         telefono: cuenta.telefono ?? '',
         estado: estadoMorosidadLabel[historial.estadoMorosidad],
       }
-      const identificadorSocio = historial.cedula
-        ? `Cédula: ${historial.cedula}`
-        : `BPS: ${historial.bps || '-'}`
+      const identificadorTipo = historial.rut?.trim() ? 'RUT' : historial.cedula?.trim() ? 'Cédula' : 'RUT/Cédula'
+      const identificadorSocio = `${identificadorTipo}: ${socio.identificador || '-'}`
       const meses = new Map<string, TotalesMes>()
       for (const movimiento of movimientos) {
         const mes = movimiento.fecha.slice(0, 7)

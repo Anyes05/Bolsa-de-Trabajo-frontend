@@ -51,7 +51,7 @@ function historial(socioId: number, extra: Partial<HistorialCaja> = {}): Histori
 }
 
 const cuentas = [
-  cuenta(1, { razonSocial: 'Alfa SA', rut: '211111', nombreRubro: 'Ferretería' }),
+  cuenta(1, { razonSocial: 'Alfa SA', rut: '211111', cedula: '2.111.111-1', nombreRubro: 'Ferretería' }),
   cuenta(2, { razonSocial: 'Beta SRL', bps: null, nombreRubro: null, estadoMorosidad: 'MOROSO', saldo: 1500, cedula: '4.444.444-4' }),
   cuenta(3, { razonSocial: 'Gamma', estadoMorosidad: 'INACTIVO', saldo: 0 }),
   cuenta(4, { razonSocial: 'Delta', estadoMorosidad: 'INACTIVO', saldo: 300 }),
@@ -159,9 +159,14 @@ describe('control de caja del administrador', () => {
       expect(metricas.map((m) => m.find('strong').text())).toEqual(['5', '2', '1', '2'])
       expect(wrapper.findAll('tbody tr')).toHaveLength(5)
 
+      expect(wrapper.find('thead').text()).toContain('RUT / Cédula')
+      expect(fila(wrapper, 'Alfa SA').findAll('td')[2]!.text()).toBe('211111')
+      expect(fila(wrapper, 'Beta SRL').findAll('td')[2]!.text()).toBe('4.444.444-4')
+      expect(fila(wrapper, 'Gamma').findAll('td')[2]!.text()).toBe('-')
+
       const beta = fila(wrapper, 'Beta SRL')
       expect(beta.text()).toContain('#S002')
-      expect(beta.findAll('td')[2]!.text()).toBe('-')
+      expect(beta.findAll('td')[2]!.text()).toBe('4.444.444-4')
       expect(beta.findAll('td')[3]!.text()).toBe('-')
       expect(beta.text()).toContain('Moroso')
       expect(beta.find('.cash-status--yellow').exists()).toBe(true)
@@ -342,8 +347,9 @@ describe('control de caja del administrador', () => {
       await wrapper.find('input[value="SELECCIONADOS"]').setValue()
       expect(contador(wrapper)).toBe('0 socios seleccionados')
       expect(wrapper.findAll('.excel-company')).toHaveLength(5)
-      expect(wrapper.find('.excel-company').text()).toContain('B-1')
-      expect(wrapper.findAll('.excel-company')[1]!.text()).toContain('Sin identificador')
+      expect(wrapper.findAll('.excel-company__note').map((note) => note.text())).toEqual([
+        '211111', '4.444.444-4', '-', '-', '-',
+      ])
 
       // Selección individual: el "seleccionar todos" queda indeterminado.
       await wrapper.findAll('.excel-company input')[0]!.setValue(true)

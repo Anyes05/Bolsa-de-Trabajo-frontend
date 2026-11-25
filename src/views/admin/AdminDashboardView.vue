@@ -467,6 +467,10 @@ function canChargeCompany(company: Pick<CuentaCaja, 'estadoMorosidad' | 'saldo'>
   return company.estadoMorosidad !== 'INACTIVO' || company.saldo > 0
 }
 
+function rutCedula(socio: { rut: string | null; cedula: string | null }) {
+  return socio.rut?.trim() || socio.cedula?.trim() || '-'
+}
+
 function paymentLabel(method: MetodoPago | null) {
   if (method === 'TRANSFERENCIA') return 'Transferencia'
   if (method === 'COBRADOR') return 'Cobrador'
@@ -510,7 +514,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr>
               <th class="cash-table__header-cell">N°</th>
               <th class="cash-table__header-cell">Razón social</th>
-              <th class="cash-table__header-cell">BPS / Cédula</th>
+              <th class="cash-table__header-cell">RUT / Cédula</th>
               <th class="cash-table__header-cell">Rubro</th>
               <th class="cash-table__header-cell">Saldo</th>
               <th class="cash-table__header-cell">Estado</th>
@@ -521,7 +525,7 @@ function paymentLabel(method: MetodoPago | null) {
             <tr v-for="company in companies" :key="company.socioId" class="cash-table__row">
               <td class="cash-table__number cash-table__cell">#S{{ String(company.socioId).padStart(3, '0') }}</td>
               <td class="cash-table__company cash-table__cell">{{ company.razonSocial }}</td>
-              <td class="cash-table__cell">{{ company.bps || '-' }}</td>
+              <td class="cash-table__cell">{{ rutCedula(company) }}</td>
               <td class="cash-table__cell">{{ company.nombreRubro || '-' }}</td>
               <td class="cash-table__cell" :class="{ 'cash-table__cell--credit': company.saldo < 0 }">{{ company.saldo < 0 ? '+' : '' }}{{ balanceLabel(company.saldo) }}</td>
               <td class="cash-table__cell">
@@ -592,7 +596,7 @@ function paymentLabel(method: MetodoPago | null) {
             <div class="excel-company-list" aria-label="Socios disponibles">
               <label v-for="company in exportCandidates" :key="company.socioId" class="excel-company excel-options__label excel-options__excel-company">
                 <input v-model="exportSelectedIds" class="excel-options__input" type="checkbox" :value="company.socioId">
-                <span class="excel-company__name"><strong class="excel-company__name-strong">{{ company.razonSocial }}</strong><small class="excel-company__name-note excel-company__note">{{ company.bps || 'Sin identificador' }}</small></span>
+                <span class="excel-company__name"><strong class="excel-company__name-strong">{{ company.razonSocial }}</strong><small class="excel-company__name-note excel-company__note">{{ rutCedula(company) }}</small></span>
                 <span class="cash-status" :class="`cash-status--${estadoMorosidadTone(company.estadoMorosidad)}`"><i class="cash-status__italic" />{{ estadoMorosidadLabel[company.estadoMorosidad] }}</span>
               </label>
               <p v-if="exportLoading" class="excel-empty" role="status">Buscando socios...</p>
@@ -651,7 +655,7 @@ function paymentLabel(method: MetodoPago | null) {
           <p v-if="validAmount(receivedAmount)" class="account-result" role="status">Saldo después del pago: <strong>{{ balanceLabel(balanceAfterPayment) }}</strong></p>
           <label class="cash-payment-detail">Referencia de cobranza<input v-model="externalReference" class="cash-payment-detail__input" maxlength="80" placeholder="Opcional"></label>
           <label class="cash-payment-detail">Observaciones<textarea v-model="paymentNotes" class="cash-payment-detail__textarea" maxlength="2000" placeholder="Opcional"></textarea></label>
-          <dl class="cash-receipt-detail"><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">Socio N°</dt><dd class="cash-receipt-detail__value">#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">BPS / Cédula</dt><dd class="cash-receipt-detail__value">{{ selectedCompany.bps || '-' }}</dd></div></dl>
+          <dl class="cash-receipt-detail"><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">Socio N°</dt><dd class="cash-receipt-detail__value">#S{{ String(selectedCompany.socioId).padStart(3, '0') }}</dd></div><div class="cash-receipt-detail__box"><dt class="cash-receipt-detail__term">RUT / Cédula</dt><dd class="cash-receipt-detail__value">{{ rutCedula(selectedCompany) }}</dd></div></dl>
           <AppAlert v-if="chargeError">{{ chargeError }}</AppAlert>
         </div>
         <footer class="cash-modal__footer"><button class="cash-history cash-modal__footer-button cash-modal__footer-cash-history" type="button" :disabled="chargeBusy || chargeLoading" @click="closeCharge">Cancelar</button><button class="cash-modal__confirm cash-modal__footer-button" type="button" :disabled="!canCharge || chargeBusy" @click="confirmCharge">{{ chargeBusy ? 'Registrando...' : 'Confirmar Cobro' }}</button></footer>
@@ -660,7 +664,7 @@ function paymentLabel(method: MetodoPago | null) {
 
     <div v-if="historyBusy || selectedHistory || historyError" class="cash-modal-layer" @click.self="closeHistory">
       <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-        <header class="history-modal__header"><div><p class="history-modal__header-text">BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title" class="history-modal__header-heading">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span class="history-modal__header-inline">{{ selectedHistory?.bps || '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button class="history-modal__header-button" type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
+        <header class="history-modal__header"><div><p class="history-modal__header-text">BITACORA DE MOVIMIENTOS</p><h2 id="history-modal-title" class="history-modal__header-heading">{{ selectedHistory?.razonSocial || 'Historial' }}</h2><span class="history-modal__header-inline">{{ selectedHistory ? rutCedula(selectedHistory) : '-' }} - {{ selectedHistory?.nombreRubro || 'Sin rubro' }}</span></div><button class="history-modal__header-button" type="button" aria-label="Cerrar" @click="closeHistory"><X :size="18" /></button></header>
         <AppAlert v-if="historyError">{{ historyError }}</AppAlert>
         <p v-else-if="historyBusy" class="company-empty">Cargando historial...</p>
         <template v-else-if="selectedHistory">
