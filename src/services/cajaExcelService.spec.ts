@@ -126,7 +126,9 @@ describe('exportación Excel del control de caja', () => {
     expect(filas[2]).toEqual(['Socio 2', '', '', '', 'Al día', 50, 0, 0, 50, '2025-03', 1000, 1000, 0, 'Pago total'])
     expect(filas[3]!.slice(4)).toEqual(['Inactivo', -1000, 1000, 0, 0, '2025-03', 1000, 0, 1000, 'Pendiente'])
     expect(filas[4]!.slice(5)).toEqual([0, 0, 0, 0, '2025-03', 0, 0, 0, 'Sin cargos emitidos'])
-    expect(resumen.getCell(2, 6).numFmt).toContain('[Green]')
+    expect(resumen.getCell(3, 6).font?.color).toMatchObject({ argb: 'FF08775F' })
+    expect(resumen.getCell(3, 6).numFmt).not.toContain('[Green]')
+    expect(resumen.getCell(2, 6).numFmt).toContain('[Red]')
     expect(resumen.getCell(1, 1).font?.bold).toBe(true)
 
     const mensual = valores(libro.getWorksheet('Por mes')!)

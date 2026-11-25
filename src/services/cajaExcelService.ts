@@ -140,7 +140,7 @@ export const cajaExcelService = {
     }
 
     const columnasMonetarias = new Set(['saldo', 'deuda', 'vencida', 'favor', 'total', 'cubierto', 'pendiente'])
-    const formatoSaldo = '[Green]+"$" #,##0.00;[Red]-"$" #,##0.00;"$" #,##0.00'
+    const formatoSaldo = '"$" #,##0.00;[Red]-"$" #,##0.00;"$" #,##0.00'
     for (const hoja of workbook.worksheets) {
       if (hoja === resumen) {
         hoja.views = [{ state: 'frozen', ySplit: 1 }]
@@ -169,6 +169,9 @@ export const cajaExcelService = {
           if (typeof celda.value === 'number'
               && (hoja === resumen ? columna === 6 || columna === 9 : columna === 5)) {
             celda.numFmt = formatoSaldo
+            if (celda.value > 0) {
+              celda.font = { ...celda.font, color: { argb: 'FF08775F' } }
+            }
           }
           celda.alignment = { vertical: 'middle' }
           if (indice % 2 === 0) {
