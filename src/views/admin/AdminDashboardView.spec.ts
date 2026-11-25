@@ -638,7 +638,8 @@ describe('control de caja del administrador', () => {
 
       const modal = modalHistorial(wrapper)
       expect(modal.find('h2').text()).toBe('Socio 1')
-      expect(modal.find('.history-summary').text()).toMatch(/500,00.*200,00/)
+      expect(modal.find('.history-summary').text()).toContain('500,00')
+      expect(modal.find('.history-summary').text()).not.toContain('Deuda vencida')
       expect(modal.find('.history-summary__strong').classes()).toContain('account-debt')
       const articulos = modal.findAll('article')
       expect(articulos.map((a) => a.find('strong').text())).toEqual(['PAGO 7', 'PAGO 6', 'PAGO 5', 'REINTEGRO 4', 'REINTEGRO 3', 'REINTEGRO 2', 'CUOTA 1'])
