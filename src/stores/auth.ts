@@ -145,13 +145,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
-    try {
-      if (token.value) {
-        await authService.logout()
-      }
-    } catch {
-      // Aunque el servidor no responda, se limpia la sesión local.
-    }
+    const logoutRequest = token.value ? authService.logout() : null
+    // Clear local auth before awaiting the server so navigation guards allow the sign-in page.
     setPhotoUrl(null)
     token.value = null
     email.value = null
@@ -160,6 +155,12 @@ export const useAuthStore = defineStore('auth', () => {
     esDirectivo.value = false
     debeCambiarPassword.value = false
     sessionStorage.removeItem(STORAGE_KEY)
+
+    try {
+      await logoutRequest
+    } catch {
+      // The local session is already cleared if the server is unavailable.
+    }
   }
 
   return {

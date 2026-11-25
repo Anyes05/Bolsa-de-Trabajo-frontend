@@ -148,4 +148,20 @@ describe('authenticated session store', () => {
     await auth.logout()
     expect(authService.logout).toHaveBeenCalledTimes(1)
   })
+
+  it('clears local auth before waiting for server logout', async () => {
+    const auth = useAuthStore()
+    auth.setSession(session())
+    const pending = deferred<void>()
+    vi.mocked(authService.logout).mockReturnValueOnce(pending.promise)
+
+    const logout = auth.logout()
+
+    expect(auth.isAuthenticated).toBe(false)
+    expect(storage.has('ccisj-session')).toBe(false)
+    expect(authService.logout).toHaveBeenCalledTimes(1)
+
+    pending.resolve(undefined)
+    await logout
+  })
 })
