@@ -81,7 +81,6 @@ export type SocioUpdatePayload = {
   esDirectivo: boolean
   fechaAlta?: string | null
   fechaAniversario?: string | null
-  estadoMorosidad?: EstadoMorosidad | null
 }
 
 export type CuentaCaja = {

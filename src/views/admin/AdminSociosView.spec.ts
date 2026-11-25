@@ -351,7 +351,7 @@ describe('gestión de socios del administrador', () => {
       expect(campo(wrapper, 'Email de contacto').text()).toContain('Con este correo se contacta a la firma.')
       expect((campo(wrapper, 'Fecha de alta').find('input').element as HTMLInputElement).value).toBe('2020-01-15')
       expect((campo(wrapper, 'Rubro').find('select').element as HTMLSelectElement).value).toBe('2')
-      expect((campo(wrapper, 'Estado de cuenta').find('select').element as HTMLSelectElement).value).toBe('MOROSO')
+      expect(modal(wrapper).text()).not.toContain('Estado de cuenta')
       expect((campo(wrapper, 'Es directivo').find('input').element as HTMLInputElement).checked).toBe(true)
       // La localidad que no está en el catálogo se agrega como opción.
       const localidades = campo(wrapper, 'Localidad').findAll('option').map((o) => o.text())
@@ -450,7 +450,6 @@ describe('gestión de socios del administrador', () => {
       await campo(wrapper, 'Fecha de alta').find('input').setValue('')
       await campo(wrapper, 'Fecha de aniversario').find('input').setValue('2021-06-01')
       await campo(wrapper, 'Rubro').find('select').setValue('2')
-      await campo(wrapper, 'Estado de cuenta').find('select').setValue('INACTIVO')
       await campo(wrapper, 'Localidad').find('select').setValue('Libertad')
       await campo(wrapper, 'Es directivo').find('input').setValue(true)
 
@@ -473,7 +472,6 @@ describe('gestión de socios del administrador', () => {
         esDirectivo: true,
         fechaAlta: null,
         fechaAniversario: '2021-06-01',
-        estadoMorosidad: 'INACTIVO',
       })
 
       guardado.resolve(socio(1, { razonSocial: 'Alfa Renovada', nombreRubro: 'Industria' }))

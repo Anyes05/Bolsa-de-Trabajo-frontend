@@ -16,7 +16,7 @@ import {
   socioIdentificadorLabel as adminIdentificadorLabel,
   socioService,
 } from '../../services/socioService'
-import type { EstadoMorosidad, RubroOption, SocioRecord } from '../../services/types'
+import type { RubroOption, SocioRecord } from '../../services/types'
 import { sociosExcelService } from '../../services/sociosExcelService'
 import { isCampoFicticio, labelsCamposFicticios } from '../../utils/camposFicticios'
 import { userFacingError } from '../../utils/userMessage'
@@ -74,7 +74,6 @@ const editForm = reactive({
   esDirectivo: false,
   fechaAlta: '',
   fechaAniversario: '',
-  estadoMorosidad: 'AL_DIA' as EstadoMorosidad,
 })
 
 onMounted(async () => {
@@ -122,7 +121,6 @@ function openEdit(socio: SocioRecord) {
   editForm.esDirectivo = socio.esDirectivo
   editForm.fechaAlta = socio.fechaAlta?.slice(0, 10) ?? ''
   editForm.fechaAniversario = socio.fechaAniversario?.slice(0, 10) ?? ''
-  editForm.estadoMorosidad = socio.estadoMorosidad
 }
 
 function closeEdit() {
@@ -164,7 +162,6 @@ async function saveEdit() {
       esDirectivo: editForm.esDirectivo,
       fechaAlta: emptyToNull(editForm.fechaAlta),
       fechaAniversario: emptyToNull(editForm.fechaAniversario),
-      estadoMorosidad: editForm.estadoMorosidad,
     })
     replaceSocio(updated)
     closeEdit()
@@ -390,13 +387,6 @@ async function resetClave() {
             <select v-model="editForm.rubroId" class="new-company-select new-company-form__new-company-select new-company-form__select field-ficticio__select" required>
               <option value="" disabled>Seleccionar rubro</option>
               <option v-for="rubro in rubros" :key="rubro.id" :value="String(rubro.id)">{{ rubro.nombreRubro }}</option>
-            </select>
-          </label>
-          <label class="new-company-form__label">Estado de cuenta
-            <select v-model="editForm.estadoMorosidad" class="new-company-select new-company-form__new-company-select new-company-form__select">
-              <option value="AL_DIA">Al día</option>
-              <option value="MOROSO">Moroso</option>
-              <option value="INACTIVO">Inactivo</option>
             </select>
           </label>
           <label class="new-company-form__label" :class="{ 'field-ficticio': fieldHint('calle') }">Calle *
