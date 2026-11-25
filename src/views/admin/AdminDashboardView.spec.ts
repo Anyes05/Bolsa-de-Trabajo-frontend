@@ -52,7 +52,7 @@ function historial(socioId: number, extra: Partial<HistorialCaja> = {}): Histori
 
 const cuentas = [
   cuenta(1, { razonSocial: 'Alfa SA', rut: '211111', cedula: '2.111.111-1', nombreRubro: 'Ferretería' }),
-  cuenta(2, { razonSocial: 'Beta SRL', bps: null, nombreRubro: null, estadoMorosidad: 'MOROSO', saldo: 1500, cedula: '4.444.444-4' }),
+  cuenta(2, { razonSocial: 'Beta SRL', bps: null, nombreRubro: null, estadoMorosidad: 'MOROSO', saldo: 1500, deudaVencida: 1500, cedula: '4.444.444-4' }),
   cuenta(3, { razonSocial: 'Gamma', estadoMorosidad: 'INACTIVO', saldo: 0 }),
   cuenta(4, { razonSocial: 'Delta', estadoMorosidad: 'INACTIVO', saldo: 300 }),
   cuenta(5, { razonSocial: 'Epsilon', saldo: -200 }),
@@ -73,7 +73,7 @@ function servidorCuentas(params: CajaCuentasParams = {}): Page<CuentaCaja> {
   const size = params.size ?? 20
   const page = params.page ?? 0
   const filtradas = cuentas.filter((c) => servidorBusca(c, params.q)
-    && (filtro === 'TODOS' || (filtro === 'DEUDA' ? c.saldo > 0 : c.estadoMorosidad === filtro)))
+    && (filtro === 'TODOS' || (filtro === 'DEUDA' ? c.deudaVencida > 0 : c.estadoMorosidad === filtro)))
   return {
     content: filtradas.slice(page * size, page * size + size), page, size,
     totalElements: filtradas.length, totalPages: Math.ceil(filtradas.length / size),
@@ -195,7 +195,7 @@ describe('control de caja del administrador', () => {
       await flushPromises()
       expect(metricas[2]!.attributes('aria-pressed')).toBe('true')
       expect(cajaService.listarCuentas).toHaveBeenLastCalledWith({ q: '', filtro: 'DEUDA', page: 0 })
-      expect(wrapper.findAll('tbody tr').map((tr) => tr.findAll('td')[1]!.text())).toEqual(['Beta SRL', 'Delta'])
+      expect(wrapper.findAll('tbody tr').map((tr) => tr.findAll('td')[1]!.text())).toEqual(['Beta SRL'])
 
       // Click en la métrica activa vuelve a "Todos".
       await metricas[2]!.trigger('click')
