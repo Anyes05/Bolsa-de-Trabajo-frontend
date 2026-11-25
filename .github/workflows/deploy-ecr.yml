@@ -11,8 +11,8 @@ permissions:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: frontend
-  EC2_HOST: 44.218.41.4
-  EC2_SECURITY_GROUP_ID: sg-07b88f147aef90a12
+  EC2_HOST: 32.195.161.218
+  EC2_SECURITY_GROUP_ID: sg-0b5c89aa6f1995647
 
 jobs:
   test:
