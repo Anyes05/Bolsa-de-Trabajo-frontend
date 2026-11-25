@@ -94,9 +94,10 @@ test('downloaded workbook contains only inclusive-range movements and keeps curr
       assert.equal(summary.getCell(9).value, Math.max(-balance, 0))
       for (const cell of [summary.getCell(6), summary.getCell(9), monthly.getCell(5)]) {
         const [positive, negative, zero] = cell.numFmt.split(';')
-        assert.equal(positive, '[Green]+"$" #,##0.00')
+        assert.equal(positive, '"$" #,##0.00')
         assert.equal(negative, '[Red]-"$" #,##0.00')
         assert.equal(zero, '"$" #,##0.00')
+        assert.equal(cell.font.color?.argb, expected > 0 ? 'FF08775F' : undefined)
       }
     }
   } finally {
