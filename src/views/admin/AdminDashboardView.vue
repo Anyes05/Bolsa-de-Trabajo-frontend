@@ -282,18 +282,6 @@ function closeHistory() {
   historyError.value = ''
 }
 
-async function refreshAfterAnnulment() {
-  const id = selectedHistory.value?.socioId
-  if (!id) return
-  try {
-    const history = await cajaService.getHistorial(id)
-    if (selectedHistory.value?.socioId === id) selectedHistory.value = history
-    await loadResumen()
-  } catch (exception) {
-    historyError.value = userFacingError(exception, 'actualizar el saldo después de la anulación')
-  }
-}
-
 function clearHistoryDates() {
   historyFrom.value = ''
   historyTo.value = ''
@@ -734,10 +722,10 @@ function paymentLabel(method: MetodoPago | null) {
             <p v-if="!historyMovements.length && !historyRangeInvalid" class="company-empty">
               {{ selectedHistory.movimientos.length ? 'No hay movimientos en el rango seleccionado.' : 'No hay movimientos registrados.' }}
             </p>
-            <HistorialContable :socio-id="selectedHistory.socioId" @actualizado="refreshAfterAnnulment" />
+            <HistorialContable :socio-id="selectedHistory.socioId" />
           </div>
         </template>
-        <footer class="history-modal__footer"><span class="history-modal__footer-inline">Saldo operativo y registro contable con originales y anulaciones.</span><button class="history-modal__footer-button" type="button" @click="closeHistory">Cerrar</button></footer>
+        <footer class="history-modal__footer"><span class="history-modal__footer-inline">Saldo operativo y registro contable inmutable.</span><button class="history-modal__footer-button" type="button" @click="closeHistory">Cerrar</button></footer>
       </section>
     </div>
 

@@ -177,10 +177,9 @@ Playwright y el workflow ya están incorporados para el smoke público descrito.
 
 ## Evidencia adicional RF-05 — 11/11/2026
 
-- En Caja → Historial se mantiene el saldo operativo y se agrega **Historial contable inmutable**, independiente del filtro de fechas operativo. Muestra emisiones/anulaciones, vínculo al original, importe firmado, autor, fecha técnica, motivo y snapshot con fecha de negocio.
-- Permite anular cuotas con motivo obligatorio (máximo 1000 caracteres), conservando el original. El backend rechaza cuentas con pagos o cuotas con reintegros vinculados; pagos aplicados no se editan/borran. Tras anular se recargan historial y resumen de Caja.
+- En Caja → Historial se mantiene el saldo operativo y se agrega **Historial contable inmutable**, independiente del filtro de fechas operativo. Muestra cada asiento con importe firmado, autor, fecha técnica, motivo y snapshot con fecha de negocio. Es de solo lectura.
 - Verificado: `npm test -- --run src\services\cajaService.spec.ts src\utils\cajaFilters.spec.ts` (**11 tests**, 0 fallos) y `npm run build` (TypeScript/Vite correcto; persiste aviso de chunks grandes).
-- Pendiente de prueba visual/E2E de este nuevo panel: carga/error/reintento, formulario, rechazo de conciliación, actualización de saldo y navegación entre socios. Los tests del cliente verifican ruta de consulta, POST con motivo y propagación del conflicto; no acreditan interacción DOM ni compliance universal.
+- Pendiente de prueba visual/E2E de este panel: carga, error, reintento y navegación entre socios. Los tests del cliente verifican la ruta de consulta; no acreditan interacción DOM ni compliance universal.
 - Límite: los datos migrados muestran autor `MIGRACION`, sin atribuirles un autor histórico desconocido. La protección depende de triggers y permisos de PostgreSQL, no es invulnerable ante propietarios/superusuarios que los alteren. No se ejecutó ni desplegó contra producción.
 
 ## Cobertura 100% de líneas — 23/11/2026
@@ -246,15 +245,15 @@ Con el pase a Vitest 5 (commit "pruebas de seguridad"), la cobertura incluye tod
 `PostulanteMiPerfilView`, `PostulantePerfilesView`, `PostulanteNotificacionesView` y `utils/moneyAmount.ts`.
 Recién incorporados, la cobertura de líneas bajó a 90,8%.
 
-`npm run test:ci` aprobado: **713 pruebas Vitest** (91 archivos), **27 pruebas Node** y build.
+`npm run test:ci` aprobado: **702 pruebas Vitest** (91 archivos), **27 pruebas Node** y build.
 `npm run test:ui`: **60 pruebas Playwright**.
 
 | Métrica | Cubierto | Total | Porcentaje |
 |---|---:|---:|---:|
-| Líneas | 4060 | 4060 | 100% |
-| Sentencias | 4626 | 4660 | 99,27% |
-| Ramas | 3901 | 3965 | 98,38% |
-| Funciones | 1320 | 1331 | 99,17% |
+| Líneas | 4035 | 4035 | 100% |
+| Sentencias | 4597 | 4631 | 99,26% |
+| Ramas | 3874 | 3938 | 98,37% |
+| Funciones | 1312 | 1323 | 99,16% |
 
 - Specs nuevos: los cuatro de postulante (shell, mi perfil, perfiles profesionales con CV en PDF y CV
   manual, notificaciones) y `moneyAmount.spec.ts`.

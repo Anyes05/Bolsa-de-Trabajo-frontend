@@ -13,7 +13,7 @@ vi.mock('../../services/cajaService', () => ({
   cajaService: {
     getResumen: vi.fn(), listarCuentas: vi.fn(), cuentasExportacion: vi.fn(), getHistorial: vi.fn(),
     registrarCobro: vi.fn(), registrarReintegro: vi.fn(),
-    actualizarProgramado: vi.fn(), eliminarProgramado: vi.fn(), historialContable: vi.fn(), anularCuota: vi.fn(),
+    actualizarProgramado: vi.fn(), eliminarProgramado: vi.fn(), historialContable: vi.fn(),
   },
 }))
 vi.mock('../../services/cajaExcelService', () => ({ cajaExcelService: { download: vi.fn() } }))
@@ -26,11 +26,10 @@ const AdminShellStub = defineComponent({
   },
 })
 
-// El historial contable tiene su propio spec; acá solo importa el evento "actualizado".
+// El historial contable tiene su propio spec; acá solo importa que reciba el socio.
 const HistorialContableStub = defineComponent({
   name: 'HistorialContable',
   props: { socioId: Number },
-  emits: ['actualizado'],
   setup(props) {
     return () => h('div', { class: 'historial-contable-stub' }, `contable ${props.socioId}`)
   },
@@ -739,46 +738,6 @@ describe('control de caja del administrador', () => {
       carga.resolve(historial(1))
       await flushPromises()
       expect(modalHistorial(wrapper).exists()).toBe(false)
-    })
-
-    it('actualiza saldo y resumen tras una anulación contable', async () => {
-      const wrapper = await abrirHistorial(historial(1, { saldo: 1000 }))
-      vi.mocked(cajaService.getHistorial).mockResolvedValueOnce(historial(1, { saldo: 0 }))
-      vi.mocked(cajaService.getResumen).mockResolvedValueOnce(resumen())
-      wrapper.findComponent(HistorialContableStub).vm.$emit('actualizado')
-      await flushPromises()
-      expect(cajaService.getHistorial).toHaveBeenLastCalledWith(1)
-      expect(modalHistorial(wrapper).find('.history-summary strong').text()).toMatch(/0,00/)
-      expect(cajaService.getResumen).toHaveBeenCalledTimes(2)
-    })
-
-    it('no pisa otro historial si cambió el socio durante la actualización', async () => {
-      const wrapper = await abrirHistorial(historial(1, { saldo: 1000 }))
-      const refresco = deferred<HistorialCaja>()
-      vi.mocked(cajaService.getHistorial).mockReturnValueOnce(refresco.promise)
-      vi.mocked(cajaService.getResumen).mockResolvedValueOnce(resumen())
-      wrapper.findComponent(HistorialContableStub).vm.$emit('actualizado')
-      await modalHistorial(wrapper).find('button[aria-label="Cerrar"]').trigger('click')
-      refresco.resolve(historial(1, { saldo: 0 }))
-      await flushPromises()
-      expect(modalHistorial(wrapper).exists()).toBe(false)
-      expect(cajaService.getResumen).toHaveBeenCalledTimes(2)
-    })
-
-    it('ignora la actualización si el historial no tiene un socio válido', async () => {
-      const wrapper = await abrirHistorial(historial(0))
-      vi.mocked(cajaService.getHistorial).mockClear()
-      wrapper.findComponent(HistorialContableStub).vm.$emit('actualizado')
-      await flushPromises()
-      expect(cajaService.getHistorial).not.toHaveBeenCalled()
-    })
-
-    it('muestra el error si no puede actualizar el saldo tras la anulación', async () => {
-      const wrapper = await abrirHistorial(historial(1))
-      vi.mocked(cajaService.getHistorial).mockRejectedValueOnce(new Error('Saldo no disponible'))
-      wrapper.findComponent(HistorialContableStub).vm.$emit('actualizado')
-      await flushPromises()
-      expect(modalHistorial(wrapper).find('[role="alert"]').text()).toContain('Saldo no disponible')
     })
   })
 

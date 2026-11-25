@@ -5,14 +5,14 @@ import HistorialContable from './HistorialContable.vue'
 import { cajaService, type AsientoContable } from '../../services/cajaService'
 
 vi.mock('../../services/cajaService', () => ({
-  cajaService: { historialContable: vi.fn(), anularCuota: vi.fn() },
+  cajaService: { historialContable: vi.fn() },
 }))
 
 function asiento(id: number, extra: Partial<AsientoContable> = {}): AsientoContable {
   return {
     id, entidad: 'CUOTA', entidadId: id * 10, tipo: 'EMISION', monto: 1500,
-    registradoEn: '2025-03-01T10:00:00Z', autor: 'admin@ccisj.test', motivo: 'Emisión mensual',
-    originalId: null, datos: '{"fecha":"2025-03-01"}', ...extra,
+    registradoEn: '2025-03-01T10:00:00Z', autor: 'JOB:FACTURACION', motivo: 'Facturación del período 2025-03-01',
+    datos: '{"fecha":"2025-03-01"}', ...extra,
   }
 }
 
@@ -23,119 +23,42 @@ function deferred<T>() {
   return { promise, resolve, reject }
 }
 
-function botonAnular(wrapper: ReturnType<typeof mount>) {
-  return wrapper.findAll('button').filter((b) => b.text().includes('Anular cuota'))
-}
-
 describe('historial contable inmutable', () => {
   beforeEach(() => {
     vi.mocked(cajaService.historialContable).mockReset()
-    vi.mocked(cajaService.anularCuota).mockReset()
   })
 
-  it('muestra los asientos y solo permite anular cuotas emitidas sin reversa', async () => {
+  it('muestra cada asiento con autor, motivo y datos originales, sin acciones', async () => {
+    vi.mocked(cajaService.historialContable).mockReturnValueOnce(new Promise(() => {}))
+    const cargando = mount(HistorialContable, { props: { socioId: 7 } })
+    expect(cargando.text()).toContain('Cargando asientos...')
+    cargando.unmount()
+
     vi.mocked(cajaService.historialContable).mockResolvedValueOnce([
       asiento(1),
-      asiento(2),
-      asiento(3, { tipo: 'ANULACION', originalId: 2, monto: -1500, motivo: 'Duplicada' }),
-      asiento(4, { entidad: 'REINTEGRO' }),
+      asiento(2, { entidad: 'PAGO', entidadId: 33, monto: -800, autor: 'ADMIN:admin@ccisj.test', motivo: 'Cobro' }),
     ])
     const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    expect(wrapper.text()).toContain('Cargando asientos...')
     await flushPromises()
 
-    expect(cajaService.historialContable).toHaveBeenCalledWith(7)
-    expect(wrapper.text()).not.toContain('Cargando asientos...')
-    expect(wrapper.findAll('li')).toHaveLength(4)
-    expect(wrapper.text()).toContain('#1 · EMISION CUOTA #10')
-    expect(wrapper.text()).toContain('Reversa del asiento #2')
-    expect(wrapper.text()).toContain('{"fecha":"2025-03-01"}')
-    // Solo el asiento 1 es anulable: el 2 ya tiene reversa y el 4 no es cuota.
-    const botones = botonAnular(wrapper)
-    expect(botones).toHaveLength(1)
-    expect(wrapper.findAll('li')[0]!.text()).toContain('Anular cuota')
+    expect(cajaService.historialContable).toHaveBeenLastCalledWith(7)
+    const items = wrapper.findAll('.accounting-history__item')
+    expect(items).toHaveLength(2)
+    expect(items[0]!.find('.accounting-history__heading').text()).toContain('#1 · EMISION CUOTA #10')
+    expect(items[0]!.text()).toContain('JOB:FACTURACION')
+    expect(items[0]!.text()).toContain('Facturación del período 2025-03-01')
+    expect(items[0]!.find('.accounting-history__data').text()).toBe('{"fecha":"2025-03-01"}')
+    expect(items[1]!.text()).toContain('#2 · EMISION PAGO #33')
+    expect(items[1]!.text()).toContain('ADMIN:admin@ccisj.test')
+    expect(wrapper.findAll('button')).toHaveLength(0)
+    expect(wrapper.find('form').exists()).toBe(false)
   })
 
-  it('no permite anular cuotas si la cuenta tiene pagos registrados', async () => {
-    vi.mocked(cajaService.historialContable).mockResolvedValueOnce([asiento(1), asiento(2, { entidad: 'PAGO' })])
-    const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    await flushPromises()
-    expect(botonAnular(wrapper)).toHaveLength(0)
-  })
-
-  it('muestra el estado vacío cuando no hay asientos', async () => {
+  it('indica cuando no hay asientos', async () => {
     vi.mocked(cajaService.historialContable).mockResolvedValueOnce([])
     const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
     await flushPromises()
     expect(wrapper.text()).toContain('No hay asientos registrados.')
-  })
-
-  it('anula una cuota con motivo recortado, recarga y emite actualizado', async () => {
-    vi.mocked(cajaService.historialContable)
-      .mockResolvedValueOnce([asiento(1)])
-      .mockResolvedValueOnce([asiento(1), asiento(2, { tipo: 'ANULACION', originalId: 1 })])
-    vi.mocked(cajaService.anularCuota).mockResolvedValueOnce(undefined)
-    const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    await flushPromises()
-
-    await botonAnular(wrapper)[0]!.trigger('click')
-    expect(wrapper.find('form').text()).toContain('Motivo de anulación de cuota #10')
-    const confirmar = wrapper.findAll('button').find((b) => b.text() === 'Confirmar anulación')!
-    expect(confirmar.attributes('disabled')).toBeDefined()
-
-    // Un motivo vacío no dispara la anulación.
-    await wrapper.find('textarea').setValue('   ')
-    await wrapper.find('form').trigger('submit')
-    expect(cajaService.anularCuota).not.toHaveBeenCalled()
-
-    await wrapper.find('textarea').setValue('  Emisión duplicada  ')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(cajaService.anularCuota).toHaveBeenCalledWith(7, 10, 'Emisión duplicada')
-    expect(cajaService.historialContable).toHaveBeenCalledTimes(2)
-    expect(wrapper.emitted('actualizado')).toHaveLength(1)
-    expect(wrapper.find('form').exists()).toBe(false)
-    expect(botonAnular(wrapper)).toHaveLength(0)
-  })
-
-  it('ignora un segundo envío mientras la anulación está en curso', async () => {
-    vi.mocked(cajaService.historialContable).mockResolvedValue([asiento(1)])
-    const pendiente = deferred<void>()
-    vi.mocked(cajaService.anularCuota).mockReturnValueOnce(pendiente.promise)
-    const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    await flushPromises()
-    await botonAnular(wrapper)[0]!.trigger('click')
-    await wrapper.find('textarea').setValue('Error de carga')
-    await wrapper.find('form').trigger('submit')
-    await wrapper.find('form').trigger('submit')
-    expect(cajaService.anularCuota).toHaveBeenCalledTimes(1)
-    pendiente.resolve()
-    await flushPromises()
-  })
-
-  it('muestra el error de anulación y mantiene el formulario abierto', async () => {
-    vi.mocked(cajaService.historialContable).mockResolvedValueOnce([asiento(1)])
-    vi.mocked(cajaService.anularCuota).mockRejectedValueOnce(new Error('Requiere conciliación'))
-    const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    await flushPromises()
-    await botonAnular(wrapper)[0]!.trigger('click')
-    await wrapper.find('textarea').setValue('Error')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(wrapper.find('[role="alert"]').text()).toContain('Requiere conciliación')
-    expect(wrapper.find('form').exists()).toBe(true)
-    expect(wrapper.emitted('actualizado')).toBeUndefined()
-  })
-
-  it('cancela el formulario de anulación', async () => {
-    vi.mocked(cajaService.historialContable).mockResolvedValueOnce([asiento(1)])
-    const wrapper = mount(HistorialContable, { props: { socioId: 7 } })
-    await flushPromises()
-    await botonAnular(wrapper)[0]!.trigger('click')
-    await wrapper.findAll('button').find((b) => b.text() === 'Cancelar')!.trigger('click')
-    expect(wrapper.find('form').exists()).toBe(false)
   })
 
   it('muestra el error de carga y permite reintentar', async () => {
@@ -150,7 +73,7 @@ describe('historial contable inmutable', () => {
     await wrapper.find('[role="alert"] button').trigger('click')
     await flushPromises()
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
-    expect(wrapper.findAll('li')).toHaveLength(1)
+    expect(wrapper.findAll('.accounting-history__item')).toHaveLength(1)
   })
 
   it('descarta respuestas obsoletas al cambiar de socio', async () => {

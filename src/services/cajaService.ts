@@ -12,25 +12,17 @@ export interface AsientoContable {
   id: number
   entidad: 'CUOTA' | 'PAGO' | 'REINTEGRO'
   entidadId: number
-  tipo: 'EMISION' | 'ANULACION'
+  tipo: 'EMISION'
   monto: number
   registradoEn: string
   autor: string
   motivo: string
-  originalId: number | null
   datos: string
 }
 
 export const cajaService = {
   historialContable(socioId: number) {
     return request<AsientoContable[]>(`/admin/caja/socios/${socioId}/historial-contable`)
-  },
-
-  anularCuota(socioId: number, cuotaId: number, motivo: string) {
-    return request<void>(`/admin/caja/socios/${socioId}/cuotas/${cuotaId}/anulacion`, {
-      method: 'POST',
-      body: JSON.stringify({ motivo }),
-    })
   },
 
   getResumen() {
