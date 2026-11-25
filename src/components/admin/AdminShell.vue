@@ -53,6 +53,7 @@ const links = [
   { key: 'dashboard', label: 'Control de Caja', to: '/admin', icon: CircleDollarSign },
   { key: 'socios', label: 'Gestión de Socios', to: '/admin/socios', icon: Building2 },
   { key: 'importacion', label: 'Carga masiva', to: '/admin/socios/importacion', icon: FileSpreadsheet },
+  { key: 'historial-caja-importacion', label: 'Importar historial', to: '/admin/caja/importar-historial', icon: FileSpreadsheet },
   { key: 'socios-historial', label: 'Historial de Socios', to: '/admin/socios/historial', icon: History },
   { key: 'rubros', label: 'Rubros', to: '/admin/rubros', icon: Tags },
   { key: 'postulantes', label: 'Postulantes', to: '/admin/postulantes', icon: CircleUserRound },
