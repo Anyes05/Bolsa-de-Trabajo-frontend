@@ -145,7 +145,7 @@ onBeforeUnmount(() => {
             <ArrowLeft :size="15" aria-hidden="true" /> Volver a recientes
           </button>
           <h3 class="notification-dropdown__detail-subheading">{{ selected.title }}</h3>
-          <time v-if="formatDate(selected.createdAt)" class="notification-dropdown__time" :datetime="selected.createdAt || undefined">{{ formatDate(selected.createdAt) }}</time>
+          <time v-if="formatDate(selected.createdAt)" class="notification-dropdown__time" :datetime="String(selected.createdAt)">{{ formatDate(selected.createdAt) }}</time>
           <p class="notification-dropdown__detail-text">{{ selected.body }}</p>
         </article>
         <p v-else-if="loading" class="notification-dropdown__empty" role="status">Cargando notificaciones...</p>
@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
               <span class="notification-dropdown__summary">
                 <strong class="notification-dropdown__summary-strong">{{ item.title }}</strong>
                 <span class="notification-dropdown__preview">{{ item.body }}</span>
-                <time v-if="formatDate(item.createdAt)" class="notification-dropdown__time" :datetime="item.createdAt || undefined">{{ formatDate(item.createdAt) }}</time>
+                <time v-if="formatDate(item.createdAt)" class="notification-dropdown__time" :datetime="String(item.createdAt)">{{ formatDate(item.createdAt) }}</time>
               </span>
               <span v-if="item.unread" class="notification-dropdown__dot" aria-label="No leída"></span>
             </button>

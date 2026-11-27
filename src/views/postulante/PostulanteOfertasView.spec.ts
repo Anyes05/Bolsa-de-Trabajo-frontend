@@ -188,4 +188,25 @@ describe('ofertas de empleo del postulante', () => {
     const wrapper = await montar()
     expect(wrapper.text()).toContain('Ofertas no disponibles')
   })
+
+describe('ofertas de empleo del postulante: estados defensivos', () => {
+  it('sin CV para el perfil elegido no confirma la postulación y formatea fechas faltantes o inválidas', async () => {
+    vi.mocked(applicantOfferService.list).mockResolvedValue({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } as never)
+    vi.mocked(applicantOfferService.listRubros).mockResolvedValue([])
+    vi.mocked(applicantOfferService.listApplications).mockResolvedValue([])
+    vi.mocked(postulanteService.listProfiles).mockResolvedValue([])
+    vi.mocked(postulanteService.listCvs).mockResolvedValue([])
+    const wrapper = await montar()
+    const vm = wrapper.vm as unknown as {
+      selectedProfileId: number | null; selectedProfileCv: unknown
+      confirmApply: () => Promise<void>; formatDate: (value: string | null) => string
+    }
+    vm.selectedProfileId = 999
+    expect(vm.selectedProfileCv).toBeNull()
+    await vm.confirmApply()
+    expect(applicantOfferService.apply).not.toHaveBeenCalled()
+    expect(vm.formatDate(null)).toBe('Fecha no disponible')
+    expect(vm.formatDate('no-es-fecha')).toBe('no-es-fecha')
+  })
+})
 })

@@ -279,4 +279,13 @@ describe('carga masiva de socios', () => {
     expect(wrapper.text()).not.toContain('2. Previsualización')
     expect(wrapper.find('.import-file span').text()).toBe('otro.xlsx')
   })
+
+  it('cancelar la subida sin el campo de archivo montado igual limpia el estado', () => {
+    const wrapper = montar()
+    const vm = wrapper.vm as unknown as { fileInput: HTMLInputElement | null; error: string; cancelarSubida: () => void }
+    vm.fileInput = null
+    vm.error = 'Error previo'
+    vm.cancelarSubida()
+    expect(vm.error).toBe('')
+  })
 })

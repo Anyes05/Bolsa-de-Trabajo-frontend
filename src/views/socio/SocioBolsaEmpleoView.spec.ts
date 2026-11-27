@@ -286,4 +286,21 @@ describe('SocioBolsaEmpleoView', () => {
     await modal.vm.$emit('notify', true, { ofertaId: 1, ofertaTitulo: '', perfilId: 1, perfilNombre: '' })
     expect(servicio.notifyApplicant).not.toHaveBeenCalled()
   })
+
+describe('bolsa de empleo del socio: contacto con respuestas tardías', () => {
+  it('un error de un postulante anterior no se muestra en el contacto del actual', async () => {
+    servidor([])
+    const vista = await montar()
+    let rechazar!: (cause: unknown) => void
+    vi.mocked(socioBolsaService.listContactApplications)
+      .mockReturnValueOnce(new Promise((_, fail) => { rechazar = fail }))
+      .mockResolvedValueOnce([])
+    const vm = vista.vm as unknown as { openContact: (applicant: unknown) => Promise<void>; contactError: string | null }
+    const primero = vm.openContact({ id: 1, profiles: [] })
+    await vm.openContact({ id: 2, profiles: [] })
+    rechazar(new Error('offline'))
+    await primero
+    expect(vm.contactError).toBeNull()
+  })
+})
 })

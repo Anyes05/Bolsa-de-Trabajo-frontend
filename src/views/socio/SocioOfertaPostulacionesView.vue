@@ -142,9 +142,8 @@ onMounted(load)
 
     <section class="socio-applications" aria-label="Postulaciones de la oferta">
       <AppAlert v-if="error" tone="error">{{ error }}</AppAlert>
-      <p v-if="loading">Cargando postulaciones...</p>
       <article
-        v-for="application in loading ? [] : applications"
+        v-for="application in applications"
         :key="application.id"
         class="socio-application-card"
       >
@@ -178,7 +177,7 @@ onMounted(load)
           <time class="socio-application-card__status-time">{{ application.appliedOn }}</time>
         </div>
       </article>
-      <p v-if="!loading && !applications.length" class="socio-applications__empty">Todavía no hay postulaciones para esta oferta.</p>
+      <p v-if="!applications.length" class="socio-applications__empty">Todavía no hay postulaciones para esta oferta.</p>
     </section>
 
     <template #overlay>

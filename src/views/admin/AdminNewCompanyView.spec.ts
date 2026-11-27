@@ -372,4 +372,10 @@ describe('alta de nuevo socio', () => {
       expect(push).toHaveBeenCalledWith({ name: 'admin-socios' })
     })
   })
+
+  it('sin un socio recién creado no envía credenciales', async () => {
+    const wrapper = await montar()
+    await (wrapper.vm as unknown as { sendCredentialsMail: () => Promise<void> }).sendCredentialsMail()
+    expect(socioService.enviarCredenciales).not.toHaveBeenCalled()
+  })
 })

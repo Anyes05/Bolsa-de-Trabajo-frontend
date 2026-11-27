@@ -28,9 +28,9 @@ const canUpdatePassword = computed(() => password.current.length > 0
   && isValidPassword(password.next) && passwordsMatch.value && password.next !== password.current)
 
 async function onPhotoChange(event: Event) {
-  if (!(event.target instanceof HTMLInputElement)) return
-  const file = event.target.files?.[0]
-  event.target.value = ''
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
   if (!file || uploadingPhoto.value) return
   photoError.value = ''
   photoMessage.value = ''

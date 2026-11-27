@@ -446,6 +446,17 @@ describe('control de caja del administrador', () => {
     })
   })
 
+  describe('exportación a Excel: alcance', () => {
+    it('se puede volver de "Elegir socios" a "Todos los socios"', async () => {
+      const wrapper = await montar()
+      ;(wrapper.vm as unknown as { openExcelExport: () => void }).openExcelExport()
+      await flushPromises()
+      await wrapper.find('input[name="excel-scope"][value="SELECCIONADOS"]').setValue(true)
+      await wrapper.find('input[name="excel-scope"][value="TODOS"]').setValue(true)
+      expect((wrapper.vm as unknown as { exportMode: string }).exportMode).toBe('TODOS')
+    })
+  })
+
   describe('registro de cobros', () => {
     it('muestra los totales del mes y registra el cobro con los datos ingresados', async () => {
       const wrapper = await montar()
@@ -978,6 +989,58 @@ describe('control de caja del administrador', () => {
 
       await wrapper.find('.cash-modal-layer').trigger('click')
       expect(modalReintegros(wrapper).exists()).toBe(false)
+    })
+  })
+
+  describe('estados defensivos', () => {
+    type Estado = Record<string, unknown> & {
+      exportStates: string[]; exportSearch: string; receivedAmount: string
+      balanceAfterPayment: number; historyMovements: unknown[]; chargeTotals: unknown
+      saveProgrammed: (entry: unknown) => Promise<void>; deleteProgrammed: (entry: unknown) => Promise<void>
+      formatMoney: (value: number | null) => string; openExcelExport: () => void
+    }
+
+    it('con la exportación cerrada no recarga opciones al cambiar filtros ni búsqueda', async () => {
+      const wrapper = await montar()
+      const vm = wrapper.vm as unknown as Estado
+      vi.mocked(cajaService.cuentasExportacion).mockClear()
+      vm.exportStates = ['AL_DIA']
+      vm.exportSearch = 'algo'
+      await flushPromises()
+      expect(cajaService.cuentasExportacion).not.toHaveBeenCalled()
+      wrapper.unmount()
+    })
+
+    it('al desmontar cancela la búsqueda pendiente de la exportación', async () => {
+      vi.useFakeTimers()
+      try {
+        const wrapper = await montar()
+        const vm = wrapper.vm as unknown as Estado
+        vm.openExcelExport()
+        await flushPromises()
+        vm.exportSearch = 'pendiente'
+        await flushPromises()
+        const limpiar = vi.spyOn(globalThis, 'clearTimeout')
+        wrapper.unmount()
+        expect(limpiar).toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    it('sin historial ni empresa seleccionada usa valores vacíos y no guarda reintegros', async () => {
+      const wrapper = await montar()
+      const vm = wrapper.vm as unknown as Estado
+      vm.receivedAmount = ''
+      expect(vm.balanceAfterPayment).toBe(0)
+      expect(vm.historyMovements).toEqual([])
+      expect(vm.chargeTotals).toBeTruthy()
+      const entrada = { id: 1 }
+      await vm.saveProgrammed(entrada)
+      await vm.deleteProgrammed(entrada)
+      expect(cajaService.actualizarProgramado).not.toHaveBeenCalled()
+      expect(cajaService.eliminarProgramado).not.toHaveBeenCalled()
+      expect(vm.formatMoney(null)).toBe('Sin cuota emitida')
     })
   })
 })

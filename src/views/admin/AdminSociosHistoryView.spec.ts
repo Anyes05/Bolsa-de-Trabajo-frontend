@@ -444,4 +444,17 @@ describe('historial de suscripción de socios', () => {
       expect(detalle(wrapper).text()).toContain('Actualizar historial')
     })
   })
+
+  it('mientras guarda, el aviso de error del detalle no ofrece actualizar el historial', async () => {
+    const wrapper = await montar([socio(1)])
+    vi.mocked(socioService.subscriptionHistory).mockResolvedValueOnce([entrada(1, 'ALTA', '2020-01-15')])
+    await socioBoton(wrapper, 'Socio 1').trigger('click')
+    await flushPromises()
+    const vm = wrapper.vm as unknown as { detailError: string; saving: boolean }
+    vm.detailError = 'No se pudo cargar'
+    vm.saving = true
+    await flushPromises()
+    expect(wrapper.text()).toContain('No se pudo cargar')
+    expect(wrapper.text()).not.toContain('Actualizar historial')
+  })
 })

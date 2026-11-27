@@ -47,7 +47,7 @@ const shownCompany = computed(() => {
   const name = auth.fullName || props.companyName || 'Socio'
   return {
     name,
-    initials: initials(name) || props.companyInitials,
+    initials: initials(name),
     roleLabel: auth.isDirectivo ? 'SOCIO DIRECTIVO' : (props.companyRole || 'SOCIO'),
   }
 })

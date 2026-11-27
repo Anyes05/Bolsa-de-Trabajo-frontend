@@ -125,7 +125,7 @@ async function signInGoogle(credential: GoogleCredential) {
   <main class="access">
     <BrandPanel />
     <section class="access__content">
-      <section v-if="!role" class="access-card" aria-labelledby="access-title">
+      <section v-if="!detail" class="access-card" aria-labelledby="access-title">
         <h2 id="access-title" class="access-card__title">Bienvenido</h2>
         <p class="access-card__subtitle">¿Cómo quieres ingresar?</p>
         <nav class="access-card__roles" aria-label="Selección de rol">
@@ -148,20 +148,20 @@ async function signInGoogle(credential: GoogleCredential) {
         </button>
         <header class="login-form__heading">
           <span class="login-form__icon" aria-hidden="true">
-            <component :is="detail?.icon" :size="20" />
+            <component :is="detail.icon" :size="20" />
           </span>
           <div>
-            <h2 class="login-form__heading-heading">{{ detail?.title }}</h2>
+            <h2 class="login-form__heading-heading">{{ detail.title }}</h2>
             <p class="login-form__heading-text">Ingresa con tus credenciales</p>
           </div>
         </header>
         <GoogleSignInButton v-if="role === 'POSTULANTE'" :disabled="busy" @credential="signInGoogle" />
-        <AppField id="login-identifier" :label="detail?.label ?? ''" required>
+        <AppField id="login-identifier" :label="detail.label" required>
           <input
             id="login-identifier"
             v-model="identifier"
             class="app-field__input"
-            :placeholder="detail?.placeholder"
+            :placeholder="detail.placeholder"
             :inputmode="role === 'SOCIO' ? 'numeric' : 'email'"
             autocomplete="username"
             :readonly="!!googleLinkCredential"

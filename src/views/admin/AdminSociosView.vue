@@ -110,7 +110,7 @@ function openEdit(socio: SocioRecord) {
   generatedPassword.value = ''
   editForm.bps = socio.bps ?? ''
   editForm.emailUsuario = socio.emailUsuario ?? ''
-  editForm.razonSocial = socio.razonSocial ?? ''
+  editForm.razonSocial = socio.razonSocial
   editForm.rut = socio.rut ?? ''
   editForm.telefono = socio.telefono ?? ''
   editForm.emailContacto = socio.emailContacto ?? ''

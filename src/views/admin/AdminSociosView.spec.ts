@@ -573,4 +573,15 @@ describe('gestión de socios del administrador', () => {
       expect(modal(wrapper).text()).not.toContain('Comunícasela al socio')
     })
   })
+
+  it('sin un socio en edición, guardar, habilitar acceso y resetear la clave no hacen nada', async () => {
+    const wrapper = await montar([socio(1)])
+    const vm = wrapper.vm as unknown as { saveEdit: () => Promise<void>; habilitarAcceso: () => Promise<void>; resetClave: () => Promise<void> }
+    await vm.saveEdit()
+    await vm.habilitarAcceso()
+    await vm.resetClave()
+    expect(socioService.updateSocio).not.toHaveBeenCalled()
+    expect(socioService.habilitarAcceso).not.toHaveBeenCalled()
+    expect(socioService.resetClaveProvisional).not.toHaveBeenCalled()
+  })
 })

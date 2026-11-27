@@ -19,6 +19,19 @@ describe('HTTP client', () => {
     vi.restoreAllMocks()
   })
 
+  it('does not send Authorization when the stored session has no token', async () => {
+    storage.set('ccisj-session', JSON.stringify({ email: 'sin-token@x.test' }))
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await request('/public')
+
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>
+    expect(headers.Authorization).toBeUndefined()
+  })
+
   it('sends JSON requests with the current bearer token and custom headers', async () => {
     storage.set('ccisj-session', JSON.stringify({ token: 'abc123' }))
     const fetchMock = vi.fn().mockResolvedValue(

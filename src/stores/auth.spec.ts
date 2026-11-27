@@ -106,6 +106,37 @@ describe('authenticated session store', () => {
     expect(auth.photoUrl).toBeNull()
   })
 
+  it('a refresh from a previous session does not clear the pending refresh of the new one', async () => {
+    const auth = useAuthStore()
+    auth.setSession(session())
+    const vieja = deferred<CurrentUserResponse>()
+    const nueva = deferred<CurrentUserResponse>()
+    vi.mocked(authService.currentUser).mockReturnValueOnce(vieja.promise).mockReturnValueOnce(nueva.promise)
+    const primera = auth.refreshCurrentUser()
+    auth.setSession({ ...session('ADMIN'), token: 'another-token' })
+    const segunda = auth.refreshCurrentUser()
+    vieja.resolve(currentUser)
+    await primera
+    const repetida = auth.refreshCurrentUser()
+    nueva.resolve({ ...currentUser, fullName: 'Admin nuevo' })
+    await Promise.all([segunda, repetida])
+    expect(authService.currentUser).toHaveBeenCalledTimes(2)
+    expect(auth.fullName).toBe('Admin nuevo')
+  })
+
+  it('keeps the photo of the new session when a removal finishes after switching sessions', async () => {
+    const auth = useAuthStore()
+    auth.setSession(session())
+    const pending = deferred<void>()
+    vi.mocked(authService.removeProfilePhoto).mockReturnValueOnce(pending.promise)
+    const remove = auth.removePhoto()
+    auth.setSession({ ...session('ADMIN'), token: 'another-token' })
+    auth.setPhotoUrl('/admin.jpg')
+    pending.resolve()
+    await remove
+    expect(auth.photoUrl).toBe('/admin.jpg')
+  })
+
   it('propagates refresh failures and permits a subsequent refresh', async () => {
     const auth = useAuthStore()
     await auth.refreshCurrentUser()

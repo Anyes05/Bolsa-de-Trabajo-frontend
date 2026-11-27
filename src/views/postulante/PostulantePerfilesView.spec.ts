@@ -528,6 +528,25 @@ describe('mis perfiles profesionales', () => {
     const agregar = (seccion: ReturnType<VueWrapper['find']>, indice: number) =>
       seccion.findAll('.profile-manual-cv__heading-button')[indice].trigger('click')
 
+    it('edita los datos del perfil y completa formación y referencias personales', async () => {
+      vi.mocked(postulanteService.listProfiles).mockResolvedValue([perfil(1)])
+      vi.mocked(postulanteService.uploadCv).mockResolvedValue(cv(10, 1) as never)
+      const wrapper = await montar()
+      const manual = await abrirManual(wrapper)
+      const etiqueta = (texto: string) => modal(wrapper).findAll('label').find((l) => l.text().startsWith(texto))!
+      await etiqueta('Libreta de conducir').find('input').setValue('Cat. A')
+      await etiqueta('Detalle del último empleo').find('input').setValue('Vendedora')
+      await etiqueta('Resumen de experiencia laboral').find('textarea').setValue('Atención al público')
+      await agregar(manual, 1)
+      await agregar(modal(wrapper).find('.profile-manual-cv'), 3)
+      for (const campo of modal(wrapper).findAll('.profile-manual-cv__entry input, .profile-manual-cv__entry textarea')) {
+        await campo.setValue(campo.attributes('type') === 'month' ? '2024-01' : 'Dato')
+      }
+      await boton(modal(wrapper), 'Generar y subir PDF').trigger('click')
+      await flushPromises()
+      expect(postulanteService.uploadCv).toHaveBeenCalledTimes(1)
+    })
+
     it('exige al menos una sección con contenido', async () => {
       vi.mocked(postulanteService.listProfiles).mockResolvedValue([perfil(1)])
       const wrapper = await montar()
@@ -678,6 +697,41 @@ describe('mis perfiles profesionales', () => {
       await abrirManual(wrapper)
       await boton(modal(wrapper), 'Crear CV manual').trigger('click')
       expect(modal(wrapper).find('.profile-manual-cv').exists()).toBe(false)
+    })
+  })
+
+  describe('estados defensivos', () => {
+    type Estado = {
+      disponibilidad: unknown; editing: unknown; selectedFile: unknown; editingCvs: unknown[]
+      toggleDisponibilidad: () => Promise<void>; toggleSector: (sector: string) => void
+      saveProfile: () => Promise<void>; uploadCv: () => Promise<void>; uploadManualCv: () => Promise<void>
+    }
+
+    it('sin perfil en edición ni disponibilidad cargada, las acciones no llaman al servidor', async () => {
+      const wrapper = await montar()
+      const vm = wrapper.vm as unknown as Estado
+      vm.disponibilidad = null
+      vm.editing = null
+      await vm.toggleDisponibilidad()
+      vm.toggleSector('Ventas')
+      await vm.saveProfile()
+      await vm.uploadCv()
+      await vm.uploadManualCv()
+      expect(vm.editingCvs).toEqual([])
+      expect(postulanteService.updateDisponibilidadLaboral).not.toHaveBeenCalled()
+      expect(postulanteService.createProfile).not.toHaveBeenCalled()
+      expect(postulanteService.updateProfile).not.toHaveBeenCalled()
+      expect(postulanteService.uploadCv).not.toHaveBeenCalled()
+    })
+
+    it('cambiar la visibilidad de un perfil no modifica los demás', async () => {
+      vi.mocked(postulanteService.listProfiles).mockResolvedValue([perfil(1), perfil(2)])
+      vi.mocked(postulanteService.updateProfile).mockImplementation(async (p) => p)
+      const wrapper = await montar()
+      await boton(tarjetas(wrapper)[0], 'Ocultar perfil').trigger('click')
+      await flushPromises()
+      expect(tarjetas(wrapper)).toHaveLength(2)
+      expect(boton(tarjetas(wrapper)[1], 'Ocultar perfil')).toBeTruthy()
     })
   })
 })

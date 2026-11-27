@@ -240,4 +240,5 @@ describe('postulaciones recibidas para una oferta', () => {
     expect(wrapper.text()).toContain('Estado inválido')
     expect(wrapper.find('.socio-application-card__status').classes()).toContain('socio-application-card__status--revisada')
   })
+
 })

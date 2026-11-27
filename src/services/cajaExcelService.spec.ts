@@ -160,6 +160,18 @@ describe('exportación Excel del control de caja', () => {
     expect(mensual.some((fila) => fila[1] === '2025-03' && fila[3] === 500)).toBe(true)
   })
 
+  it('rotula el identificador del socio como RUT, Cédula o ambos según el dato disponible', async () => {
+    vi.mocked(cajaService.getHistorial)
+      .mockResolvedValueOnce(historial(1, { rut: '211111110011' }))
+      .mockResolvedValueOnce(historial(2, { cedula: '12345678' }))
+      .mockResolvedValueOnce(historial(3))
+    await cajaExcelService.download([cuenta(1), cuenta(2), cuenta(3)])
+    const textos = valores((await libroDescargado()).getWorksheet('Por mes')!).flat().map(String)
+    expect(textos).toContain('RUT: 211111110011')
+    expect(textos).toContain('Cédula: 12345678')
+    expect(textos).toContain('RUT/Cédula: -')
+  })
+
   it('usa "inicio" cuando solo se indica la fecha Hasta', async () => {
     vi.mocked(cajaService.getHistorial).mockResolvedValueOnce(historial(1))
     await cajaExcelService.download([cuenta(1)], { hasta: '2025-02-28' })

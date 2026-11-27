@@ -242,4 +242,10 @@ describe('vista de acceso', () => {
     expect(wrapper.text()).toContain('No se pudo iniciar sesión con Google: no hay conexión con el servidor.')
     expect(wrapper.find('.google-falso').attributes('data-disabled')).toBe('false')
   })
+
+  it('enviar el formulario sin un rol elegido no intenta iniciar sesión', async () => {
+    const wrapper = await montar()
+    await (wrapper.vm as unknown as { submitLogin: () => Promise<void> }).submitLogin()
+    expect(authService.login).not.toHaveBeenCalled()
+  })
 })

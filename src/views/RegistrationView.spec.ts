@@ -864,4 +864,12 @@ describe('vista de registro de postulante', () => {
       expect(storage.has('ccisj-google-registration')).toBe(false)
     })
   })
+
+  it('volver desde el primer paso no retrocede más', async () => {
+    const wrapper = await montar()
+    const vm = wrapper.vm as unknown as { step: number; previous: () => void }
+    expect(vm.step).toBe(1)
+    vm.previous()
+    expect(vm.step).toBe(1)
+  })
 })

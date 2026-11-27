@@ -152,7 +152,7 @@ export const cajaExcelService = {
           celda.alignment = { vertical: 'middle', wrapText: true }
         })
         hoja.columns.forEach((columna) => {
-          if (columnasMonetarias.has(columna.key ?? '')) {
+          if (columnasMonetarias.has(String(columna.key))) {
             columna.numFmt = '"$" #,##0.00;[Red]-"$" #,##0.00'
           }
         })

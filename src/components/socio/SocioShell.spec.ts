@@ -78,6 +78,14 @@ describe('layout del socio', () => {
     return wrapper
   }
 
+  it('abrir el detalle del aviso sin aviso pendiente no hace nada', async () => {
+    const wrapper = await montar()
+    const store = useSocioNotificationsStore()
+    const abrir = vi.spyOn(store, 'openDetail')
+    ;(wrapper.vm as unknown as { openToastDetail: () => void }).openToastDetail()
+    expect(abrir).not.toHaveBeenCalled()
+  })
+
   it('fuera de una sesión de socio no consulta perfil ni notificaciones', async () => {
     const wrapper = await montar({ companyName: 'Empresa Prop', companyRole: '' })
     expect(authService.currentUser).not.toHaveBeenCalled()

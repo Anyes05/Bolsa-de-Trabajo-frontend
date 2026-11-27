@@ -418,7 +418,7 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
       fileType: file.type,
       fileSize: file.size,
       hasAuthToken: Boolean(authToken),
-      authTokenLength: authToken?.length ?? 0,
+      authTokenLength: authToken.length,
     })
     const message = firstError instanceof Error ? firstError.message : ''
     const isForbidden = /403|forbidden/i.test(message)
@@ -436,7 +436,7 @@ async function uploadCvWithRetry(file: File, resumen: string, authToken: string)
         fileType: file.type,
         fileSize: file.size,
         hasAuthToken: Boolean(authToken),
-        authTokenLength: authToken?.length ?? 0,
+        authTokenLength: authToken.length,
       })
       throw retryError
     }
@@ -507,7 +507,7 @@ async function complete() {
             fileType: file.type,
             fileSize: file.size,
             hasAuthToken: Boolean(session.token),
-            authTokenLength: session.token?.length ?? 0,
+            authTokenLength: session.token.length,
           })
         }
       }
@@ -551,7 +551,7 @@ async function complete() {
       <span class="registration-success__icon" aria-hidden="true"><Check :size="26" /></span>
       <h2 id="register-done-title" ref="stepHeading" class="registration-card__heading registration-success__heading" tabindex="-1">Registro completado</h2>
       <p class="registration-success__text">Tu ficha de postulante ya está lista. Podés entrar a la plataforma o volver al inicio de sesión.</p>
-      <AppAlert class="registration-card__alert" tone="success">{{ success || 'Cuenta creada correctamente.' }}</AppAlert>
+      <AppAlert class="registration-card__alert" tone="success">{{ success }}</AppAlert>
       <div class="registration-success__actions">
         <AppButton class="registration-success__actions-app-button" type="button" @click="router.push({ name: 'postulante-bolsa-empleo' })">
           Ir a ofertas de empleo

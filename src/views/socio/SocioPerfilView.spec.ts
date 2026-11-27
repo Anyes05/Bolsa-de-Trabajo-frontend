@@ -356,4 +356,11 @@ describe('perfil del socio', () => {
     expect(useAuthStore().token).toBeNull()
     expect(router.currentRoute.value.name).toBe('access')
   })
+
+  it('sin la ficha del socio cargada el identificador se muestra como guion', async () => {
+    const wrapper = await montar()
+    const vm = wrapper.vm as unknown as { socio: unknown; identificador: string }
+    vm.socio = null
+    expect(vm.identificador).toBe('—')
+  })
 })

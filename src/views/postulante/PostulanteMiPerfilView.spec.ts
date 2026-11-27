@@ -248,4 +248,12 @@ describe('mi perfil del postulante', () => {
       expect(formClave(wrapper).text()).not.toContain('Tu contraseña se actualizó')
     })
   })
+
+  it('sin datos personales cargados, guardar no hace nada', async () => {
+    const wrapper = await montar()
+    const vm = wrapper.vm as unknown as { profile: unknown; save: () => Promise<void> }
+    vm.profile = null
+    await vm.save()
+    expect(postulanteService.updatePersonalProfile).not.toHaveBeenCalled()
+  })
 })

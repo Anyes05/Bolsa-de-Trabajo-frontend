@@ -176,8 +176,7 @@ async function updatePassword() {
 }
 
 async function onPhotoChange(event: Event) {
-  if (!(event.target instanceof HTMLInputElement)) return
-  const input = event.target
+  const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   photoError.value = ''
