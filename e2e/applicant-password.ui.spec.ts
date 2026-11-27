@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('RF-18: applicant password validation, server error and session renewal (mock API)', async ({ page }) => {
+test('RF-05: applicant password validation, server error and session renewal (mock API)', async ({ page }) => {
   const session = { token: 'synthetic-old', email: 'applicant@example.test', role: 'POSTULANTE', fullName: 'Persona Prueba' }
   await page.addInitScript(value => sessionStorage.setItem('ccisj-session', JSON.stringify(value)), session)
   let submissions = 0

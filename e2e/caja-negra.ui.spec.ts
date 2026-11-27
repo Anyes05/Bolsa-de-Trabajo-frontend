@@ -74,7 +74,7 @@ async function completarLogin(page: Page, rol: 'POSTULANTE' | 'SOCIO', identific
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
 }
 
-test.describe('CN-UI ingreso (RF-19)', () => {
+test.describe('CN-UI ingreso (RF-01)', () => {
   test('CN-UI-01 credenciales válidas de postulante llevan a Ofertas de Empleo', async ({ page }) => {
     const postulante = sesion('POSTULANTE')
     await simularApi(page, {
@@ -142,7 +142,7 @@ test.describe('CN-UI-06 tabla de decisión: rol de la sesión × área solicitad
   }
 })
 
-test.describe('CN-UI registro de postulante (RF-18)', () => {
+test.describe('CN-UI registro de postulante (RF-03)', () => {
   async function completarPaso1(page: Page, clave: string, confirmacion = clave, correo = 'nuevo@example.test') {
     await simularApi(page, { '/sectors': () => ({ json: RUBROS }) })
     await page.goto('/registro')
@@ -188,7 +188,7 @@ test.describe('CN-UI registro de postulante (RF-18)', () => {
   })
 })
 
-test.describe('CN-UI postulación a ofertas (RF-11)', () => {
+test.describe('CN-UI postulación a ofertas (RF-23)', () => {
   const postulante = sesion('POSTULANTE')
 
   async function abrirOfertas(page: Page, extra: Record<string, Manejador> = {}) {

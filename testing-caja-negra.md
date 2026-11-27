@@ -5,7 +5,7 @@ Fecha: 23/11/2026. Complementa `testing.md` (caja blanca / cobertura Vitest).
 ## Qué es y cómo se hizo
 
 En las pruebas de caja negra se prueba la aplicación **como la usa una persona, sin mirar el código**.
-Los casos se diseñan desde los requerimientos (RF-11, RF-18 y RF-19) y se verifica solo lo que se ve
+Los casos se diseñan desde los requerimientos (RF-01, RF-03, RF-05 y RF-23) y se verifica solo lo que se ve
 en pantalla y la URL final.
 
 - **Herramienta:** Playwright, sobre la aplicación **compilada**
@@ -43,7 +43,7 @@ en celular.
 
 ## Casos de prueba
 
-### Ingreso y sesión (RF-19)
+### Ingreso y sesión (RF-01)
 
 | ID | Técnica | Pasos / entrada | Resultado esperado | Obtenido |
 |---|---|---|---|---|
@@ -52,9 +52,9 @@ en celular.
 | CN-UI-03 | PE inválida | Demasiados intentos (la API responde 429) | Se muestra el aviso del servidor ("Esperá 15 minutos…") | ✅ |
 | CN-UI-04 | PE inválida | Contraseña vacía o con solo espacios | "Ingresá tu contraseña para continuar."; **no** se llama a la API | ✅ |
 | CN-UI-05 | TE | Socio con clave provisional ingresa → intenta abrir la bolsa | Va a `/socio/cambiar-clave` y no puede salir de ahí hasta cambiarla | ✅ |
-| RF-19 (existente) | PE | Elegir cada uno de los 3 roles | Se muestran los 3 roles con el formulario correcto (tipo de dato del campo) y se limpia al volver | ✅ |
-| RF-19 (existente) | TD | Sin sesión, abrir `/admin`, `/socio/bolsa-empleo` o `/postulante/ofertas-empleo` | Vuelve al inicio | ✅ |
-| RF-19 (existente) | PE inválida | Socio con un identificador sin números | Mensaje de validación, sin llamar a la API | ✅ |
+| RF-01 (existente) | PE | Elegir cada uno de los 3 roles | Se muestran los 3 roles con el formulario correcto (tipo de dato del campo) y se limpia al volver | ✅ |
+| RF-01 (existente) | TD | Sin sesión, abrir `/admin`, `/socio/bolsa-empleo` o `/postulante/ofertas-empleo` | Vuelve al inicio | ✅ |
+| RF-01 (existente) | PE inválida | Socio con un identificador sin números | Mensaje de validación, sin llamar a la API | ✅ |
 
 ### CN-UI-06 — Tabla de decisión: rol de la sesión × área solicitada
 
@@ -67,7 +67,7 @@ en celular.
 | Admin | `/socio/mis-ofertas` | `/admin` | ✅ |
 | Admin | `/postulante/ofertas-empleo` | `/admin` | ✅ |
 
-### Registro de postulante y contraseñas (RF-18)
+### Registro de postulante y contraseñas (RF-03 y RF-05)
 
 | ID | Técnica | Entrada (paso 1 del registro) | Resultado esperado | Obtenido |
 |---|---|---|---|---|
@@ -77,9 +77,9 @@ en celular.
 | CN-UI-07 | PE inválida | Clave sin carácter especial | Mensaje de política de contraseña; no avanza | ✅ |
 | CN-UI-08a | PE inválida | La confirmación no coincide con la clave | "Las contraseñas no coinciden."; no avanza | ✅ |
 | CN-UI-08b | PE inválida | Correo sin `@` | El navegador marca el campo como inválido y no avanza | ✅ |
-| RF-18 (existente) | PE / TE | Cambio de clave del postulante: confirmación distinta → clave actual incorrecta → correcta | El botón queda deshabilitado; luego se ve el error del servidor; por último el éxito, con los campos limpios y la sesión renovada | ✅ |
+| RF-05 (existente) | PE / TE | Cambio de clave del postulante: confirmación distinta → clave actual incorrecta → correcta | El botón queda deshabilitado; luego se ve el error del servidor; por último el éxito, con los campos limpios y la sesión renovada | ✅ |
 
-### Postulación a ofertas (RF-11)
+### Postulación a ofertas (RF-23)
 
 | ID | Técnica | Pasos / entrada | Resultado esperado | Obtenido |
 |---|---|---|---|---|

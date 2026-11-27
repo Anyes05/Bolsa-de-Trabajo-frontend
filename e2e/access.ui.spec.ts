@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('RF-19: selection of the three roles and registration entry point', async ({ page }) => {
+test('RF-01: selection of the three roles and registration entry point', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Bienvenido' })).toBeVisible()
   for (const role of ['ADMINISTRADOR', 'SOCIO', 'POSTULANTE']) {
@@ -15,7 +15,7 @@ for (const [role, label, inputmode] of [
   ['SOCIO', 'BPS o cédula', 'numeric'],
   ['POSTULANTE', 'Gmail / Correo electrónico', 'email'],
 ] as const) {
-  test(`RF-19: ${role} credentials and reset on return`, async ({ page }) => {
+  test(`RF-01: ${role} credentials and reset on return`, async ({ page }) => {
     await page.goto('/')
     await page.getByRole('button', { name: new RegExp(`^${role}`) }).click()
     const identifier = page.getByRole('textbox', { name: label, exact: true })
@@ -32,14 +32,14 @@ for (const [role, label, inputmode] of [
 }
 
 for (const path of ['/admin', '/socio/bolsa-empleo', '/postulante/ofertas-empleo']) {
-  test(`RF-19: anonymous user cannot open ${path}`, async ({ page }) => {
+  test(`RF-01: anonymous user cannot open ${path}`, async ({ page }) => {
     await page.goto(path)
     await expect(page).toHaveURL('http://127.0.0.1:4173/')
     await expect(page.getByRole('heading', { name: 'Bienvenido' })).toBeVisible()
   })
 }
 
-test('RF-19: invalid socio identifier is rejected before requesting login', async ({ page }) => {
+test('RF-01: invalid socio identifier is rejected before requesting login', async ({ page }) => {
   let requests = 0
   await page.route('**/auth/login', async route => {
     requests++
