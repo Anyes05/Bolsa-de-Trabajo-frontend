@@ -139,7 +139,7 @@ describe('gestión de ofertas del socio', () => {
     servidor([oferta(1, 'ACTIVA'), oferta(2, 'ACTIVA'), oferta(3, 'PAUSADA')])
     const wrapper = await montar()
     const filtros = wrapper.findAll('.cash-filter')
-    expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Abiertas', 'Pausada', 'Cerrada', 'Vencida'])
+    expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Activas', 'Pausada', 'Cerrada', 'Vencida'])
     expect(filtros[0]!.classes()).toContain('cash-filter--active')
 
     await filtros[1]!.trigger('click')

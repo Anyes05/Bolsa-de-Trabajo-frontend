@@ -138,7 +138,7 @@ function displayStatus(status: JobOffer['estado']) {
           type="button"
           @click="statusFilter = filter"
         >
-          {{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Abiertas' : statusLabels[filter] }}
+          {{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Activas' : statusLabels[filter] }}
         </button>
       </div>
 

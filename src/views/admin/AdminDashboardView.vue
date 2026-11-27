@@ -72,7 +72,7 @@ const paymentMethods: Array<{ key: MetodoPago; label: string }> = [
 
 const metrics = computed(() => [
   { label: 'Total Socios', value: resumen.value?.totalSocios ?? 0, icon: UsersRound, tone: 'blue', filterKey: 'TODOS' as CajaFilter },
-  { label: 'Al Dia', value: resumen.value?.alDia ?? 0, icon: CheckCircle2, tone: 'green', filterKey: 'AL_DIA' as CajaFilter },
+  { label: 'Al Día', value: resumen.value?.alDia ?? 0, icon: CheckCircle2, tone: 'green', filterKey: 'AL_DIA' as CajaFilter },
   { label: 'Pendiente', value: resumen.value?.pendiente ?? 0, icon: Clock3, tone: 'orange', filterKey: 'DEUDA' as CajaFilter },
   { label: 'Inactivos', value: resumen.value?.inactivos ?? 0, icon: AlertCircle, tone: 'red', filterKey: 'INACTIVO' as CajaFilter },
 ])
@@ -479,7 +479,7 @@ function paymentLabel(method: MetodoPago | null) {
 </script>
 
 <template>
-  <AdminShell active="dashboard" title="Control de Caja y Cobranza" subtitle="Gestion de cuotas y cobros">
+  <AdminShell active="dashboard" title="Control de Caja y Cobranza" subtitle="Gestión de cuotas y cobros">
     <section class="cash-metrics" aria-label="Resumen de cobranza">
       <button
         v-for="metric in metrics"

@@ -116,7 +116,7 @@ onMounted(loadData)
           :class="{ 'cash-filter--active': statusFilter === filter }"
           type="button"
           @click="statusFilter = filter"
-        >{{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Abiertas' : statusLabels[filter as JobOffer['estado']] }}</button>
+        >{{ filter === 'TODAS' ? 'Todas' : filter === 'ACTIVA' ? 'Activas' : statusLabels[filter as JobOffer['estado']] }}</button>
       </div>
     </div>
 

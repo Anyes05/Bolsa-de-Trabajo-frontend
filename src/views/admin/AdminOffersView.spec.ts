@@ -200,7 +200,7 @@ describe('ofertas laborales (administración)', () => {
     await waitForSearch()
 
     const filtros = wrapper.findAll('.cash-filter')
-    expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Abiertas', 'Pausada', 'Cerrada', 'Vencida'])
+    expect(filtros.map((filtro) => filtro.text())).toEqual(['Todas', 'Activas', 'Pausada', 'Cerrada', 'Vencida'])
     await filtros[2]!.trigger('click')
     await flushPromises()
     expect(offerService.list).toHaveBeenLastCalledWith({ q: '', estado: 'PAUSADA', page: 0 })
