@@ -2,7 +2,7 @@
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { ArrowLeft, ArrowRight, BadgeCheck, BriefcaseBusiness, Check, ChevronDown, FileText, GraduationCap, Languages, Lightbulb, Paperclip, Plus, Trash2, UserRound, UsersRound, Wrench } from 'lucide-vue-next'
-import { jsPDF } from 'jspdf'
+import { buildManualCvPdf, period } from '../services/manualCvPdf'
 import AppAlert from '../components/AppAlert.vue'
 import BrandLogo from '../components/BrandLogo.vue'
 import AppButton from '../components/AppButton.vue'
@@ -155,125 +155,64 @@ function isEmail(value: string) {
 // Solo se llama después de validar que el CV manual tiene contenido (hasManualContent).
 // Las referencias son opcionales.
 function buildManualCvFile() {
-  const doc = new jsPDF()
-  const pageHeight = doc.internal.pageSize.getHeight()
-  const contentWidth = 180
-  let y = 20
-
-  const ensureSpace = (height: number) => {
-    if (y + height > pageHeight - 18) {
-      doc.addPage()
-      y = 20
-    }
-  }
-
-  const addHeading = (title: string) => {
-    ensureSpace(12)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.setTextColor(0, 112, 62)
-    doc.text(title, 14, y)
-    doc.setTextColor(0, 0, 0)
-    y += 8
-  }
-
-  const addParagraph = (value: string) => {
-    const lines = doc.splitTextToSize(value, contentWidth)
-    ensureSpace(lines.length * 5 + 4)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    doc.text(lines, 14, y)
-    y += lines.length * 5 + 4
-  }
-
-  const nonEmptyExperiences = manualCv.experiences.filter((item) => item.company.trim() || item.role.trim() || item.description.trim())
-  const nonEmptyEducation = manualCv.education.filter((item) => item.institution.trim() || item.degree.trim())
-  const nonEmptyLanguages = manualCv.languages.filter((item) => item.name.trim())
-  const nonEmptyWorkReferences = manualCv.workReferences.filter((item) => item.name.trim())
-  const nonEmptyPersonalReferences = manualCv.personalReferences.filter((item) => item.name.trim())
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(18)
-  doc.setTextColor(0, 112, 62)
-  doc.text(form.fullName || 'Curriculum Vitae', 14, y)
-  y += 10
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10)
-  doc.setTextColor(0, 0, 0)
-  doc.text(`Correo: ${form.email}`, 14, y)
-  y += 7
-  doc.text(`Teléfono: ${form.phone}`, 14, y)
-  y += 7
-  doc.text(`Zona: ${form.residenceArea}`, 14, y)
-  y += 7
-  doc.text(`Perfil: ${form.profileName}`, 14, y)
-  y += 10
-
-  if (manualCv.summary.trim()) {
-    addHeading('Perfil profesional')
-    addParagraph(manualCv.summary.trim())
-  }
-
-  if (nonEmptyExperiences.length) {
-    addHeading('Experiencia laboral')
-    nonEmptyExperiences.forEach((experience) => {
-      const period = [experience.startDate, experience.current ? 'Actualidad' : experience.endDate].filter(Boolean).join(' - ')
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(10)
-      ensureSpace(11)
-      doc.text([experience.role, experience.company].filter(Boolean).join(' | '), 14, y)
-      y += 5
-      if (period) {
-        doc.setFont('helvetica', 'normal')
-        doc.setFontSize(9)
-        doc.text(period, 14, y)
-        y += 5
-      }
-      if (experience.description.trim()) addParagraph(experience.description.trim())
-      else y += 3
-    })
-  }
-
-  if (nonEmptyEducation.length) {
-    addHeading('Formación académica')
-    nonEmptyEducation.forEach((education) => {
-      const period = [education.startYear, education.endYear].filter(Boolean).join(' - ')
-      addParagraph([education.degree, education.institution, education.level, period].filter(Boolean).join(' | '))
-    })
-  }
-
-  if (manualCv.technicalSkills.trim()) {
-    addHeading('Habilidades técnicas')
-    addParagraph(manualCv.technicalSkills.trim())
-  }
-
-  if (nonEmptyLanguages.length) {
-    addHeading('Idiomas')
-    addParagraph(nonEmptyLanguages.map((language) => [language.name, language.level].filter(Boolean).join(' - ')).join(', '))
-  }
-
-  if (manualCv.certifications.trim()) {
-    addHeading('Cursos y certificaciones')
-    addParagraph(manualCv.certifications.trim())
-  }
-
-  if (nonEmptyWorkReferences.length) {
-    addHeading('Referencias laborales')
-    nonEmptyWorkReferences.forEach((reference) => addParagraph([
-      reference.name, reference.role, reference.company, reference.phone, reference.email,
-    ].filter(Boolean).join(' | ')))
-  }
-
-  if (nonEmptyPersonalReferences.length) {
-    addHeading('Referencias personales')
-    nonEmptyPersonalReferences.forEach((reference) => addParagraph([
-      reference.name, reference.role, reference.phone, reference.email,
-    ].filter(Boolean).join(' | ')))
-  }
-
-  const blob = doc.output('blob')
-  return new File([blob], 'cv-manual.pdf', { type: 'application/pdf' })
+  return buildManualCvPdf({
+    fullName: form.fullName,
+    header: [
+      ['Correo', form.email],
+      ['Teléfono', form.phone],
+      ['Zona de residencia', form.residenceArea],
+      ['Perfil', form.profileName],
+    ],
+    sections: [
+      { title: 'Perfil profesional', text: manualCv.summary },
+      {
+        title: 'Experiencia laboral',
+        entries: manualCv.experiences.map((item) => [
+          ['Cargo', item.role],
+          ['Empresa', item.company],
+          ['Período', period(item.startDate, item.current ? 'Actualidad' : item.endDate)],
+          ['Tareas', item.description],
+        ]),
+      },
+      {
+        title: 'Formación académica',
+        entries: manualCv.education.map((item) => [
+          ['Título', item.degree],
+          ['Institución', item.institution],
+          ['Nivel', item.level],
+          ['Período', period(item.startYear, item.endYear)],
+        ]),
+      },
+      { title: 'Habilidades técnicas', text: manualCv.technicalSkills },
+      {
+        title: 'Idiomas',
+        entries: manualCv.languages.filter((item) => item.name.trim()).map((item) => [
+          ['Idioma', item.name],
+          ['Nivel', item.level],
+        ]),
+      },
+      { title: 'Cursos y certificaciones', text: manualCv.certifications },
+      {
+        title: 'Referencias laborales',
+        entries: manualCv.workReferences.filter((item) => item.name.trim()).map((item) => [
+          ['Nombre', item.name],
+          ['Cargo', item.role],
+          ['Empresa', item.company],
+          ['Teléfono', item.phone],
+          ['Correo', item.email],
+        ]),
+      },
+      {
+        title: 'Referencias personales',
+        entries: manualCv.personalReferences.filter((item) => item.name.trim()).map((item) => [
+          ['Nombre', item.name],
+          ['Relación', item.role],
+          ['Teléfono', item.phone],
+          ['Correo', item.email],
+        ]),
+      },
+    ],
+  })
 }
 
 function selectCvMode(mode: 'upload' | 'manual') {

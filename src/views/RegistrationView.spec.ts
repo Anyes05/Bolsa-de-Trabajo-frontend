@@ -34,6 +34,8 @@ vi.mock('jspdf', () => {
     setFont() {}
     setFontSize() {}
     setTextColor() {}
+    setDrawColor() {}
+    line() {}
     addPage() { this.paginas += 1 }
     text(valor: string | string[]) { this.textos.push(valor) }
     splitTextToSize(valor: string) { return valor.split('\n') }
@@ -625,15 +627,23 @@ describe('vista de registro de postulante', () => {
       const [documento] = pdf.documentos
       expect(documento.paginas).toBeGreaterThan(1)
       const textos = documento.textos.map((texto) => (Array.isArray(texto) ? texto.join('\n') : texto))
-      expect(textos.slice(0, 5)).toEqual([
-        'Ana Pérez', 'Correo: ana@test.uy', 'Teléfono: 099123456', 'Zona: San José de Mayo', 'Perfil: Perfil Ventas',
+      // Cada dato se imprime como "Etiqueta:" seguida de su valor.
+      const datos = textos.flatMap((texto, i) => (texto.endsWith(':') ? [`${texto} ${textos[i + 1]}`] : []))
+      expect(textos[0]).toBe('Ana Pérez')
+      expect(datos.slice(0, 4)).toEqual([
+        'Correo: ana@test.uy', 'Teléfono: 099123456', 'Zona de residencia: San José de Mayo', 'Perfil: Perfil Ventas',
       ])
       expect(textos).toEqual(expect.arrayContaining([
-        'Perfil profesional', 'Experiencia laboral', 'Vendedora | Tienda Sol', '2020-01 - Actualidad', 'Atención al público',
-        'Kiosco Luna', '2018-01 - 2019-12', 'Formación académica', 'Técnico en ventas | UTU | Técnico | 2015-03 - 2017-12',
-        'Habilidades técnicas', 'Excel, caja', 'Idiomas', 'Inglés - Intermedio, Portugués',
-        'Cursos y certificaciones', 'Curso de atención al cliente', 'Referencias laborales',
-        'Luis Gómez | Supervisor | Tienda Sol | 099111222 | luis@sol.uy', 'Referencias personales', 'Marta Ruiz | Excompañera | 098765432 | marta@correo.uy',
+        'Perfil profesional', 'Experiencia laboral', 'Formación académica', 'Habilidades técnicas', 'Excel, caja',
+        'Idiomas', 'Cursos y certificaciones', 'Curso de atención al cliente', 'Referencias laborales', 'Referencias personales',
+      ]))
+      expect(datos).toEqual(expect.arrayContaining([
+        'Cargo: Vendedora', 'Empresa: Tienda Sol', 'Período: 01/2020 a Actualidad', 'Tareas: Atención al público',
+        'Empresa: Kiosco Luna', 'Período: 01/2018 a 12/2019',
+        'Título: Técnico en ventas', 'Institución: UTU', 'Nivel: Técnico', 'Período: 03/2015 a 12/2017',
+        'Idioma: Inglés', 'Nivel: Intermedio', 'Idioma: Portugués',
+        'Nombre: Luis Gómez', 'Cargo: Supervisor', 'Empresa: Tienda Sol', 'Teléfono: 099111222', 'Correo: luis@sol.uy',
+        'Nombre: Marta Ruiz', 'Relación: Excompañera', 'Teléfono: 098765432', 'Correo: marta@correo.uy',
       ]))
       // Las entradas vacías no se imprimen.
       expect(textos.filter((texto) => texto === '')).toHaveLength(0)

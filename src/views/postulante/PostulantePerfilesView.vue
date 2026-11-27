@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { jsPDF } from 'jspdf'
+import { buildManualCvPdf, period, type CvField } from '../../services/manualCvPdf'
 import { Briefcase, Pause, Plus, Trash2, Wrench } from 'lucide-vue-next'
 import AppAlert from '../../components/AppAlert.vue'
 import AppButton from '../../components/AppButton.vue'
@@ -29,12 +29,13 @@ const editing = ref<ProfessionalProfile | null>(null)
 const selectedFile = ref<File | null>(null)
 const manualCvOpen = ref(false)
 const editorError = ref('')
-type ManualEntry = { title: string; detail: string; from: string; to: string }
+type ManualExperience = { role: string; company: string; detail: string; from: string; to: string }
+type ManualEducation = { degree: string; institution: string; detail: string; from: string; to: string }
 type ManualReference = { name: string; role: string; phone: string; email: string }
 const manualCv = reactive({
   summary: '',
-  experiences: [] as ManualEntry[],
-  education: [] as ManualEntry[],
+  experiences: [] as ManualExperience[],
+  education: [] as ManualEducation[],
   skills: '',
   languages: '',
   certifications: '',
@@ -227,7 +228,8 @@ async function uploadCv() {
 }
 
 function addManualEntry(kind: 'experiences' | 'education') {
-  manualCv[kind].push({ title: '', detail: '', from: '', to: '' })
+  if (kind === 'experiences') manualCv.experiences.push({ role: '', company: '', detail: '', from: '', to: '' })
+  else manualCv.education.push({ degree: '', institution: '', detail: '', from: '', to: '' })
 }
 
 function addReference(kind: 'workReferences' | 'personalReferences') {
@@ -249,8 +251,8 @@ function hasContent() {
     manualCv.skills.trim(),
     manualCv.languages.trim(),
     manualCv.certifications.trim(),
-    manualCv.experiences.map((entry) => entry.title).join('').trim(),
-    manualCv.education.map((entry) => entry.title).join('').trim(),
+    manualCv.experiences.map((entry) => entry.role + entry.company + entry.detail).join('').trim(),
+    manualCv.education.map((entry) => entry.degree + entry.institution + entry.detail).join('').trim(),
     manualCv.workReferences.map((reference) => reference.name).join('').trim(),
     manualCv.personalReferences.map((reference) => reference.name).join('').trim(),
   ]
@@ -259,46 +261,42 @@ function hasContent() {
 
 function buildManualCv() {
   if (!editing.value || !hasContent()) return null
-  const document = new jsPDF()
-  let y = 20
-  const pageHeight = document.internal.pageSize.getHeight()
-  const write = (title: string, content: string) => {
-    if (!content.trim()) return
-    const lines = document.splitTextToSize(content, 180)
-    if (y + lines.length * 5 + 14 > pageHeight - 18) {
-      document.addPage()
-      y = 20
-    }
-    document.setFont('helvetica', 'bold')
-    document.setFontSize(12)
-    document.setTextColor(0, 112, 62)
-    document.text(title, 14, y)
-    y += 7
-    document.setFont('helvetica', 'normal')
-    document.setFontSize(10)
-    document.setTextColor(0, 0, 0)
-    document.text(lines, 14, y)
-    y += lines.length * 5 + 7
-  }
-  document.setFont('helvetica', 'bold')
-  document.setFontSize(18)
-  document.setTextColor(0, 112, 62)
-  document.text(auth.fullName || 'Curriculum Vitae', 14, y)
-  y += 10
-  document.setFont('helvetica', 'normal')
-  document.setFontSize(10)
-  document.setTextColor(0, 0, 0)
-  document.text(`Perfil: ${editing.value.nombre}`, 14, y)
-  y += 9
-  write('Perfil profesional', manualCv.summary)
-  write('Experiencia laboral', manualCv.experiences.filter((entry) => entry.title.trim()).map((entry) => [entry.title, entry.from, entry.to, entry.detail].filter(Boolean).join(' | ')).join('\n'))
-  write('Formación académica', manualCv.education.filter((entry) => entry.title.trim()).map((entry) => [entry.title, entry.from, entry.to, entry.detail].filter(Boolean).join(' | ')).join('\n'))
-  write('Habilidades técnicas', manualCv.skills)
-  write('Idiomas', manualCv.languages)
-  write('Cursos y certificaciones', manualCv.certifications)
-  write('Referencias laborales', manualCv.workReferences.filter((reference) => reference.name.trim()).map((reference) => [reference.name, reference.role, reference.phone, reference.email].filter(Boolean).join(' | ')).join('\n'))
-  write('Referencias personales', manualCv.personalReferences.filter((reference) => reference.name.trim()).map((reference) => [reference.name, reference.role, reference.phone, reference.email].filter(Boolean).join(' | ')).join('\n'))
-  return new File([document.output('blob')], 'cv-manual.pdf', { type: 'application/pdf' })
+  const references = (items: ManualReference[], roleLabel: string) => items.map((reference) => [
+    ['Nombre', reference.name],
+    [roleLabel, reference.role],
+    ['Teléfono', reference.phone],
+    ['Correo', reference.email],
+  ] as CvField[])
+  return buildManualCvPdf({
+    fullName: auth.fullName || '',
+    header: [['Perfil', editing.value.nombre]],
+    sections: [
+      { title: 'Perfil profesional', text: manualCv.summary },
+      {
+        title: 'Experiencia laboral',
+        entries: manualCv.experiences.map((entry) => [
+          ['Cargo', entry.role],
+          ['Empresa', entry.company],
+          ['Período', period(entry.from, entry.to)],
+          ['Tareas', entry.detail],
+        ]),
+      },
+      {
+        title: 'Formación académica',
+        entries: manualCv.education.map((entry) => [
+          ['Título', entry.degree],
+          ['Institución', entry.institution],
+          ['Período', period(entry.from, entry.to)],
+          ['Detalle', entry.detail],
+        ]),
+      },
+      { title: 'Habilidades técnicas', text: manualCv.skills },
+      { title: 'Idiomas', text: manualCv.languages },
+      { title: 'Cursos y certificaciones', text: manualCv.certifications },
+      { title: 'Referencias laborales', entries: references(manualCv.workReferences, 'Cargo') },
+      { title: 'Referencias personales', entries: references(manualCv.personalReferences, 'Relación') },
+    ],
+  })
 }
 
 async function uploadManualCv() {
@@ -446,7 +444,7 @@ onMounted(loadDisponibilidad)
               <AppButton :loading="uploading" :disabled="!selectedFile" @click="uploadCv">{{ editingCvs.length ? 'Reemplazar CV' : 'Subir CV' }}</AppButton>
               <AppButton variant="secondary" :disabled="uploading" @click="manualCvOpen = !manualCvOpen"><Wrench :size="15" /> {{ editingCvs.length ? 'Reemplazar por CV manual' : 'Crear CV manual' }}</AppButton>
             </div>
-            <section v-if="manualCvOpen" class="profile-manual-cv"><p class="profile-manual-cv__text">Completá al menos una sección para generar el PDF. Las referencias son opcionales.</p><label class="profile-editor__label profile-manual-cv__label">Perfil profesional<textarea v-model="manualCv.summary" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Experiencia laboral</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('experiences')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.experiences" :key="`experience-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" class="profile-manual-cv__input" placeholder="Cargo | Empresa"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Responsabilidades y logros" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('experiences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Formación académica</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('education')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.education" :key="`education-${index}`" class="profile-manual-cv__entry"><input v-model="entry.title" class="profile-manual-cv__input" placeholder="Título | Institución"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Detalle de la formación" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('education', index)"><Trash2 :size="14" /> Quitar</button></div><label class="profile-editor__label profile-manual-cv__label">Habilidades técnicas<textarea v-model="manualCv.skills" class="profile-editor__textarea profile-manual-cv__textarea" /></label><label class="profile-editor__label profile-manual-cv__label">Idiomas<textarea v-model="manualCv.languages" class="profile-editor__textarea profile-manual-cv__textarea" placeholder="Ej: Inglés - Intermedio" /></label><label class="profile-editor__label profile-manual-cv__label">Cursos y certificaciones<textarea v-model="manualCv.certifications" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Referencias laborales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('workReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.workReferences" :key="`work-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Cargo / relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('workReferences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Referencias personales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('personalReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.personalReferences" :key="`personal-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('personalReferences', index)"><Trash2 :size="14" /> Quitar</button></div><AppButton :loading="uploading" @click="uploadManualCv">Generar y subir PDF</AppButton></section>
+            <section v-if="manualCvOpen" class="profile-manual-cv"><p class="profile-manual-cv__text">Completá al menos una sección para generar el PDF. Las referencias son opcionales.</p><label class="profile-editor__label profile-manual-cv__label">Perfil profesional<textarea v-model="manualCv.summary" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Experiencia laboral</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('experiences')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.experiences" :key="`experience-${index}`" class="profile-manual-cv__entry"><input v-model="entry.role" class="profile-manual-cv__input" placeholder="Cargo"><input v-model="entry.company" class="profile-manual-cv__input" placeholder="Empresa"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Tareas, responsabilidades y logros" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('experiences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Formación académica</b><button class="profile-manual-cv__heading-button" type="button" @click="addManualEntry('education')"><Plus :size="14" /> Agregar</button></div><div v-for="(entry, index) in manualCv.education" :key="`education-${index}`" class="profile-manual-cv__entry"><input v-model="entry.degree" class="profile-manual-cv__input" placeholder="Título"><input v-model="entry.institution" class="profile-manual-cv__input" placeholder="Institución"><input v-model="entry.from" class="profile-manual-cv__input" type="month"><input v-model="entry.to" class="profile-manual-cv__input" type="month"><textarea v-model="entry.detail" class="profile-editor__textarea profile-manual-cv__entry-textarea profile-manual-cv__textarea" placeholder="Detalle de la formación" /><button class="profile-manual-cv__entry-button" type="button" @click="removeEntry('education', index)"><Trash2 :size="14" /> Quitar</button></div><label class="profile-editor__label profile-manual-cv__label">Habilidades técnicas<textarea v-model="manualCv.skills" class="profile-editor__textarea profile-manual-cv__textarea" /></label><label class="profile-editor__label profile-manual-cv__label">Idiomas<textarea v-model="manualCv.languages" class="profile-editor__textarea profile-manual-cv__textarea" placeholder="Ej: Inglés - Intermedio" /></label><label class="profile-editor__label profile-manual-cv__label">Cursos y certificaciones<textarea v-model="manualCv.certifications" class="profile-editor__textarea profile-manual-cv__textarea" /></label><div class="profile-manual-cv__heading"><b>Referencias laborales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('workReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.workReferences" :key="`work-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Cargo / relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('workReferences', index)"><Trash2 :size="14" /> Quitar</button></div><div class="profile-manual-cv__heading"><b>Referencias personales</b><button class="profile-manual-cv__heading-button" type="button" @click="addReference('personalReferences')"><Plus :size="14" /> Agregar</button></div><div v-for="(reference, index) in manualCv.personalReferences" :key="`personal-${index}`" class="profile-manual-cv__entry"><input v-model="reference.name" class="profile-manual-cv__input" placeholder="Nombre"><input v-model="reference.role" class="profile-manual-cv__input" placeholder="Relación"><input v-model="reference.phone" class="profile-manual-cv__input" placeholder="Teléfono"><input v-model="reference.email" class="profile-manual-cv__input" placeholder="Correo"><button class="profile-manual-cv__entry-button" type="button" @click="removeReference('personalReferences', index)"><Trash2 :size="14" /> Quitar</button></div><AppButton :loading="uploading" @click="uploadManualCv">Generar y subir PDF</AppButton></section>
           </section>
         </div>
         <footer class="modal__actions"><AppButton class="modal__actions-app-button" variant="secondary" @click="editing = null">Cancelar</AppButton><AppButton class="modal__actions-app-button" :loading="saving" @click="saveProfile">Guardar cambios</AppButton></footer>

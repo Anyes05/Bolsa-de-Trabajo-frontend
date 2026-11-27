@@ -31,6 +31,8 @@ vi.mock('jspdf', () => {
     setFont() {}
     setFontSize() {}
     setTextColor() {}
+    setDrawColor() {}
+    line() {}
     addPage() { this.paginas += 1 }
     text(valor: string | string[]) { this.textos.push(valor) }
     splitTextToSize(valor: string) { return valor.split('\n') }
@@ -560,12 +562,14 @@ describe('mis perfiles profesionales', () => {
       const entradas = seccion.findAll('.profile-manual-cv__entry')
       // Experiencias: la primera completa, la segunda vacía (se descarta).
       const exp = entradas[0].findAll('input')
-      await exp[0].setValue('Cajera | Super')
-      await exp[1].setValue('2020-01')
-      await exp[2].setValue('2022-06')
+      await exp[0].setValue('Cajera')
+      await exp[1].setValue('Super')
+      await exp[2].setValue('2020-01')
+      await exp[3].setValue('2022-06')
       await entradas[0].find('textarea').setValue('Atención al público')
       // Formación
-      await entradas[2].findAll('input')[0].setValue('Bachillerato | Liceo 1')
+      await entradas[2].findAll('input')[0].setValue('Bachillerato')
+      await entradas[2].findAll('input')[1].setValue('Liceo 1')
       // Referencias laborales: una completa y otra que se quita.
       const ref = entradas[3].findAll('input')
       await ref[0].setValue('Juan Gómez')
@@ -587,12 +591,17 @@ describe('mis perfiles profesionales', () => {
       const [archivo] = vi.mocked(postulanteService.uploadCv).mock.calls[0]
       expect(archivo.name).toBe('cv-manual.pdf')
       const escrito = pdf.documentos[0].textos.flat()
+      // Cada dato se imprime como "Etiqueta:" seguida de su valor.
+      const datos = escrito.flatMap((texto, i) => (texto.endsWith(':') ? [`${texto} ${escrito[i + 1]}`] : []))
       expect(escrito).toEqual(expect.arrayContaining([
-        'Ana Pérez', 'Perfil: Ventas', 'Perfil profesional', 'Vendedora con experiencia',
-        'Experiencia laboral', 'Cajera | Super | 2020-01 | 2022-06 | Atención al público',
-        'Formación académica', 'Bachillerato | Liceo 1', 'Habilidades técnicas', 'Excel', 'Idiomas', 'Inglés - Intermedio',
-        'Cursos y certificaciones', 'Curso de ventas', 'Referencias laborales', 'Juan Gómez | Encargado | 099111222 | juan@test.uy',
-        'Referencias personales', 'María',
+        'Ana Pérez', 'Perfil profesional', 'Vendedora con experiencia', 'Experiencia laboral', 'Formación académica',
+        'Habilidades técnicas', 'Excel', 'Idiomas', 'Inglés - Intermedio', 'Cursos y certificaciones', 'Curso de ventas',
+        'Referencias laborales', 'Referencias personales',
+      ]))
+      expect(datos).toEqual(expect.arrayContaining([
+        'Perfil: Ventas', 'Cargo: Cajera', 'Empresa: Super', 'Período: 01/2020 a 06/2022', 'Tareas: Atención al público',
+        'Título: Bachillerato', 'Institución: Liceo 1',
+        'Nombre: Juan Gómez', 'Cargo: Encargado', 'Teléfono: 099111222', 'Correo: juan@test.uy', 'Nombre: María',
       ]))
       expect(alertaPrincipal(wrapper).text()).toContain('El CV manual se generó y guardó correctamente.')
       expect(modal(wrapper).find('.profile-manual-cv').exists()).toBe(false)
