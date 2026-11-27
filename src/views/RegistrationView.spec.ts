@@ -507,12 +507,23 @@ describe('vista de registro de postulante', () => {
       return wrapper.findAll('.manual-cv-section')[seccion]
     }
 
-    it('exige al menos una referencia laboral o personal', async () => {
+    it('exige al menos una sección con contenido', async () => {
       await irAlCvManual()
       await aceptarTerminos()
       await enviar()
-      expect(wrapper.text()).toContain('Agrega al menos una referencia laboral o personal para crear el CV manual.')
+      expect(wrapper.text()).toContain('Completa al menos una sección del CV manual (resumen, experiencia, formación, habilidades, idiomas o referencias).')
       expect(authService.registerApplicant).not.toHaveBeenCalled()
+    })
+
+    it('las referencias son opcionales: con solo una experiencia genera el CV', async () => {
+      await irAlCvManual()
+      await boton('Agregar experiencia').trigger('click')
+      await entradas(1).find('.manual-cv-entry input[placeholder="Ej: Auxiliar administrativo"]').setValue('Repositor')
+      await aceptarTerminos()
+      await enviar()
+      expect(authService.registerApplicant).toHaveBeenCalledTimes(1)
+      expect(textosDelPdf()).not.toContain('Referencias personales')
+      expect(postulanteService.uploadCv).toHaveBeenCalledTimes(1)
     })
 
     it('agrega y quita bloques del CV manual', async () => {

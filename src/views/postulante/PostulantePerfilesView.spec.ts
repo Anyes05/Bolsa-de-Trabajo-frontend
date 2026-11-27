@@ -526,14 +526,25 @@ describe('mis perfiles profesionales', () => {
     const agregar = (seccion: ReturnType<VueWrapper['find']>, indice: number) =>
       seccion.findAll('.profile-manual-cv__heading-button')[indice].trigger('click')
 
-    it('exige al menos una referencia con nombre', async () => {
+    it('exige al menos una sección con contenido', async () => {
       vi.mocked(postulanteService.listProfiles).mockResolvedValue([perfil(1)])
       const wrapper = await montar()
       const manual = await abrirManual(wrapper)
       await agregar(manual, 2)
       await boton(modal(wrapper), 'Generar y subir PDF').trigger('click')
-      expect(modal(wrapper).text()).toContain('Agregá al menos una referencia laboral o personal')
+      expect(modal(wrapper).text()).toContain('Completá al menos una sección del CV')
       expect(postulanteService.uploadCv).not.toHaveBeenCalled()
+    })
+
+    it('las referencias son opcionales: con solo el resumen genera y sube el PDF', async () => {
+      vi.mocked(postulanteService.listProfiles).mockResolvedValue([perfil(1)])
+      vi.mocked(postulanteService.uploadCv).mockResolvedValue(cv(10, 1) as never)
+      const wrapper = await montar()
+      const manual = await abrirManual(wrapper)
+      await manual.findAll('textarea')[0].setValue('Vendedora con experiencia')
+      await boton(modal(wrapper), 'Generar y subir PDF').trigger('click')
+      await flushPromises()
+      expect(postulanteService.uploadCv).toHaveBeenCalledTimes(1)
     })
 
     it('arma el PDF con todas las secciones completas y lo sube', async () => {

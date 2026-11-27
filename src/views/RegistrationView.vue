@@ -152,8 +152,8 @@ function isEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
-// Solo se llama después de validar que hay al menos una referencia (hasManualReference),
-// así que siempre hay contenido para el PDF.
+// Solo se llama después de validar que el CV manual tiene contenido (hasManualContent).
+// Las referencias son opcionales.
 function buildManualCvFile() {
   const doc = new jsPDF()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -321,9 +321,19 @@ function removePersonalReference(index: number) {
   manualCv.personalReferences.splice(index, 1)
 }
 
-function hasManualReference() {
-  return manualCv.workReferences.some((item) => item.name.trim())
-    || manualCv.personalReferences.some((item) => item.name.trim())
+// El CV manual necesita al menos una sección con contenido; las referencias son opcionales.
+function hasManualContent() {
+  const secciones = [
+    manualCv.summary.trim(),
+    manualCv.technicalSkills.trim(),
+    manualCv.certifications.trim(),
+    manualCv.experiences.map((item) => item.company + item.role + item.description).join('').trim(),
+    manualCv.education.map((item) => item.institution + item.degree).join('').trim(),
+    manualCv.languages.map((item) => item.name).join('').trim(),
+    manualCv.workReferences.map((item) => item.name).join('').trim(),
+    manualCv.personalReferences.map((item) => item.name).join('').trim(),
+  ]
+  return secciones.some(Boolean)
 }
 
 function manualProfileSummary() {
@@ -502,8 +512,8 @@ async function complete() {
   busy.value = true
   clearFeedback()
   try {
-    if (cvMode.value === 'manual' && !hasManualReference()) {
-      error.value = 'Agrega al menos una referencia laboral o personal para crear el CV manual.'
+    if (cvMode.value === 'manual' && !hasManualContent()) {
+      error.value = 'Completa al menos una sección del CV manual (resumen, experiencia, formación, habilidades, idiomas o referencias).'
       return
     }
     const manualSummary = cvMode.value === 'manual' ? manualProfileSummary() : null
